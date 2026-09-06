@@ -133,6 +133,11 @@ class ListingService:
         if not outcome.created:
             raise DuplicateManualListingError(outcome.listing_id)
         await self.db.flush()
+        from app.vehicles.service import VehicleService
+
+        await VehicleService.generate_match_candidates(
+            self.db, new_listing_ids=[outcome.listing_id]
+        )
         row = await self.repository.get_with_snapshots(outcome.listing_id)
         assert row is not None
         listing, source_key = row

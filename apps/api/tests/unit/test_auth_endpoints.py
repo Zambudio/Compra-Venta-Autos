@@ -14,6 +14,7 @@ from app.core.config import Settings
 from app.main import create_app
 from app.users.models import User, UserRole
 from httpx import ASGITransport, AsyncClient
+from pydantic import SecretStr
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -254,16 +255,23 @@ async def test_metrics_endpoint() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cli_create_owner_validations(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Missing credentials
-    monkeypatch.delenv("OWNER_EMAIL", raising=False)
-    monkeypatch.delenv("OWNER_PASSWORD", raising=False)
+    # 1. Missing credentials
+    s1 = make_test_settings()
+    s1.owner_email = None
+    s1.owner_password = None
+    monkeypatch.setattr("app.auth.cli.get_settings", lambda: s1)
     assert await create_owner() == 2
 
-    # Placeholder password
-    monkeypatch.setenv("OWNER_EMAIL", "owner@example.com")
-    monkeypatch.setenv("OWNER_PASSWORD", "CHANGE_ME_NOW_12345")
+    # 2. Placeholder password
+    s2 = make_test_settings()
+    s2.owner_email = "owner@example.com"
+    s2.owner_password = SecretStr("CHANGE_ME_NOW_12345")
+    monkeypatch.setattr("app.auth.cli.get_settings", lambda: s2)
     assert await create_owner() == 2
 
-    # Password too short
-    monkeypatch.setenv("OWNER_PASSWORD", "short")
+    # 3. Password too short
+    s3 = make_test_settings()
+    s3.owner_email = "owner@example.com"
+    s3.owner_password = SecretStr("short")
+    monkeypatch.setattr("app.auth.cli.get_settings", lambda: s3)
     assert await create_owner() == 2

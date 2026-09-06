@@ -168,6 +168,10 @@ class SourceService:
         run.finished_at = datetime.now(UTC)
         run.error_summary = _sanitize(errors)
         run.status = _final_status(errors=errors, seen=seen, changed=created + updated)
+        if created > 0:
+            from app.vehicles.service import VehicleService
+
+            await VehicleService.generate_match_candidates(self.db)
         await self.db.flush()
         return run
 
