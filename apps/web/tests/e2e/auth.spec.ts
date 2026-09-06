@@ -15,6 +15,10 @@ test("owner can login, inspect Foundation status and logout", async ({
   await page.getByLabel("Contraseña").fill(password!);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(
+    page.getByRole("heading", { name: "Anuncios", level: 1 }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Estado" }).click();
+  await expect(
     page.getByRole("heading", { name: "Foundation operativa" }),
   ).toBeVisible();
   await expect(page.getByText("PostgreSQL")).toBeVisible();

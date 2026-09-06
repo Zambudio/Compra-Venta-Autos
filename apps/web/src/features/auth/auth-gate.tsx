@@ -6,7 +6,7 @@ import { useState } from "react";
 import { getCurrentUser, login, logout } from "@/features/auth/api";
 import { LoginScreen } from "@/features/auth/login-screen";
 import type { LoginValues } from "@/features/auth/login-form";
-import { StatusScreen } from "@/features/auth/status-screen";
+import { AppShell } from "@/features/shell/app-shell";
 import { ApiError } from "@/lib/api";
 
 export function AuthGate() {
@@ -57,7 +57,7 @@ export function AuthGate() {
 
   if (session.data) {
     return (
-      <StatusScreen
+      <AppShell
         user={session.data}
         onLogout={async () => {
           await logoutMutation.mutateAsync();
