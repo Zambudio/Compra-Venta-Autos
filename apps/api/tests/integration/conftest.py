@@ -10,10 +10,17 @@ from alembic import command
 from alembic.config import Config
 from app.auth.security import hash_password
 from app.core.config import Settings
+from app.listings.models import VehicleListing
 from app.main import create_app
+from app.sources.models import SourceSyncRun
 from app.users.models import User, UserRole
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete
+
+OWNER_PASSWORD = "a secure integration password"
+ADMIN_PASSWORD = "another secure integration password"
+VIEWER_PASSWORD = "a read only integration password"
 
 
 def _integration_settings() -> Settings:
@@ -48,23 +55,64 @@ def migrated_database() -> Iterator[None]:
     command.upgrade(config, "head")
 
 
+async def _reset_database(app: FastAPI) -> None:
+    async with app.state.database.session_factory() as db:
+        await db.execute(delete(SourceSyncRun))
+        await db.execute(delete(VehicleListing))
+        await db.execute(delete(User))
+        db.add_all(
+            [
+                User(
+                    email="owner@example.com",
+                    password_hash=hash_password(OWNER_PASSWORD),
+                    role=UserRole.OWNER,
+                ),
+                User(
+                    email="admin@example.com",
+                    password_hash=hash_password(ADMIN_PASSWORD),
+                    role=UserRole.ADMIN,
+                ),
+                User(
+                    email="viewer@example.com",
+                    password_hash=hash_password(VIEWER_PASSWORD),
+                    role=UserRole.VIEWER,
+                ),
+            ]
+        )
+        await db.commit()
+
+
 @pytest_asyncio.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     settings = _integration_settings()
     app = create_app(settings)
     async with app.router.lifespan_context(app):
         await app.state.redis.client.flushdb()
-        async with app.state.database.session_factory() as db:
-            await db.execute(delete(User))
-            db.add(
-                User(
-                    email="owner@example.com",
-                    password_hash=hash_password("a secure integration password"),
-                    role=UserRole.OWNER,
-                )
-            )
-            await db.commit()
+        await _reset_database(app)
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
         ) as test_client:
             yield test_client
+
+
+async def login(test_client: AsyncClient, email: str, password: str) -> None:
+    response = await test_client.post(
+        "/api/v1/auth/login", json={"email": email, "password": password}
+    )
+    assert response.status_code == 200, response.text
+
+
+def csrf_headers(test_client: AsyncClient) -> dict[str, str]:
+    return {"X-CSRF-Token": test_client.cookies["motorscope_csrf"]}
+
+
+@pytest_asyncio.fixture
+async def owner_client(client: AsyncClient) -> AsyncClient:
+    await login(client, "owner@example.com", OWNER_PASSWORD)
+    return client
+
+
+@pytest_asyncio.fixture
+async def viewer_client(client: AsyncClient) -> AsyncClient:
+    await login(client, "viewer@example.com", VIEWER_PASSWORD)
+    return client
