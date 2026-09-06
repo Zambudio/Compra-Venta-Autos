@@ -1,6 +1,64 @@
 {
   "components": {
     "schemas": {
+      "ComplianceReviewRead": {
+        "properties": {
+          "acquisition_method": {
+            "title": "Acquisition Method",
+            "type": "string"
+          },
+          "authentication_required": {
+            "title": "Authentication Required",
+            "type": "string"
+          },
+          "automated_allowed": {
+            "title": "Automated Allowed",
+            "type": "boolean"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "rate_limit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Limit"
+          },
+          "terms_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms Url"
+          }
+        },
+        "required": [
+          "acquisition_method",
+          "automated_allowed",
+          "authentication_required",
+          "rate_limit",
+          "terms_url",
+          "checked_at",
+          "notes"
+        ],
+        "title": "ComplianceReviewRead",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -39,6 +97,20 @@
         "title": "ErrorBody",
         "type": "object"
       },
+      "FuelType": {
+        "enum": [
+          "PETROL",
+          "DIESEL",
+          "LPG",
+          "CNG",
+          "HYBRID",
+          "PLUGIN_HYBRID",
+          "ELECTRIC",
+          "OTHER"
+        ],
+        "title": "FuelType",
+        "type": "string"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -64,6 +136,459 @@
         ],
         "title": "HealthResponse",
         "type": "object"
+      },
+      "ListingDetailRead": {
+        "properties": {
+          "brand": {
+            "title": "Brand",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "engine_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Code"
+          },
+          "external_id": {
+            "title": "External Id",
+            "type": "string"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "fuel_type": {
+            "$ref": "#/components/schemas/FuelType"
+          },
+          "generation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "image_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Image Urls",
+            "type": "array"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "mileage_km": {
+            "title": "Mileage Km",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "power_kw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Kw"
+          },
+          "price_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Price Amount",
+            "type": "string"
+          },
+          "price_currency": {
+            "title": "Price Currency",
+            "type": "string"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "seller_type": {
+            "$ref": "#/components/schemas/SellerType"
+          },
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotRead"
+            },
+            "title": "Snapshots",
+            "type": "array"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          },
+          "transmission": {
+            "$ref": "#/components/schemas/Transmission"
+          },
+          "trim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trim"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "source_key",
+          "external_id",
+          "url",
+          "brand",
+          "model",
+          "generation",
+          "trim",
+          "engine_code",
+          "power_kw",
+          "fuel_type",
+          "transmission",
+          "year",
+          "mileage_km",
+          "price_amount",
+          "price_currency",
+          "location",
+          "province",
+          "seller_type",
+          "description",
+          "image_urls",
+          "status",
+          "first_seen_at",
+          "last_seen_at",
+          "published_at",
+          "snapshots"
+        ],
+        "title": "ListingDetailRead",
+        "type": "object"
+      },
+      "ListingPage": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ListingRead"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
+          "has_more"
+        ],
+        "title": "ListingPage",
+        "type": "object"
+      },
+      "ListingRead": {
+        "properties": {
+          "brand": {
+            "title": "Brand",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "engine_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Code"
+          },
+          "external_id": {
+            "title": "External Id",
+            "type": "string"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "fuel_type": {
+            "$ref": "#/components/schemas/FuelType"
+          },
+          "generation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "image_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Image Urls",
+            "type": "array"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "mileage_km": {
+            "title": "Mileage Km",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "power_kw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Kw"
+          },
+          "price_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Price Amount",
+            "type": "string"
+          },
+          "price_currency": {
+            "title": "Price Currency",
+            "type": "string"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "seller_type": {
+            "$ref": "#/components/schemas/SellerType"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          },
+          "transmission": {
+            "$ref": "#/components/schemas/Transmission"
+          },
+          "trim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trim"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "source_key",
+          "external_id",
+          "url",
+          "brand",
+          "model",
+          "generation",
+          "trim",
+          "engine_code",
+          "power_kw",
+          "fuel_type",
+          "transmission",
+          "year",
+          "mileage_km",
+          "price_amount",
+          "price_currency",
+          "location",
+          "province",
+          "seller_type",
+          "description",
+          "image_urls",
+          "status",
+          "first_seen_at",
+          "last_seen_at",
+          "published_at"
+        ],
+        "title": "ListingRead",
+        "type": "object"
+      },
+      "ListingStatus": {
+        "enum": [
+          "ACTIVE",
+          "WITHDRAWN",
+          "UNKNOWN"
+        ],
+        "title": "ListingStatus",
+        "type": "string"
       },
       "LoginRequest": {
         "properties": {
@@ -97,6 +622,538 @@
         "title": "LogoutResponse",
         "type": "object"
       },
+      "ManualListingCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "brand": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Brand",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "engine_code": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Code"
+          },
+          "fuel_type": {
+            "$ref": "#/components/schemas/FuelType",
+            "default": "OTHER"
+          },
+          "generation": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation"
+          },
+          "image_urls": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Image Urls",
+            "type": "array"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "mileage_km": {
+            "maximum": 2000000.0,
+            "minimum": 0.0,
+            "title": "Mileage Km",
+            "type": "integer"
+          },
+          "model": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "price_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Price Amount"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "seller_type": {
+            "$ref": "#/components/schemas/SellerType",
+            "default": "UNKNOWN"
+          },
+          "transmission": {
+            "$ref": "#/components/schemas/Transmission",
+            "default": "UNKNOWN"
+          },
+          "trim": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trim"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "year": {
+            "maximum": 2100.0,
+            "minimum": 1950.0,
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "brand",
+          "model",
+          "year",
+          "mileage_km",
+          "price_amount"
+        ],
+        "title": "ManualListingCreate",
+        "type": "object"
+      },
+      "ProviderKind": {
+        "description": "Medio de adquisici\u00f3n de una fuente (ADR-0006).",
+        "enum": [
+          "MOCK",
+          "MANUAL",
+          "CONNECTOR"
+        ],
+        "title": "ProviderKind",
+        "type": "string"
+      },
+      "SellerType": {
+        "enum": [
+          "PRIVATE",
+          "DEALER",
+          "UNKNOWN"
+        ],
+        "title": "SellerType",
+        "type": "string"
+      },
+      "SnapshotRead": {
+        "properties": {
+          "mileage_km": {
+            "title": "Mileage Km",
+            "type": "integer"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "price_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Price Amount",
+            "type": "string"
+          },
+          "price_currency": {
+            "title": "Price Currency",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          }
+        },
+        "required": [
+          "observed_at",
+          "price_amount",
+          "price_currency",
+          "mileage_km",
+          "status"
+        ],
+        "title": "SnapshotRead",
+        "type": "object"
+      },
+      "SortOrder": {
+        "enum": [
+          "newest",
+          "price_asc",
+          "price_desc"
+        ],
+        "title": "SortOrder",
+        "type": "string"
+      },
+      "SourceHealthRead": {
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "healthy": {
+            "title": "Healthy",
+            "type": "boolean"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_key",
+          "healthy",
+          "detail",
+          "checked_at"
+        ],
+        "title": "SourceHealthRead",
+        "type": "object"
+      },
+      "SourceRead": {
+        "properties": {
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_automatable": {
+            "title": "Is Automatable",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "latest_review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceReviewRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provider_kind": {
+            "$ref": "#/components/schemas/ProviderKind"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "provider_kind",
+          "is_active",
+          "is_automatable",
+          "latest_review"
+        ],
+        "title": "SourceRead",
+        "type": "object"
+      },
+      "SyncMode": {
+        "enum": [
+          "sync",
+          "async"
+        ],
+        "title": "SyncMode",
+        "type": "string"
+      },
+      "SyncRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "fuel_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FuelType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mileage_max": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mileage Max"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "price_max": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Max"
+          },
+          "price_min": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Min"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "seller_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SellerType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "year_max": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1950.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Max"
+          },
+          "year_min": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1950.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Min"
+          }
+        },
+        "title": "SyncRequest",
+        "type": "object"
+      },
+      "SyncRunRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "listings_created": {
+            "title": "Listings Created",
+            "type": "integer"
+          },
+          "listings_seen": {
+            "title": "Listings Seen",
+            "type": "integer"
+          },
+          "listings_updated": {
+            "title": "Listings Updated",
+            "type": "integer"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "snapshots_created": {
+            "title": "Snapshots Created",
+            "type": "integer"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SyncRunStatus"
+          }
+        },
+        "required": [
+          "id",
+          "source_key",
+          "status",
+          "mode",
+          "listings_seen",
+          "listings_created",
+          "listings_updated",
+          "snapshots_created",
+          "error_summary",
+          "started_at",
+          "finished_at",
+          "created_at"
+        ],
+        "title": "SyncRunRead",
+        "type": "object"
+      },
+      "SyncRunStatus": {
+        "description": "Estado de una sincronizaci\u00f3n de fuente (observabilidad de jobs, \u00a739/\u00a741).",
+        "enum": [
+          "PENDING",
+          "RUNNING",
+          "SUCCESS",
+          "PARTIAL",
+          "FAILED"
+        ],
+        "title": "SyncRunStatus",
+        "type": "string"
+      },
       "SystemStatusResponse": {
         "properties": {
           "api": {
@@ -120,6 +1177,15 @@
         },
         "title": "SystemStatusResponse",
         "type": "object"
+      },
+      "Transmission": {
+        "enum": [
+          "MANUAL",
+          "AUTOMATIC",
+          "UNKNOWN"
+        ],
+        "title": "Transmission",
+        "type": "string"
       },
       "UserResponse": {
         "properties": {
@@ -412,6 +1478,676 @@
         "summary": "Readiness",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/v1/listings": {
+      "get": {
+        "operationId": "search_listings_api_v1_listings_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "brand",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Brand"
+            }
+          },
+          {
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 1950,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 1950,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "price_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "price_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fuel_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FuelType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fuel Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mileage_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mileage Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Province"
+            }
+          },
+          {
+            "in": "query",
+            "name": "seller_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SellerType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Seller Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Source",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ListingStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "newest"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Listings",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
+    "/api/v1/listings/manual": {
+      "post": {
+        "operationId": "create_manual_listing_api_v1_listings_manual_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualListingCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Create Manual Listing",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
+    "/api/v1/listings/{listing_id}": {
+      "get": {
+        "operationId": "get_listing_api_v1_listings__listing_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "listing_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Listing Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingDetailRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Listing",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "operationId": "list_sources_api_v1_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceRead"
+                  },
+                  "title": "Response List Sources Api V1 Sources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Sources",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_key}/health": {
+      "get": {
+        "operationId": "source_health_api_v1_sources__source_key__health_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_key",
+            "required": true,
+            "schema": {
+              "title": "Source Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceHealthRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Source Health",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_key}/sync": {
+      "post": {
+        "operationId": "sync_source_api_v1_sources__source_key__sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_key",
+            "required": true,
+            "schema": {
+              "title": "Source Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SyncMode",
+              "default": "sync"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SyncRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncRunRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_key}/sync-runs": {
+      "get": {
+        "operationId": "list_sync_runs_api_v1_sources__source_key__sync_runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_key",
+            "required": true,
+            "schema": {
+              "title": "Source Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SyncRunRead"
+                  },
+                  "title": "Response List Sync Runs Api V1 Sources  Source Key  Sync Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sync Runs",
+        "tags": [
+          "sources"
         ]
       }
     },

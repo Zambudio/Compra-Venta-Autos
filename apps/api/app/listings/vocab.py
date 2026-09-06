@@ -165,6 +165,12 @@ _SELLER_ALIASES: dict[str, SellerType] = {
 }
 
 
+# Cada nombre canónico también se acepta como alias de sí mismo (entrada manual).
+_FUEL_ALIASES.update({member.value.casefold(): member for member in FuelType})
+_TRANSMISSION_ALIASES.update({member.value.casefold(): member for member in Transmission})
+_SELLER_ALIASES.update({member.value.casefold(): member for member in SellerType})
+
+
 def parse_fuel_type(raw: str | None) -> FuelType:
     if raw is None:
         return FuelType.OTHER

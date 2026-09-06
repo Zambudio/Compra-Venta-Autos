@@ -1,10 +1,7 @@
-import dramatiq
-from dramatiq.brokers.redis import RedisBroker
-
+import app.sources.tasks  # noqa: F401 - registra los actores en el broker
+from app.core.broker import configure_broker
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
-settings = get_settings()
-configure_logging(settings.log_level)
-broker = RedisBroker(url=settings.redis_dsn)  # type: ignore[no-untyped-call]
-dramatiq.set_broker(broker)
+configure_logging(get_settings().log_level)
+broker = configure_broker()

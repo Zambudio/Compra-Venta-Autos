@@ -21,11 +21,34 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.connectors.manual import ManualEntryConnector
 from app.connectors.schemas import RawListing
 from app.listings.models import ListingSnapshot, RawListingPayload, VehicleListing
 from app.listings.normalizer import NormalizedListing, normalize, payload_hash
+from app.listings.repository import ListingRepository
+from app.listings.schemas import (
+    ListingDetailRead,
+    ListingPage,
+    ListingRead,
+    ManualListingCreate,
+    SnapshotRead,
+)
 from app.listings.vocab import EntryChannel, ListingStatus, ProviderKind
+from app.search.schemas import SearchFilter
 from app.sources.models import Source
+
+
+class ListingNotFoundError(Exception):
+    def __init__(self, listing_id: UUID) -> None:
+        super().__init__(f"unknown listing: {listing_id}")
+        self.listing_id = listing_id
+
+
+class DuplicateManualListingError(Exception):
+    def __init__(self, listing_id: UUID) -> None:
+        super().__init__("this vehicle was already registered manually")
+        self.listing_id = listing_id
+
 
 _ENTRY_CHANNEL_BY_PROVIDER = {
     ProviderKind.MOCK: EntryChannel.MOCK_SYNC,
@@ -80,6 +103,40 @@ def description_hash(description: str | None) -> str | None:
 class ListingService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
+        self.repository = ListingRepository(db)
+
+    async def search(self, criteria: SearchFilter) -> ListingPage:
+        rows, total = await self.repository.search(criteria)
+        return ListingPage(
+            items=[_listing_read(listing, source_key) for listing, source_key in rows],
+            page=criteria.page,
+            page_size=criteria.page_size,
+            total=total,
+            has_more=criteria.page * criteria.page_size < total,
+        )
+
+    async def get_detail(self, listing_id: UUID) -> ListingDetailRead:
+        row = await self.repository.get_with_snapshots(listing_id)
+        if row is None:
+            raise ListingNotFoundError(listing_id)
+        listing, source_key = row
+        return ListingDetailRead(
+            **_listing_read(listing, source_key).model_dump(),
+            snapshots=[SnapshotRead.model_validate(snap) for snap in listing.snapshots],
+        )
+
+    async def create_manual(self, data: ManualListingCreate) -> ListingRead:
+        source = (await self.db.execute(select(Source).where(Source.key == "manual"))).scalar_one()
+        observed = _manual_observed_payload(data)
+        raw = ManualEntryConnector().build_raw(observed)
+        outcome = await self.ingest_raw(raw, source)
+        if not outcome.created:
+            raise DuplicateManualListingError(outcome.listing_id)
+        await self.db.flush()
+        row = await self.repository.get_with_snapshots(outcome.listing_id)
+        assert row is not None
+        listing, source_key = row
+        return _listing_read(listing, source_key)
 
     async def ingest_raw(self, raw: RawListing, source: Source) -> IngestOutcome:
         normalized = normalize(raw.payload, raw.source_key)
@@ -239,3 +296,61 @@ def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def _listing_read(listing: VehicleListing, source_key: str) -> ListingRead:
+    return ListingRead(
+        id=listing.id,
+        source_key=source_key,
+        external_id=listing.external_id,
+        url=listing.url,
+        brand=listing.brand,
+        model=listing.model,
+        generation=listing.generation,
+        trim=listing.trim,
+        engine_code=listing.engine_code,
+        power_kw=listing.power_kw,
+        fuel_type=listing.fuel_type,
+        transmission=listing.transmission,
+        year=listing.year,
+        mileage_km=listing.mileage_km,
+        price_amount=listing.price_amount,
+        price_currency=listing.price_currency,
+        location=listing.location,
+        province=listing.province,
+        seller_type=listing.seller_type,
+        description=listing.description,
+        image_urls=list(listing.image_urls),
+        status=listing.status,
+        first_seen_at=listing.first_seen_at,
+        last_seen_at=listing.last_seen_at,
+        published_at=listing.published_at,
+    )
+
+
+def _manual_external_id(data: ManualListingCreate) -> str:
+    seed = f"{data.brand}|{data.model}|{data.year}|{data.mileage_km}|{data.url or ''}".casefold()
+    return "manual-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:20]
+
+
+def _manual_observed_payload(data: ManualListingCreate) -> dict[str, object]:
+    return {
+        "external_id": _manual_external_id(data),
+        "url": data.url,
+        "marca": data.brand,
+        "modelo": data.model,
+        "version": data.trim,
+        "generacion": data.generation,
+        "codigo_motor": data.engine_code,
+        "anio": data.year,
+        "km": data.mileage_km,
+        "precio": str(data.price_amount),
+        "moneda": "EUR",
+        "combustible": data.fuel_type.value,
+        "cambio": data.transmission.value,
+        "vendedor": data.seller_type.value,
+        "provincia": data.province,
+        "poblacion": data.location,
+        "descripcion": data.description,
+        "fotos": list(data.image_urls),
+    }

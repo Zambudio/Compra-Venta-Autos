@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -75,6 +75,34 @@ def test_decide_ingest_writes_snapshot_on_relevant_change(change: dict[str, obje
 
 
 @pytest.mark.asyncio
+async def test_search_builds_page_from_repository_rows() -> None:
+    from app.listings.repository import ListingRepository
+    from app.search.schemas import SearchFilter
+
+    listing = _existing_listing(id=uuid4())
+    with patch.object(
+        ListingRepository, "search", AsyncMock(return_value=([(listing, "mock")], 1))
+    ):
+        page = await ListingService(AsyncMock(spec=AsyncSession)).search(
+            SearchFilter(page=1, page_size=20)
+        )
+
+    assert page.total == 1
+    assert page.has_more is False
+    assert page.items[0].source_key == "mock"
+
+
+@pytest.mark.asyncio
+async def test_get_detail_raises_when_missing() -> None:
+    from app.listings.repository import ListingRepository
+    from app.listings.service import ListingNotFoundError
+
+    with patch.object(ListingRepository, "get_with_snapshots", AsyncMock(return_value=None)):
+        with pytest.raises(ListingNotFoundError):
+            await ListingService(AsyncMock(spec=AsyncSession)).get_detail(uuid4())
+
+
+@pytest.mark.asyncio
 async def test_ingest_raw_creates_listing_payload_and_snapshot() -> None:
     db = AsyncMock(spec=AsyncSession)
     result = MagicMock()
@@ -126,8 +154,18 @@ def _existing_listing(**overrides: object) -> VehicleListing:
         "price_amount": Decimal("2800"),
         "price_currency": "EUR",
         "description": None,
+        "image_urls": [],
         "payload_hash": "old-hash",
+        "url": None,
+        "generation": None,
+        "trim": None,
+        "engine_code": None,
+        "power_kw": None,
+        "location": None,
+        "province": "Murcia",
+        "first_seen_at": datetime(2026, 7, 1, tzinfo=UTC),
         "last_seen_at": datetime(2026, 8, 1, tzinfo=UTC),
+        "published_at": None,
     }
     defaults.update(overrides)
     return VehicleListing(**defaults)
