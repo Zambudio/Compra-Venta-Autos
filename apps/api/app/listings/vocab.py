@@ -53,6 +53,16 @@ class ProviderKind(StrEnum):
     CONNECTOR = "CONNECTOR"
 
 
+class SyncRunStatus(StrEnum):
+    """Estado de una sincronización de fuente (observabilidad de jobs, §39/§41)."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    PARTIAL = "PARTIAL"
+    FAILED = "FAILED"
+
+
 # --- Canonicalización de marca -------------------------------------------------
 
 # Claves en minúsculas y sin acentos redundantes; el valor es la forma canónica.
