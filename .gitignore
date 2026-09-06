@@ -23,3 +23,5 @@ backups/
 cookies.txt
 *.tmp
 *.tsbuildinfo
+
+.claude/settings.local.json
