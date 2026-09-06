@@ -33,6 +33,12 @@ dev = [
 
 [tool.uv]
 package = false
+# `copy` en lugar de hardlink/symlink: el recurso de red UNC de desarrollo no
+# admite enlaces (ADR-0011, riesgo R-08).
+link-mode = "copy"
+# Cooldown de cadena de suministro (Semgrep uv-missing-dependency-cooldown): no
+# resolver versiones publicadas después de esta fecha. Súbela al regenerar el lock.
+exclude-newer = "2026-09-06T00:00:00Z"
 
 [tool.ruff]
 target-version = "py314"

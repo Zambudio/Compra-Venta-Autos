@@ -12,6 +12,7 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["iPhone 13"] } },
+    // Pixel 5 usa Chromium: cobertura de viewport móvil sin instalar WebKit.
+    { name: "mobile", use: { ...devices["Pixel 5"] } },
   ],
 });

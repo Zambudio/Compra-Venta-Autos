@@ -65,6 +65,20 @@ No se declara una fase completa si falla: formato, lint, tipos, unit, integraci�
 
 No hay una decisión pendiente que bloquee Foundation. Antes de producción deberán decidirse y documentarse: proveedor/host de secretos, dominio, VPS/plataforma, correo de recuperación (si se incorpora), responsable nominal de backups y base jurídica/retención definitiva de cada dato personal. Ninguna de ellas se presupone en el código.
 
+## Fallos de CI detectados y corregidos al cerrar Fase 2
+
+El pipeline completo (`ci.yml` + `security.yml`) se ejecutó por primera vez en `main`
+tras Fase 2 (antes, los jobs `frontend`/`e2e` no llegaban a correr). Fallos
+preexistentes —no causados por el código de Fase 2— corregidos en el mismo cierre:
+
+| Ítem | Job | Corrección aplicada |
+| --- | --- | --- |
+| `actions/setup-node` con `cache: pnpm` antes de instalar pnpm | `ci.yml`, `security.yml` | `pnpm/action-setup` se ejecuta antes de `setup-node`. |
+| `test_migration_0002` con `asyncio.run()` anidado | `ci.yml → backend` | Tests de migración pasados a síncronos con engine sync. |
+| E2E: base URL `http://localhost` (Caddy publica en `:3080`) y proyecto `mobile` con WebKit sin instalar | `ci.yml → e2e` | `PLAYWRIGHT_BASE_URL=http://localhost:3080`, paso de espera a Caddy, proyecto `mobile` → Chromium (Pixel 5). |
+| Semgrep `uv-missing-dependency-cooldown` (MEDIUM) | `security.yml → sast` | `exclude-newer = "2026-09-06T00:00:00Z"` en `[tool.uv]` de `pyproject.toml`; `uv.toml` consolidado en `pyproject.toml`; `uv.lock` regenerado (sin cambio de versiones). |
+| Trivy: `msgpack` GHSA-6v7p-g79w-8964 (HIGH) y `setuptools` CVE-2025-47273 (copias vendorizadas por `pip` en la imagen base) | `security.yml → containers` | `api.Dockerfile` elimina `pip`/`setuptools`/`wheel` de la etapa runtime (el proceso ejecuta `uvicorn`, no `pip`). |
+
 ## Regla de parada
 
 El informe de la sección 60 se emitió al cerrar Fase 1. El usuario autorizó Fase 2 el

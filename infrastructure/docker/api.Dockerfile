@@ -20,6 +20,9 @@ COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 COPY --chown=motorscope:motorscope apps/api/app ./app
 COPY --chown=motorscope:motorscope apps/api/alembic ./alembic
 COPY --chown=motorscope:motorscope apps/api/alembic.ini apps/api/pyproject.toml ./
+# El runtime ejecuta uvicorn/alembic desde /app/.venv; no necesita pip. Quitarlo
+# elimina sus copias vendorizadas (msgpack, setuptools) del escáner de contenedores.
+RUN python -m pip uninstall -y pip setuptools wheel 2>/dev/null || true
 USER motorscope
 EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
