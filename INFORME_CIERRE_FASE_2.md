@@ -45,7 +45,7 @@ deduplicación entre fuentes, `VehicleMatchCandidate`, `MarketEstimate`.
 | `vitest` (frontend) | **56 pasan**, cobertura **91.4% stmts / 82.1% branches / 92.9% funcs / 93.5% líneas**; `vitest-axe` sin violaciones en cada pantalla nueva. |
 | `next build --webpack` | Compila y genera páginas correctamente. |
 | E2E Playwright | `auth.spec.ts` actualizado; `listings.spec.ts` nuevo (login → sincronizar → filtrar → detalle → alta manual → ver anuncio). Se ejecutan en CI sobre el stack Compose. |
-| Seguridad | Sin dependencias nuevas; `pnpm audit` / `pip-audit` sin cambios. Semgrep/Gitleaks/Trivy/CodeQL en CI. Sin HIGH/CRITICAL abiertos. |
+| Seguridad | Sin dependencias nuevas; `pip-audit` limpio (deps de `uv.lock`). CodeQL (Python + JS/TS) en verde. Al ejecutarse el pipeline completo por primera vez en `main` aparecieron fallos **preexistentes** (no de Fase 2): E2E nunca había corrido (base URL/WebKit), Semgrep con una regla MEDIUM nueva (`uv-missing-dependency-cooldown`) y Trivy con dos HIGH de copias vendorizadas por `pip` en la imagen base. **Todos corregidos** en el cierre de Fase 2 (ver `implementation_plan.md → Fallos de CI detectados y corregidos`). |
 
 ## 4. Validación en vivo (NAS `192.168.1.3:3080`)
 
@@ -88,6 +88,10 @@ anuncios deterministas) se conserva para exploración.
   unitaria local; su ruta completa la cubren los tests de integración en CI.
 - **`app/core/broker.py`:** conecta a Redis de forma perezosa; el worker importa
   `app/sources/tasks` para registrar el actor.
+- **CI:** este cierre es el primer pipeline completo verde en `main` (los jobs
+  `frontend`/`e2e` no llegaban a ejecutarse antes). Cambios de infraestructura
+  aplicados: orden `pnpm/action-setup` → `setup-node`; `exclude-newer` de uv;
+  `pip` fuera de la imagen runtime; base URL y navegador de Playwright en CI.
 
 ## 6. Siguiente fase propuesta
 
