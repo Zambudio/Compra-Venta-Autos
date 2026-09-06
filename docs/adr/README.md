@@ -15,3 +15,4 @@ Formato: ADR numerados e inmutables tras aceptación; un cambio se registra en u
 | 0009 | Docker Compose + Caddy        | Aceptado |
 | 0010 | Score determinista versionado | Aceptado |
 | 0011 | uv + pnpm y runtimes fijados  | Aceptado |
+| 0012 | Ingesta y dedup de anuncios F2 | Aceptado |

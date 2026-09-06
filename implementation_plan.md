@@ -67,4 +67,6 @@ No hay una decisión pendiente que bloquee Foundation. Antes de producción debe
 
 ## Regla de parada
 
-Tras Fase 1 se emitirá el informe de la sección 60 y se detendrá el trabajo. Fase 2 requiere aprobación explícita.
+El informe de la sección 60 se emitió al cerrar Fase 1. El usuario autorizó Fase 2 el
+2026-09-06; su alcance y decisiones están en `task.md` (F2.1–F2.10), [ADR-0012](docs/adr/0012-listing-ingestion-and-dedup.md)
+y ADR-0006. Fase 3 vuelve a requerir aprobación explícita: no se inicia sin ella.
