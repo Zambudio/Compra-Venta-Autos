@@ -19,12 +19,12 @@ Quedan fuera del MVP: scraping no autorizado, ML, agentes LLM decisores, microse
 
 ## Orden obligatorio
 
-| Fase | Entrega                                                                              | Gate de salida                                                                |
-| ---- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| 0    | Inspección, alcance, documentación, riesgos y ADRs                                   | Documentación inicial completa y consistente; decisiones críticas registradas |
-| 1    | Monorepo, entorno, persistencia, observabilidad, CI, seguridad y auth                | Definition of Done de Foundation y aprobación explícita para continuar        |
-| 2    | Search, contratos de adquisición, proveedores mock/manual, normalización y snapshots | Contratos, compliance, pruebas sin portales reales                            |
-| 3    | Vehicle/Listing, deduplicación, comparables e histórico                              | PostgreSQL real, decisiones manuales para matches inciertos                   |
+| Fase   | Entrega                                                                              | Gate de salida                                                                |
+| ------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 0 ✅   | Inspección, alcance, documentación, riesgos y ADRs                                   | Completada.                                                                   |
+| 1 ✅   | Monorepo, entorno, persistencia, observabilidad, CI, seguridad y auth                | Completada; informe de cierre de Foundation emitido.                          |
+| 2 ✅   | Search, contratos de adquisición, conectores mock/manual, normalización, ingesta idempotente y snapshots | Completada 2026-09-06; `INFORME_CIERRE_FASE_2.md`. Conectores, compliance (ADR-0012), pruebas sin portales reales, despliegue y smoke test en el NAS. |
+| 3      | Vehicle/Listing, deduplicación, comparables e histórico                              | PostgreSQL real, decisiones manuales para matches inciertos                   |
 | 4    | Knowledge Base, evidencias y clasificación                                           | Ninguna afirmación mecánica sin fuente trazable                               |
 | 5    | Scoring, valoración y oportunidades                                                  | Score determinista, versionado, explicable y cubierto                         |
 | 6    | Watchlist e inspección                                                               | Estados y checklists verificados                                              |

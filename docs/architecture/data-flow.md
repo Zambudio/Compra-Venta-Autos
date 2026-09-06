@@ -29,21 +29,40 @@ Mutación       → cookie CSRF + X-CSRF-Token → comparación constante + hash
 
 Cualquier fallo termina en 401/403 uniforme; no se confía en el frontend.
 
-## Adquisición prevista (Fase 2)
+## Adquisición implementada (Fase 2)
 
 ```text
-SearchFilter validado
-  → SearchApplicationService
-    → Connector por Source
-      → Provider autorizado (Mock/Manual en MVP inicial)
-        → payload observado
-      → Normalizer
-        → VehicleListingNormalized + raw_data permitido
-          → Listing upsert + ListingSnapshot append-only
-            → job de deduplicación/scoring (fases posteriores)
+SearchFilter / SyncRequest validado (Pydantic)
+  → SourceService.create_run  →  SourceSyncRun(PENDING)
+      → mode=sync: execute_run en la petición
+      → mode=async: sync_source_actor.send(source_key, run_id)  (Dramatiq)
+  → SourceService.execute_run
+    → get_connector(source_key)   (solo mock | manual)
+      → connector.search(page)    (reintentos ante TransientConnectorError)
+        → RawListing (payload observado tal cual)
+      → normalize(payload, source_key)  →  NormalizedListing + payload_hash
+        → ListingService.ingest_raw  (transaccional, ADR-0012):
+            (source_id, external_id) nuevo         → VehicleListing + RawListingPayload + ListingSnapshot
+            payload_hash ya visto                  → solo refresca last_seen_at
+            payload nuevo, listing conocido        → actualiza + snapshot si cambia precio·km·descripción
+      → SourceSyncRun(SUCCESS | PARTIAL | FAILED, contadores, error saneado)
 ```
 
-Cada fuente se aísla: timeout, rate limit, circuit/fallo explícito e idempotencia. Una caída no bloquea las demás. `raw_data` solo se guarda si la base legal, minimización y términos lo permiten.
+Cada fuente se aísla: reintentos acotados, fallo transitorio explícito e
+idempotencia por `run_id`. Una caída deja el run en `PARTIAL`/`FAILED` sin
+bloquear el resto. `RawListingPayload` es inmutable y nunca se expone por API.
+La deduplicación entre fuentes y el scoring son fases posteriores.
+
+## Petición autenticada de anuncios (Fase 2)
+
+```text
+GET /api/v1/listings?filtros   → require_auth → ListingRepository.search (join Source, filtros, orden, paginación)
+GET /api/v1/listings/{id}      → require_auth → detalle + ListingSnapshot recientes
+POST /api/v1/listings/manual   → require_csrf + rol OWNER|ADMIN → ManualEntryConnector.build_raw → ingest_raw
+POST /api/v1/sources/{k}/sync  → require_csrf + rol OWNER|ADMIN
+```
+
+Los DTOs de salida nunca incluyen `payload` ni `payload_hash` (§36).
 
 ## Conocimiento y scoring previstos
 
