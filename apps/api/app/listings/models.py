@@ -11,8 +11,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
+
+if TYPE_CHECKING:
+    from app.vehicles.models import Vehicle
 
 from sqlalchemy import (
     DateTime,
@@ -57,6 +60,9 @@ class VehicleListing(TimestampMixin, Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     source_id: Mapped[UUID] = mapped_column(
         ForeignKey("sources.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vehicle_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True, index=True
     )
     external_id: Mapped[str] = mapped_column(String(128), nullable=False)
     url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
@@ -103,6 +109,7 @@ class VehicleListing(TimestampMixin, Base):
         cascade="all, delete-orphan",
         order_by="ListingSnapshot.observed_at",
     )
+    vehicle: Mapped[Vehicle | None] = relationship("Vehicle", back_populates="listings")
 
 
 class RawListingPayload(Base):
