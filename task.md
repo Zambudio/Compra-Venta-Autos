@@ -258,9 +258,77 @@ Regla vigente: CERO scraping; solo `MockConnector` y `ManualEntryConnector`.
 - **Pruebas necesarias:** revisión de consistencia y de enlaces.
 - **Documentación afectada:** toda la anterior.
 - **Resultado:** `docs/domain/data-model.md`, `docs/architecture/architecture.md`, `docs/source-compliance.md`, `docs/testing/testing-strategy.md`, `implementation_plan.md`, `README.md`, `docs/adr/0012` + `docs/adr/README.md` y este `task.md` actualizados en el mismo conjunto de commits. Informe de cierre en `INFORME_CIERRE_FASE_2.md`.
+## Fase 3 — Vehicles y market data
+
+Iniciada el 2026-09-06 en rama `feature/fase-3-vehicles-market`. Diseño registrado en [ADR-0005](docs/adr/0005-vehicle-listing-separation.md), [ADR-0012](docs/adr/0012-listing-ingestion-and-dedup.md) y [ADR-0013](docs/adr/0013-vehicle-matching-and-market-estimates.md).
+Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matching (Plan Maestro §13, §32; R-03); comparables basados estrictamente en anuncios homogéneos de la BD; explicabilidad total.
+
+### [x] F3.0 — Dejar `Security → containers` (Trivy) en verde
+
+- **Objetivo:** solventar fallos preexistentes de Trivy en imágenes base y dependencias de contenedores.
+- **Alcance:** depuración de `web.Dockerfile` eliminando dependencias de npm y corepack en la etapa runtime de producción; configuración de `trivyignores: .trivyignore` en `.github/workflows/security.yml`; creación de `.trivyignore` con propietario, justificación, compensación y fecha de revisión; rebuild y smoke test en el NAS.
+- **Dependencias:** cierre de Fase 2.
+- **Criterios de aceptación:** `web` saludable sin npm en runtime; contenedor reconstruido y verificado en NAS (`http://192.168.1.3:3080`); excepciones de seguridad formalmente documentadas bajo ASVS L2.
+- **Pruebas necesarias:** rebuild Docker Compose en NAS y comprobación de liveness/readiness (HTTP 200).
+- **Documentación afectada:** `.trivyignore`, `.github/workflows/security.yml`, `web.Dockerfile`.
+- **Resultado:** Completado en commit `02482fb`. Contenedor `motorscope-web-1` reconstruido y verificado _healthy_ en el Synology NAS (`http://192.168.1.3:3080/` responde 200).
+
+### [ ] F3.1 — Entidad `Vehicle` y enlace tardío
+
+- **Objetivo:** materializar el modelo de vehículo unificado y su relación no destructiva con los anuncios.
+- **Alcance:** modelo SQLAlchemy 2.0 `Vehicle` (`vehicles`) con atributos canónicos (marca, modelo, generación, versión/trim, motor, combustible, transmisión, año, contadores agregados `first_listed_at`, `listing_count`); columna foránea `VehicleListing.vehicle_id` nullable (`ondelete="SET NULL"`); migración de esquema `20260906_0004_vehicles_and_market.py`.
+- **Dependencias:** F3.0.
+- **Criterios de aceptación:** migración reversible y no destructiva; DTOs Pydantic sin exponer datos internos; `app/models.py` sincronizado.
+- **Pruebas necesarias:** unit tests de modelos, integración con PostgreSQL real (`test_migration_0004.py`).
+- **Documentación afectada:** `docs/domain/data-model.md`, `docs/architecture/architecture.md`.
+
+### [ ] F3.2 — Deduplicación asistida y candidatos de matching
+
+- **Objetivo:** detectar automáticamente posibles duplicados entre fuentes distintas sin emplear datos personales restringidos.
+- **Alcance:** modelo `VehicleMatchCandidate` (`vehicle_match_candidates`) con par único ordenado `(listing_a_id < listing_b_id)`, score y razones explicables en JSONB; función pura `score_match(listing_a, listing_b) -> MatchResult`; orquestación de generación de candidatos idempotente tras sincronización o alta manual; endpoints `GET /match-candidates`, `POST /match-candidates/{id}/confirm`, `POST /match-candidates/{id}/reject` con CSRF y rol `OWNER|ADMIN`; emisión de `AuditEvent` (`manual_match`).
+- **Dependencias:** F3.1.
+- **Criterios de aceptación:** función pura determinista sin I/O (100% cobertura de ramas); ponderación multicriterio; confirmación vincula o crea `Vehicle` propagando `vehicle_id`; rechazo permanente.
+- **Pruebas necesarias:** unit `test_matching.py`; integración `test_matching_flow.py` (PG real).
+- **Documentación afectada:** [ADR-0013](docs/adr/0013-vehicle-matching-and-market-estimates.md), `docs/domain/data-model.md`.
+
+### [ ] F3.3 — Histórico y métricas derivadas
+
+- **Objetivo:** extraer dinámicamente métricas de evolución temporal a partir de `ListingSnapshot` sin redundancia de persistencia.
+- **Alcance:** funciones puras de cálculo (`price_delta`, `price_delta_percentage`, `days_on_market`, `number_of_price_changes`, precio inicial vs actual, reaparición de anuncio); agregación en detalle de `VehicleListing` y cálculo consolidado a nivel de `Vehicle`.
+- **Dependencias:** F3.1.
+- **Criterios de aceptación:** exactitud matemática con `Decimal`; manejo robusto de anuncios con un solo snapshot; respuestas coherentes en DTOs.
+- **Pruebas necesarias:** unit `test_history_metrics.py`.
+- **Documentación afectada:** `docs/domain/data-model.md`.
+
+### [ ] F3.4 — Comparables y `MarketEstimate`
+
+- **Objetivo:** calcular un valor de mercado realista con intervalo de confianza a partir de anuncios homogéneos reales de la BD.
+- **Alcance:** modelo y DTO `MarketEstimate`; función pura `estimate_market_price(subject, comparables_pool)`; algoritmo con filtro intercuartil (IQR), mediana y percentiles P25-P75; función de confianza dependiente del tamaño de muestra $N$ y homogeneidad; endpoint `GET /vehicles/{id}/market-estimate`.
+- **Dependencias:** F3.1, F3.3.
+- **Criterios de aceptación:** estimación determinista y auditable; sin invención de valores de mercado; distinción clara en API y UI entre observado y estimado.
+- **Pruebas necesarias:** unit `test_market_estimate.py` (muestras vacías, pocas muestras, alta dispersión, clusters homogéneos).
+- **Documentación afectada:** [ADR-0013](docs/adr/0013-vehicle-matching-and-market-estimates.md), `docs/domain/data-model.md`.
+
+### [ ] F3.5 — Frontend (Vehículos, Histórico, Candidatos y Estimación)
+
+- **Objetivo:** proporcionar la interfaz de usuario para explorar vehículos, analizar histórico y revisar la cola de deduplicación.
+- **Alcance:** pestaña `Vehículos` en `app-shell`; lista de vehículos con tarjetas, badges y enlaces; vista detalle con evolución gráfica/tabular accesible (no solo color) y estimación de mercado; pantalla o bandeja de candidatos de matching (cola PENDING, desglose de razones coincidentes/discrepantes, botones de acción Confirmar/Rechazar con mutaciones TanStack Query accesibles).
+- **Dependencias:** F3.2, F3.3, F3.4.
+- **Criterios de aceptación:** navegación completa por teclado; cero violaciones de accesibilidad (`vitest-axe`); formularios y validaciones Zod estrictas; responsive.
+- **Pruebas necesarias:** Vitest + Testing Library + `vitest-axe` para cada componente y vista.
+- **Documentación afectada:** `README.md`.
+
+### [ ] F3.6 — Testing, Calidad, Despliegue en NAS y Cierre de Fase 3
+
+- **Objetivo:** validar todos los gates de calidad, aplicar la migración en el NAS, comprobar funcionamiento en vivo y emitir el informe de cierre.
+- **Alcance:** suites completas (unit, integración con PG real, E2E Playwright `tests/e2e/vehicles.spec.ts`); linters y tipado estricto al 100%; `export_openapi.py` sincronizado; migración `20260906_0004` ejecutada en el NAS; smoke test en vivo; emisión de `INFORME_CIERRE_FASE_3.md`.
+- **Dependencias:** F3.1–F3.5.
+- **Criterios de aceptación:** Definition of Done de Fase 3 cumplida al 100%; 6 contenedores saludables en el NAS; informe de cierre emitido sin avanzar a Fase 4.
+- **Pruebas necesarias:** matriz completa de gates de calidad y smoke tests en NAS.
+- **Documentación afectada:** toda la documentación del proyecto.
+
 ## Fases posteriores — no autorizadas en este cambio
 
-- [ ] Fase 3 — Vehicles y market data.
 - [ ] Fase 4 — Knowledge Base.
 - [ ] Fase 5 — Scoring y opportunities.
 - [ ] Fase 6 — Watchlist e inspección.
@@ -268,4 +336,4 @@ Regla vigente: CERO scraping; solo `MockConnector` y `ManualEntryConnector`.
 - [ ] Fase 8 — Hardening.
 - [ ] Fase 9 — Release MVP.
 
-No se iniciará Fase 3 sin aprobación explícita del usuario.
+No se iniciará Fase 4 sin aprobación explícita del usuario.
