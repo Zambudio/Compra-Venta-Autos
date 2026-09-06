@@ -175,7 +175,7 @@ y smoke test por Caddy con `curl` en `http://192.168.1.3:3080/api/v1/...`.
    slice (rojo → verde → refactor, TDD). **No hagas push ni PR hasta que el usuario lo
    apruebe.** Mensajes de commit terminando en:
    ```
-   Co-Authored-By: <tu identidntificador>
+   Co-Authored-By: <tu identificador de agente>
    ```
 3. **TDD estricto:** test que falla → mínimo código para pasar → refactor. La lógica de
    deduplicación y de comparables/market estimate es crítica: sepárala en funciones
@@ -264,23 +264,28 @@ feeds oficiales (V2).
 
 ## 7. Nota sobre el estado de git / CI
 
-Fase 2 completa está en `origin/main` (hasta el commit `4197f62`, "fix(ci): …"). El
-pipeline nunca había corrido entero hasta ahora; al cerrarse Fase 2 se corrigieron
-varios fallos **preexistentes** (orden `pnpm/action-setup` vs `setup-node`, tests de
-migración síncronos, base URL/navegador de Playwright, `exclude-newer` de uv, `pip`
-fuera de la imagen runtime). Todo está registrado en
+Fase 2 completa está en `origin/main` (commits `d5928d4`..`a259165`). El pipeline
+completo nunca había corrido antes; al cerrar Fase 2 se corrigieron varios fallos
+**preexistentes** (orden `pnpm/action-setup` vs `setup-node`, tests de migración
+síncronos, base URL/navegador de Playwright, `exclude-newer` de uv, `pip` fuera de la
+imagen runtime). Todo está registrado en
 `implementation_plan.md → Fallos de CI detectados y corregidos` y en
 `INFORME_CIERRE_FASE_2.md`.
 
+Estado del CI en `main`:
+- **`CI` (backend, frontend, e2e): verde.**
+- **`Security`:** `sast` y `codeql` (Python + JS/TS) verdes; **`containers` (Trivy)
+  en rojo** por CVE HIGH en imágenes base y dependencias transitivas (`libcrypto3`,
+  `brace-expansion`, `ip-address`, `tar`), no código de MotorScope.
+
 **PASO 0 obligatorio antes de tocar Fase 3:**
-1. `git pull` en `main`.
-2. Ejecuta los gates locales (sección 4) — deben estar verdes.
-3. `gh run list --branch main --limit 3` y `gh run view <id>` del último CI y Security.
-   Si algún job sigue rojo (puede quedar alguna iteración de E2E o del escaneo de
-   contenedores), **arréglalo como primera tarea** y deja el pipeline en verde antes
-   de empezar F3.1. Los fallos, si los hay, serán de infraestructura de CI, no del
-   código de dominio (backend y frontend ya pasan).
-4. Rebuild del NAS si cambia algo de `apps/api`, `apps/web` o los Dockerfiles.
+1. `git pull` en `main`; ejecuta los gates locales (sección 4) — deben estar verdes.
+2. `gh run list --branch main` y revisa el último `CI` (verde) y `Security`.
+3. **Tarea F3.0:** dejar `Security → containers` en verde — subir los digests de las
+   imágenes base (`python`, `node`, `caddy`), regenerar `pnpm-lock.yaml` y `uv.lock`,
+   `.trivyignore` (con dueño y fecha de revisión) para CVE sin fix; rebuild del NAS y
+   smoke test.
+4. Rebuild del NAS ante cualquier cambio en `apps/api`, `apps/web` o los Dockerfiles.
 
 Luego empieza leyendo `PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md` y `task.md`, y presenta
 el plan de Fase 3.
