@@ -7,8 +7,16 @@ from uuid import uuid4
 
 import pytest
 from app.connectors.schemas import RawListing
+from app.listings.models import VehicleListing
 from app.listings.service import IngestDecision, ListingService, decide_ingest
-from app.listings.vocab import EntryChannel, ProviderKind
+from app.listings.vocab import (
+    EntryChannel,
+    FuelType,
+    ListingStatus,
+    ProviderKind,
+    SellerType,
+    Transmission,
+)
 from app.sources.models import Source
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -100,6 +108,105 @@ async def test_ingest_raw_creates_listing_payload_and_snapshot() -> None:
     assert db.add.call_count == 3
     added_types = {type(call.args[0]).__name__ for call in db.add.call_args_list}
     assert added_types == {"VehicleListing", "RawListingPayload", "ListingSnapshot"}
+
+
+def _existing_listing(**overrides: object) -> VehicleListing:
+    defaults: dict[str, object] = {
+        "id": uuid4(),
+        "source_id": uuid4(),
+        "external_id": "mock-0001",
+        "brand": "SEAT",
+        "model": "Ibiza",
+        "fuel_type": FuelType.DIESEL,
+        "transmission": Transmission.MANUAL,
+        "seller_type": SellerType.PRIVATE,
+        "status": ListingStatus.ACTIVE,
+        "year": 2013,
+        "mileage_km": 168000,
+        "price_amount": Decimal("2800"),
+        "price_currency": "EUR",
+        "description": None,
+        "payload_hash": "old-hash",
+        "last_seen_at": datetime(2026, 8, 1, tzinfo=UTC),
+    }
+    defaults.update(overrides)
+    return VehicleListing(**defaults)
+
+
+@pytest.mark.asyncio
+async def test_ingest_raw_marks_seen_when_payload_hash_already_stored() -> None:
+    db = AsyncMock(spec=AsyncSession)
+    listing = _existing_listing()
+    get_result = MagicMock()
+    get_result.scalar_one_or_none.return_value = listing
+    payload_result = MagicMock()
+    payload_result.first.return_value = ("payload-id",)
+    db.execute.side_effect = [get_result, payload_result]
+
+    source = Source(id=uuid4(), key="mock", name="Mock", provider_kind=ProviderKind.MOCK)
+    raw = RawListing(
+        source_key="mock",
+        external_id="mock-0001",
+        url=None,
+        retrieved_at=datetime(2026, 9, 5, tzinfo=UTC),
+        connector_version="mock-catalog-v1",
+        payload={
+            "external_id": "mock-0001",
+            "marca": "Seat",
+            "modelo": "Ibiza",
+            "anio": 2013,
+            "km": 168000,
+            "precio": 2800,
+            "combustible": "Diésel",
+            "vendedor": "particular",
+        },
+    )
+
+    outcome = await ListingService(db).ingest_raw(raw, source)
+
+    assert outcome.created is False
+    assert outcome.updated is False
+    assert outcome.snapshot_created is False
+    db.add.assert_not_called()
+    assert listing.last_seen_at == datetime(2026, 9, 5, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
+async def test_ingest_raw_updates_and_snapshots_on_price_change() -> None:
+    db = AsyncMock(spec=AsyncSession)
+    listing = _existing_listing(price_amount=Decimal("2800"))
+    get_result = MagicMock()
+    get_result.scalar_one_or_none.return_value = listing
+    payload_result = MagicMock()
+    payload_result.first.return_value = None
+    db.execute.side_effect = [get_result, payload_result]
+
+    source = Source(id=uuid4(), key="mock", name="Mock", provider_kind=ProviderKind.MOCK)
+    raw = RawListing(
+        source_key="mock",
+        external_id="mock-0001",
+        url=None,
+        retrieved_at=datetime(2026, 9, 5, tzinfo=UTC),
+        connector_version="mock-catalog-v1",
+        payload={
+            "external_id": "mock-0001",
+            "marca": "Seat",
+            "modelo": "Ibiza",
+            "anio": 2013,
+            "km": 168000,
+            "precio": 2500,
+            "combustible": "Diésel",
+            "vendedor": "particular",
+        },
+    )
+
+    outcome = await ListingService(db).ingest_raw(raw, source)
+
+    assert outcome.updated is True
+    assert outcome.snapshot_created is True
+    assert listing.price_amount == Decimal("2500")
+    added_types = {type(call.args[0]).__name__ for call in db.add.call_args_list}
+    assert added_types == {"RawListingPayload", "ListingSnapshot"}
 
 
 @pytest.mark.asyncio

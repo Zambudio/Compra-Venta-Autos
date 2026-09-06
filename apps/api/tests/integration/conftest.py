@@ -100,9 +100,10 @@ async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
         yield test_client
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 def session_factory(app: FastAPI) -> async_sessionmaker[AsyncSession]:
-    return app.state.database.session_factory  # type: ignore[no-any-return]
+    factory: async_sessionmaker[AsyncSession] = app.state.database.session_factory
+    return factory
 
 
 async def login(test_client: AsyncClient, email: str, password: str) -> None:
