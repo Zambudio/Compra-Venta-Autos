@@ -1,0 +1,31 @@
+﻿# MotorScope Trivy Ignore List
+# Politica: cada entrada documenta Dueno, Fecha, Justificacion y Compensacion (ASVS L2 / Plan Maestro §55).
+# Revision periodica en cada cambio de ciclo de dependencias.
+
+# CVE-2026-14257: brace-expansion DoS via memory exhaustion in expand()
+# Dueno: Security Owner
+# Fecha: 2026-09-06
+# Revision: 2026-12-01
+# Justificacion: Dependencia vendorizada en herramientas de tooling/imagen base; no se usa en runtime de produccion ni expone endpoint vulnerable.
+CVE-2026-14257
+
+# CVE-2026-69152: brace-expansion DoS via unbounded intermediate arrays
+# Dueno: Security Owner
+# Fecha: 2026-09-06
+# Revision: 2026-12-01
+# Justificacion: Dependencia vendorizada en herramientas de tooling/imagen base; eliminada en runtime y sin vector de ataque.
+CVE-2026-69152
+
+# CVE-2026-69192: ip-address inconsistent IP parsing
+# Dueno: Security Owner
+# Fecha: 2026-09-06
+# Revision: 2026-12-01
+# Justificacion: Modulo vendorizado por npm en imagen base Alpine; no forma parte del runtime de Next.js y el puerto web esta protegido por Caddy.
+CVE-2026-69192
+
+# CVE-2026-73566: node-tar DoS via crafted long-path tar archive
+# Dueno: Security Owner
+# Fecha: 2026-09-06
+# Revision: 2026-12-01
+# Justificacion: Modulo vendorizado por npm en imagen base Alpine; la aplicacion web no procesa archivos tar de usuarios.
+CVE-2026-73566

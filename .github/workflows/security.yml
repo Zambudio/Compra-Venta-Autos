@@ -68,6 +68,7 @@ jobs:
           exit-code: "1"
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          trivyignores: .trivyignore
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: motorscope-web
@@ -75,6 +76,7 @@ jobs:
           exit-code: "1"
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
   codeql:
     runs-on: ubuntu-latest
