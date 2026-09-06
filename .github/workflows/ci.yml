@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+        env:
+          POSTGRES_DB: motorscope_test
+          POSTGRES_USER: motorscope
+          POSTGRES_PASSWORD: integration-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U motorscope -d motorscope_test"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:8.8.2-alpine@sha256:96cb544fa0af5aa898d160cffb7dae70c3df117190fc123831c64712cda425ff
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+psycopg://motorscope:integration-password@127.0.0.1:5432/motorscope_test
+      REDIS_URL: redis://127.0.0.1:6379/15
+      TEST_DATABASE_URL: postgresql+psycopg://motorscope:integration-password@127.0.0.1:5432/motorscope_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379/15
+      CORS_ORIGINS: '["http://testserver"]'
+      ALLOWED_HOSTS: '["testserver"]'
+      SESSION_COOKIE_SECURE: "false"
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: 3.14.7
+      - run: python -m pip install --disable-pip-version-check uv==0.10.2
+      - run: uv sync --frozen --all-groups
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run mypy app tests
+      - run: uv run pytest
+      - run: uv run python ../../infrastructure/scripts/export_openapi.py
+      - run: git diff --exit-code ../../docs/api/openapi.json
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.1.3
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    env:
+      E2E_OWNER_EMAIL: owner@example.com
+      E2E_OWNER_PASSWORD: a-secure-ci-owner-password
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.1.3
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Configure isolated CI stack
+        run: |
+          cat > .env <<'EOF'
+          ENVIRONMENT=test
+          LOG_LEVEL=INFO
+          POSTGRES_DB=motorscope
+          POSTGRES_USER=motorscope
+          POSTGRES_PASSWORD=ci-postgres-password
+          DATABASE_URL=postgresql+psycopg://motorscope:ci-postgres-password@postgres:5432/motorscope
+          REDIS_PASSWORD=ci-redis-password
+          REDIS_URL=redis://:ci-redis-password@redis:6379/0
+          CORS_ORIGINS=["http://localhost"]
+          ALLOWED_HOSTS=["localhost","127.0.0.1","api","web"]
+          SESSION_COOKIE_SECURE=false
+          OWNER_EMAIL=owner@example.com
+          OWNER_PASSWORD=a-secure-ci-owner-password
+          NEXT_PUBLIC_API_BASE_URL=/api/v1
+          CADDY_SITE_ADDRESS=http://localhost
+          EOF
+      - run: docker compose up --build -d postgres redis api web caddy
+      - run: docker compose exec -T api alembic upgrade head
+      - run: docker compose exec -T api python -m app.auth.cli create-owner
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @motorscope/web e2e
+      - if: failure()
+        run: docker compose logs --no-color
+      - if: always()
+        run: docker compose down --volumes

@@ -1,0 +1,1 @@
+"""MotorScope modular monolith."""

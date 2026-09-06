@@ -1,0 +1,18 @@
+packages:
+  - "apps/web"
+  - "packages/*"
+
+allowBuilds:
+  unrs-resolver: true
+
+catalogMode: strict
+
+nodeLinker: hoisted
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+
+packageImportMethod: copy
+
+symlink: false

@@ -1,0 +1,7 @@
+{
+  "name": "@motorscope/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Contratos generados y tipos compartidos; se poblará desde OpenAPI cuando exista un consumidor real."
+}

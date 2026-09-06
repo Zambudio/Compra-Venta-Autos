@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+pnpm-lock.yaml
+uv.lock
+.venv/
+__pycache__/
+*.pyc
+docs/api/openapi.json
