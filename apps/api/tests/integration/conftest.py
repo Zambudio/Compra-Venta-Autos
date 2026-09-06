@@ -17,6 +17,7 @@ from app.users.models import User, UserRole
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 OWNER_PASSWORD = "a secure integration password"
 ADMIN_PASSWORD = "another secure integration password"
@@ -83,16 +84,25 @@ async def _reset_database(app: FastAPI) -> None:
 
 
 @pytest_asyncio.fixture
-async def client() -> AsyncIterator[AsyncClient]:
-    settings = _integration_settings()
-    app = create_app(settings)
-    async with app.router.lifespan_context(app):
-        await app.state.redis.client.flushdb()
-        await _reset_database(app)
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://testserver"
-        ) as test_client:
-            yield test_client
+async def app() -> AsyncIterator[FastAPI]:
+    application = create_app(_integration_settings())
+    async with application.router.lifespan_context(application):
+        await application.state.redis.client.flushdb()
+        await _reset_database(application)
+        yield application
+
+
+@pytest_asyncio.fixture
+async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as test_client:
+        yield test_client
+
+
+@pytest_asyncio.fixture
+def session_factory(app: FastAPI) -> async_sessionmaker[AsyncSession]:
+    return app.state.database.session_factory  # type: ignore[no-any-return]
 
 
 async def login(test_client: AsyncClient, email: str, password: str) -> None:

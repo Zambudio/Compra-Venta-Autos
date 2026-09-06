@@ -22,9 +22,18 @@ export function LoginScreen(props: LoginScreenProps) {
       </div>
       <section className="flex min-h-dvh items-center px-6 py-12 sm:px-12 lg:px-20">
         <div className="w-full max-w-[27rem]">
-          <p className="text-[1.75rem] leading-8 font-bold tracking-[-0.03em] text-[var(--accent)]">
-            MotorScope
-          </p>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images/motorscope-mark.png"
+              alt=""
+              width={44}
+              height={44}
+              className="h-11 w-11 object-contain"
+            />
+            <p className="text-[1.75rem] leading-8 font-bold tracking-[-0.03em] text-[var(--accent)]">
+              MotorScope
+            </p>
+          </div>
           <h1 className="mt-10 text-[2rem] leading-[2.375rem] font-semibold tracking-[-0.025em]">
             Acceso privado
           </h1>
