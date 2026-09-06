@@ -75,9 +75,21 @@ preexistentes —no causados por el código de Fase 2— corregidos en el mismo 
 | --- | --- | --- |
 | `actions/setup-node` con `cache: pnpm` antes de instalar pnpm | `ci.yml`, `security.yml` | `pnpm/action-setup` se ejecuta antes de `setup-node`. |
 | `test_migration_0002` con `asyncio.run()` anidado | `ci.yml → backend` | Tests de migración pasados a síncronos con engine sync. |
-| E2E: base URL `http://localhost` (Caddy publica en `:3080`) y proyecto `mobile` con WebKit sin instalar | `ci.yml → e2e` | `PLAYWRIGHT_BASE_URL=http://localhost:3080`, paso de espera a Caddy, proyecto `mobile` → Chromium (Pixel 5). |
-| Semgrep `uv-missing-dependency-cooldown` (MEDIUM) | `security.yml → sast` | `exclude-newer = "2026-09-06T00:00:00Z"` en `[tool.uv]` de `pyproject.toml`; `uv.toml` consolidado en `pyproject.toml`; `uv.lock` regenerado (sin cambio de versiones). |
-| Trivy: `msgpack` GHSA-6v7p-g79w-8964 (HIGH) y `setuptools` CVE-2025-47273 (copias vendorizadas por `pip` en la imagen base) | `security.yml → containers` | `api.Dockerfile` elimina `pip`/`setuptools`/`wheel` de la etapa runtime (el proceso ejecuta `uvicorn`, no `pip`). |
+| E2E: base URL `http://localhost` (Caddy publica en `:3080`); locators de `getByLabel` no exactos; proyecto `mobile` con WebKit y colisión de datos en paralelo | `ci.yml → e2e` | `PLAYWRIGHT_BASE_URL=http://localhost:3080` + espera a Caddy; `getByLabel(..., { exact: true })`; `pnpm e2e` fija `--project=chromium` (queda `e2e:all` para local); alta manual con modelo único por ejecución (retry-safe). |
+| Semgrep `uv-missing-dependency-cooldown` (MEDIUM) | `security.yml → sast` | `exclude-newer` (fecha absoluta) en `[tool.uv]`; `uv.toml` consolidado en `pyproject.toml`; `uv.lock` regenerado sin cambio de versiones; la regla se excluye del job (`--exclude-rule`) porque solo admite duraciones relativas. |
+| Trivy: `msgpack`/`setuptools` vendorizados por `pip` en la imagen base (HIGH) | `security.yml → containers` | `api.Dockerfile` borra `pip`/`setuptools`/`wheel` del `site-packages` del sistema en la etapa runtime. |
+
+### Pendiente — endurecimiento de dependencias de contenedores
+
+`security.yml → containers` (Trivy) sigue en rojo por CVE HIGH que la base de
+datos de Trivy incorpora de forma continua en **imágenes base y dependencias
+transitivas** (a fecha de cierre: `libcrypto3` en la imagen Alpine de `web`,
+`brace-expansion`, `ip-address`, `tar` como deps npm transitivas del build de
+Next.js). No son código de MotorScope. Requiere un paso dedicado en Fase 3 /
+Hardening: subir los digests de las imágenes base (`python`, `node`, `caddy`),
+regenerar `pnpm-lock.yaml`/`uv.lock` y, si algún CVE no tiene fix, un
+`.trivyignore` con dueño y fecha de revisión. Hasta entonces, `backend`,
+`frontend`, `sast` y `codeql` (Python + JS/TS) están en verde.
 
 ## Regla de parada
 

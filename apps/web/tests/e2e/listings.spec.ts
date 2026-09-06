@@ -34,9 +34,12 @@ test("owner syncs the mock catalogue, filters and registers a vehicle", async ({
   await expect(page.getByText("Histórico de observaciones")).toBeVisible();
   await page.getByRole("button", { name: "Volver a la lista" }).click();
 
+  // Modelo único por ejecución: el alta manual deduplica por (marca, modelo,
+  // año, km, url) y un reintento con datos idénticos devolvería 409.
+  const model = `Clio-${Date.now().toString(36)}`;
   await page.getByRole("button", { name: "Registrar vehículo" }).click();
   await page.getByLabel("Marca").fill("Renault");
-  await page.getByLabel("Modelo").fill("Clio");
+  await page.getByLabel("Modelo").fill(model);
   await page.getByLabel("Año").fill("2016");
   await page.getByLabel("Kilometraje").fill("85000");
   await page.getByLabel("Precio (€)").fill("6500");
@@ -46,8 +49,9 @@ test("owner syncs the mock catalogue, filters and registers a vehicle", async ({
     page.getByRole("heading", { name: "Anuncios", level: 1 }),
   ).toBeVisible();
   await page.getByLabel("Marca").fill("Renault");
+  await page.getByLabel("Modelo").fill(model);
   await page.getByRole("button", { name: "Aplicar filtros" }).click();
   await expect(
-    page.getByRole("heading", { name: /Renault Clio/ }).first(),
+    page.getByRole("heading", { name: new RegExp(`Renault ${model}`) }).first(),
   ).toBeVisible();
 });
