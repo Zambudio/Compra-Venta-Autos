@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { ListingsView } from "@/features/listings/listings-view";
 import { StatusView } from "@/features/system/status-view";
+import { VehiclesView } from "@/features/vehicles/vehicles-view";
 import type { User } from "@/features/auth/types";
 
 type AppShellProps = {
@@ -13,10 +14,11 @@ type AppShellProps = {
   isLoggingOut: boolean;
 };
 
-type Tab = "listings" | "status";
+type Tab = "listings" | "vehicles" | "status";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "listings", label: "Anuncios" },
+  { id: "vehicles", label: "Vehículos" },
   { id: "status", label: "Estado" },
 ];
 
@@ -60,7 +62,11 @@ export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
       </header>
 
       <p className="sr-only">Sesión iniciada como {user.email}</p>
-      <main>{active === "listings" ? <ListingsView /> : <StatusView />}</main>
+      <main>
+        {active === "listings" && <ListingsView />}
+        {active === "vehicles" && <VehiclesView />}
+        {active === "status" && <StatusView />}
+      </main>
     </div>
   );
 }

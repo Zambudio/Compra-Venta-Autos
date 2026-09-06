@@ -5,6 +5,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import * as authApi from "@/features/auth/api";
 import * as listingsApi from "@/features/listings/api";
+import * as vehiclesApi from "@/features/vehicles/api";
 import { AppShell } from "@/features/shell/app-shell";
 import { renderWithClient } from "@/test/render";
 
@@ -24,9 +25,23 @@ beforeEach(() => {
     postgresql: "available",
     redis: "ready",
   });
+  vi.spyOn(vehiclesApi, "getVehicles").mockResolvedValue({
+    items: [],
+    page: 1,
+    page_size: 12,
+    total: 0,
+    has_more: false,
+  });
+  vi.spyOn(vehiclesApi, "getMatchCandidates").mockResolvedValue({
+    items: [],
+    page: 1,
+    page_size: 1,
+    total: 0,
+    has_more: false,
+  });
 });
 
-test("opens on the Anuncios tab and switches to Estado", async () => {
+test("opens on the Anuncios tab and switches to Vehículos and Estado", async () => {
   const kbUser = userEvent.setup();
   renderWithClient(
     <AppShell user={user} onLogout={vi.fn()} isLoggingOut={false} />,
@@ -36,8 +51,14 @@ test("opens on the Anuncios tab and switches to Estado", async () => {
     await screen.findByRole("heading", { name: "Anuncios" }),
   ).toBeInTheDocument();
 
-  await kbUser.click(screen.getByRole("button", { name: "Estado" }));
+  // Switch to Vehículos
+  await kbUser.click(screen.getByRole("button", { name: "Vehículos" }));
+  expect(
+    await screen.findByRole("heading", { name: "Vehículos y Mercado" }),
+  ).toBeInTheDocument();
 
+  // Switch to Estado
+  await kbUser.click(screen.getByRole("button", { name: "Estado" }));
   expect(
     await screen.findByRole("heading", { name: "Foundation operativa" }),
   ).toBeInTheDocument();
