@@ -32,7 +32,10 @@ const schema = z
   .refine(
     (v) =>
       !v.year_min || !v.year_max || Number(v.year_min) <= Number(v.year_max),
-    { path: ["year_max"], message: "El año máximo no puede ser menor que el mínimo." },
+    {
+      path: ["year_max"],
+      message: "El año máximo no puede ser menor que el mínimo.",
+    },
   );
 
 type FilterValues = z.infer<typeof schema>;
@@ -107,17 +110,35 @@ export function FilterForm({ onApply }: FilterFormProps) {
       <Field id="filter-province" label="Provincia">
         {(p) => <Input placeholder="Murcia" {...p} {...register("province")} />}
       </Field>
-      <Field id="filter-year-min" label="Año desde" error={errors.year_min?.message}>
+      <Field
+        id="filter-year-min"
+        label="Año desde"
+        error={errors.year_min?.message}
+      >
         {(p) => <Input inputMode="numeric" {...p} {...register("year_min")} />}
       </Field>
-      <Field id="filter-year-max" label="Año hasta" error={errors.year_max?.message}>
+      <Field
+        id="filter-year-max"
+        label="Año hasta"
+        error={errors.year_max?.message}
+      >
         {(p) => <Input inputMode="numeric" {...p} {...register("year_max")} />}
       </Field>
-      <Field id="filter-price-max" label="Precio máximo (€)" error={errors.price_max?.message}>
+      <Field
+        id="filter-price-max"
+        label="Precio máximo (€)"
+        error={errors.price_max?.message}
+      >
         {(p) => <Input inputMode="numeric" {...p} {...register("price_max")} />}
       </Field>
-      <Field id="filter-mileage-max" label="Km máximos" error={errors.mileage_max?.message}>
-        {(p) => <Input inputMode="numeric" {...p} {...register("mileage_max")} />}
+      <Field
+        id="filter-mileage-max"
+        label="Km máximos"
+        error={errors.mileage_max?.message}
+      >
+        {(p) => (
+          <Input inputMode="numeric" {...p} {...register("mileage_max")} />
+        )}
       </Field>
       <Field id="filter-fuel" label="Combustible">
         {(p) => (

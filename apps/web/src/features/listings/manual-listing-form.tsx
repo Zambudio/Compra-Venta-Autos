@@ -11,7 +11,11 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { createManualListing } from "@/features/listings/api";
-import { FUEL_LABELS, SELLER_LABELS, TRANSMISSION_LABELS } from "@/features/listings/format";
+import {
+  FUEL_LABELS,
+  SELLER_LABELS,
+  TRANSMISSION_LABELS,
+} from "@/features/listings/format";
 import type { ManualListingInput } from "@/features/listings/types";
 import { ApiError } from "@/lib/api";
 
@@ -54,7 +58,10 @@ type ManualListingFormProps = {
   onCancel: () => void;
 };
 
-export function ManualListingForm({ onCreated, onCancel }: ManualListingFormProps) {
+export function ManualListingForm({
+  onCreated,
+  onCancel,
+}: ManualListingFormProps) {
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string>();
   const {
@@ -125,8 +132,14 @@ export function ManualListingForm({ onCreated, onCancel }: ManualListingFormProp
       <Field id="manual-year" label="Año" error={errors.year?.message}>
         {(p) => <Input inputMode="numeric" {...p} {...register("year")} />}
       </Field>
-      <Field id="manual-mileage" label="Kilometraje" error={errors.mileage_km?.message}>
-        {(p) => <Input inputMode="numeric" {...p} {...register("mileage_km")} />}
+      <Field
+        id="manual-mileage"
+        label="Kilometraje"
+        error={errors.mileage_km?.message}
+      >
+        {(p) => (
+          <Input inputMode="numeric" {...p} {...register("mileage_km")} />
+        )}
       </Field>
       <Field
         id="manual-price"
@@ -134,9 +147,15 @@ export function ManualListingForm({ onCreated, onCancel }: ManualListingFormProp
         error={errors.price_amount?.message}
         hint="Solo el número, por ejemplo 2800"
       >
-        {(p) => <Input inputMode="decimal" {...p} {...register("price_amount")} />}
+        {(p) => (
+          <Input inputMode="decimal" {...p} {...register("price_amount")} />
+        )}
       </Field>
-      <Field id="manual-fuel" label="Combustible" error={errors.fuel_type?.message}>
+      <Field
+        id="manual-fuel"
+        label="Combustible"
+        error={errors.fuel_type?.message}
+      >
         {(p) => (
           <Select {...p} {...register("fuel_type")}>
             {Object.entries(FUEL_LABELS).map(([value, label]) => (
@@ -147,7 +166,11 @@ export function ManualListingForm({ onCreated, onCancel }: ManualListingFormProp
           </Select>
         )}
       </Field>
-      <Field id="manual-transmission" label="Cambio" error={errors.transmission?.message}>
+      <Field
+        id="manual-transmission"
+        label="Cambio"
+        error={errors.transmission?.message}
+      >
         {(p) => (
           <Select {...p} {...register("transmission")}>
             {Object.entries(TRANSMISSION_LABELS).map(([value, label]) => (
@@ -158,7 +181,11 @@ export function ManualListingForm({ onCreated, onCancel }: ManualListingFormProp
           </Select>
         )}
       </Field>
-      <Field id="manual-seller" label="Vendedor" error={errors.seller_type?.message}>
+      <Field
+        id="manual-seller"
+        label="Vendedor"
+        error={errors.seller_type?.message}
+      >
         {(p) => (
           <Select {...p} {...register("seller_type")}>
             {Object.entries(SELLER_LABELS).map(([value, label]) => (
@@ -169,14 +196,26 @@ export function ManualListingForm({ onCreated, onCancel }: ManualListingFormProp
           </Select>
         )}
       </Field>
-      <Field id="manual-province" label="Provincia" error={errors.province?.message}>
+      <Field
+        id="manual-province"
+        label="Provincia"
+        error={errors.province?.message}
+      >
         {(p) => <Input {...p} {...register("province")} />}
       </Field>
-      <Field id="manual-url" label="URL del anuncio" error={errors.url?.message}>
+      <Field
+        id="manual-url"
+        label="URL del anuncio"
+        error={errors.url?.message}
+      >
         {(p) => <Input inputMode="url" {...p} {...register("url")} />}
       </Field>
       <div className="sm:col-span-2">
-        <Field id="manual-description" label="Observaciones" error={errors.description?.message}>
+        <Field
+          id="manual-description"
+          label="Observaciones"
+          error={errors.description?.message}
+        >
           {(p) => (
             <textarea
               className="min-h-24 w-full rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-2 text-[0.9375rem] outline-none focus:border-[var(--accent)]"

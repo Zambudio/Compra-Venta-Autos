@@ -21,7 +21,13 @@ beforeEach(() => vi.restoreAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
 test("getListings serialises filters into query params", async () => {
-  const fetchMock = mockFetch({ items: [], page: 1, page_size: 12, total: 0, has_more: false });
+  const fetchMock = mockFetch({
+    items: [],
+    page: 1,
+    page_size: 12,
+    total: 0,
+    has_more: false,
+  });
 
   await getListings({
     brand: "SEAT",
@@ -41,7 +47,13 @@ test("getListings serialises filters into query params", async () => {
 });
 
 test("getListings omits empty filters", async () => {
-  const fetchMock = mockFetch({ items: [], page: 1, page_size: 12, total: 0, has_more: false });
+  const fetchMock = mockFetch({
+    items: [],
+    page: 1,
+    page_size: 12,
+    total: 0,
+    has_more: false,
+  });
 
   await getListings({ brand: "", sort: "newest" });
 

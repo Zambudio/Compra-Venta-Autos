@@ -22,7 +22,9 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
 
 test("validates required fields", async () => {
   const user = userEvent.setup();
-  renderWithClient(<ManualListingForm onCreated={vi.fn()} onCancel={vi.fn()} />);
+  renderWithClient(
+    <ManualListingForm onCreated={vi.fn()} onCancel={vi.fn()} />,
+  );
 
   await user.click(screen.getByRole("button", { name: "Registrar vehículo" }));
 
@@ -33,8 +35,12 @@ test("validates required fields", async () => {
 test("submits a valid vehicle and calls onCreated", async () => {
   const user = userEvent.setup();
   const onCreated = vi.fn();
-  const create = vi.spyOn(api, "createManualListing").mockResolvedValue({} as never);
-  renderWithClient(<ManualListingForm onCreated={onCreated} onCancel={vi.fn()} />);
+  const create = vi
+    .spyOn(api, "createManualListing")
+    .mockResolvedValue({} as never);
+  renderWithClient(
+    <ManualListingForm onCreated={onCreated} onCancel={vi.fn()} />,
+  );
 
   await fillValidForm(user);
   await user.click(screen.getByRole("button", { name: "Registrar vehículo" }));
@@ -55,7 +61,9 @@ test("shows a friendly message on a duplicate", async () => {
   vi.spyOn(api, "createManualListing").mockRejectedValue(
     new ApiError(409, "listing_already_exists", "dup"),
   );
-  renderWithClient(<ManualListingForm onCreated={vi.fn()} onCancel={vi.fn()} />);
+  renderWithClient(
+    <ManualListingForm onCreated={vi.fn()} onCancel={vi.fn()} />,
+  );
 
   await fillValidForm(user);
   await user.click(screen.getByRole("button", { name: "Registrar vehículo" }));
@@ -68,7 +76,9 @@ test("shows a friendly message on a duplicate", async () => {
 test("cancel calls onCancel", async () => {
   const user = userEvent.setup();
   const onCancel = vi.fn();
-  renderWithClient(<ManualListingForm onCreated={vi.fn()} onCancel={onCancel} />);
+  renderWithClient(
+    <ManualListingForm onCreated={vi.fn()} onCancel={onCancel} />,
+  );
 
   await user.click(screen.getByRole("button", { name: "Cancelar" }));
 

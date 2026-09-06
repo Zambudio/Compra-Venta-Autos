@@ -40,7 +40,14 @@ function listing(overrides: Partial<Listing> = {}): Listing {
 }
 
 function page(items: Listing[], extra: Partial<ListingPage> = {}): ListingPage {
-  return { items, page: 1, page_size: 12, total: items.length, has_more: false, ...extra };
+  return {
+    items,
+    page: 1,
+    page_size: 12,
+    total: items.length,
+    has_more: false,
+    ...extra,
+  };
 }
 
 beforeEach(() => {
@@ -146,12 +153,16 @@ test("paginates through results", async () => {
 
   await user.click(screen.getByRole("button", { name: "Siguiente" }));
   await waitFor(() =>
-    expect(getListings).toHaveBeenCalledWith(expect.objectContaining({ page: 2 })),
+    expect(getListings).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 2 }),
+    ),
   );
 
   await user.click(screen.getByRole("button", { name: "Anterior" }));
   await waitFor(() =>
-    expect(getListings).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 })),
+    expect(getListings).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1 }),
+    ),
   );
 });
 
@@ -166,12 +177,16 @@ test("reports a sync failure", async () => {
     screen.getByRole("button", { name: "Sincronizar catálogo Mock" }),
   );
 
-  expect(await screen.findByText(/Error inesperado al sincronizar/)).toBeInTheDocument();
+  expect(
+    await screen.findByText(/Error inesperado al sincronizar/),
+  ).toBeInTheDocument();
 });
 
 test("applies a filter from the filter form", async () => {
   const user = userEvent.setup();
-  const getListings = vi.spyOn(api, "getListings").mockResolvedValue(page([listing()]));
+  const getListings = vi
+    .spyOn(api, "getListings")
+    .mockResolvedValue(page([listing()]));
   renderWithClient(<ListingsView />);
   await screen.findByText("SEAT Ibiza");
 

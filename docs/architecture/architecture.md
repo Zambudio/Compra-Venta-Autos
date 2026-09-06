@@ -38,7 +38,9 @@ infrastructure/docker/ infrastructure/caddy/ infrastructure/scripts/
 docs/ tests/
 ```
 
-Foundation implementa `core`, `auth`, `users` y `audit`; los demás directorios son límites declarados sin lógica de negocio hasta su fase.
+Fase 1 implementó `core`, `auth`, `users` y `audit`. Fase 2 implementa
+`connectors`, `listings`, `sources` y `search`; el resto de directorios son
+límites declarados sin lógica de negocio hasta su fase.
 
 ## Regla de dependencia
 
@@ -53,9 +55,9 @@ Foundation implementa `core`, `auth`, `users` y `audit`; los demás directorios 
 
 | Módulo                     | Responsabilidad                                          | Fase        |
 | -------------------------- | -------------------------------------------------------- | ----------- |
-| core                       | configuración, DB, Redis, errores, observabilidad        | 1           |
+| core                       | configuración, DB, Redis, errores, observabilidad, broker | 1 / 2      |
 | auth/users/audit           | identidad, sesiones, roles y eventos auditables          | 1           |
-| search/connectors/listings | filtros, adquisición permitida, normalización, snapshots | 2           |
+| search/connectors/listings/sources | filtros, adquisición permitida, normalización, ingesta, snapshots, health | 2 |
 | vehicles                   | identidad normalizada y deduplicación                    | 3           |
 | knowledge                  | jerarquía técnica, problemas, fuentes y evidencias       | 4           |
 | scoring/opportunities      | perfiles, score y valoración explicable                  | 5           |
@@ -65,7 +67,7 @@ Foundation implementa `core`, `auth`, `users` y `audit`; los demás directorios 
 
 ## Contratos externos
 
-La adquisición sigue `Search Engine → Connector → Provider → Normalizer`. Un `Connector` conoce semántica de una fuente; un `Provider` conoce el medio autorizado; el `Normalizer` produce DTO interno. Fase 2 empieza con `MockProvider` y `ManualProvider`. Ningún HTML o API privada se acopla al dominio.
+La adquisición sigue `Search Engine → Connector → Provider → Normalizer`. Un `Connector` conoce semántica de una fuente; un `Provider` conoce el medio autorizado; el `Normalizer` produce DTO interno. Fase 2 implementa `MockConnector` (catálogo determinista versionado, con latencia y fallos transitorios simulados) y `ManualEntryConnector` (ficha aportada bajo acción humana); el registro (`app/connectors/registry.py`) solo expone estos dos. Ningún conector de portal real está activo. La ingesta (`ListingService.ingest_raw`) es idempotente: dedup por `payload_hash` + `(source_id, external_id)`, `RawListingPayload` inmutable, `ListingSnapshot` solo ante cambio real. Las sincronizaciones se ejecutan síncronas o mediante el actor Dramatiq `sync_source_actor` (idempotente por `run_id`).
 
 ## Datos y consistencia
 

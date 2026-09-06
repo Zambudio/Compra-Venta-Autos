@@ -18,20 +18,20 @@ test("owner syncs the mock catalogue, filters and registers a vehicle", async ({
     page.getByRole("heading", { name: "Anuncios", level: 1 }),
   ).toBeVisible();
 
-  await page
-    .getByRole("button", { name: "Sincronizar catálogo Mock" })
-    .click();
+  await page.getByRole("button", { name: "Sincronizar catálogo Mock" }).click();
   await expect(page.getByRole("status")).toContainText("nuevos");
-  await expect(page.getByRole("heading", { name: /SEAT/ }).first()).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /SEAT/ }).first(),
+  ).toBeVisible();
 
   await page.getByLabel("Marca").fill("Dacia");
   await page.getByRole("button", { name: "Aplicar filtros" }).click();
-  await expect(page.getByRole("heading", { name: /Dacia/ }).first()).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /Dacia/ }).first(),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Ver detalle" }).first().click();
-  await expect(
-    page.getByText("Histórico de observaciones"),
-  ).toBeVisible();
+  await expect(page.getByText("Histórico de observaciones")).toBeVisible();
   await page.getByRole("button", { name: "Volver a la lista" }).click();
 
   await page.getByRole("button", { name: "Registrar vehículo" }).click();

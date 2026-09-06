@@ -58,7 +58,9 @@ beforeEach(() => {
 
 test("renders the vehicle and its price history", async () => {
   vi.spyOn(api, "getListing").mockResolvedValue(detail);
-  renderWithClient(<ListingDetailPanel listingId="listing-1" onBack={vi.fn()} />);
+  renderWithClient(
+    <ListingDetailPanel listingId="listing-1" onBack={vi.fn()} />,
+  );
 
   expect(
     await screen.findByRole("heading", { name: "SEAT Ibiza" }),
@@ -71,7 +73,9 @@ test("calls onBack", async () => {
   const user = userEvent.setup();
   const onBack = vi.fn();
   vi.spyOn(api, "getListing").mockResolvedValue(detail);
-  renderWithClient(<ListingDetailPanel listingId="listing-1" onBack={onBack} />);
+  renderWithClient(
+    <ListingDetailPanel listingId="listing-1" onBack={onBack} />,
+  );
   await screen.findByRole("heading", { name: "SEAT Ibiza" });
 
   await user.click(screen.getByRole("button", { name: "Volver a la lista" }));
@@ -81,7 +85,9 @@ test("calls onBack", async () => {
 
 test("shows an error message on failure", async () => {
   vi.spyOn(api, "getListing").mockRejectedValue(new Error("nope"));
-  renderWithClient(<ListingDetailPanel listingId="listing-1" onBack={vi.fn()} />);
+  renderWithClient(
+    <ListingDetailPanel listingId="listing-1" onBack={vi.fn()} />,
+  );
 
   expect(
     await screen.findByText("No se pudo cargar el anuncio."),

@@ -73,12 +73,14 @@ export function ListingDetailPanel({ listingId, onBack }: ListingDetailProps) {
           </dl>
 
           {detail.data.description ? (
-            <p className="mt-6 whitespace-pre-line text-sm">
+            <p className="mt-6 text-sm whitespace-pre-line">
               {detail.data.description}
             </p>
           ) : null}
 
-          <h2 className="mt-8 text-base font-semibold">Histórico de observaciones</h2>
+          <h2 className="mt-8 text-base font-semibold">
+            Histórico de observaciones
+          </h2>
           <ul className="mt-3 border-t border-[var(--border)]">
             {detail.data.snapshots.map((snap) => (
               <li

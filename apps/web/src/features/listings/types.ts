@@ -97,11 +97,7 @@ export type Source = {
 };
 
 export type SyncRunStatus =
-  | "PENDING"
-  | "RUNNING"
-  | "SUCCESS"
-  | "PARTIAL"
-  | "FAILED";
+  "PENDING" | "RUNNING" | "SUCCESS" | "PARTIAL" | "FAILED";
 
 export type SyncRun = {
   id: string;

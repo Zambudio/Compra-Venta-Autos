@@ -15,7 +15,9 @@ const currency = new Intl.NumberFormat("es-ES", {
 export function formatPrice(amount: string, code = "EUR"): string {
   const value = Number(amount);
   if (Number.isNaN(value)) return `${amount} ${code}`;
-  return code === "EUR" ? currency.format(value) : `${numbers.format(value)} ${code}`;
+  return code === "EUR"
+    ? currency.format(value)
+    : `${numbers.format(value)} ${code}`;
 }
 
 export function formatKm(km: number): string {

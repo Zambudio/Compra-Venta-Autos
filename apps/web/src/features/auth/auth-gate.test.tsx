@@ -48,7 +48,10 @@ test("renders login screen when unauthenticated", async () => {
 });
 
 test("renders the app shell when authenticated", async () => {
-  renderGate({ id: "user-1", email: "owner@example.com", role: "OWNER" }, false);
+  renderGate(
+    { id: "user-1", email: "owner@example.com", role: "OWNER" },
+    false,
+  );
   expect(
     await screen.findByRole("heading", { name: "Anuncios" }),
   ).toBeInTheDocument();

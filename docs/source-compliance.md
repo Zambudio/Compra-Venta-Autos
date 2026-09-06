@@ -26,4 +26,13 @@ No eludir CAPTCHA, anti-bot, rate limits o autenticación; no rotar proxies para
 
 ## Situación actual
 
-Fase 1 no implementa conectores ni acceso a portales. Fase 2 solo puede comenzar con `MockProvider` y `ManualProvider`. Los conectores nominales podrán existir como contrato/configuración deshabilitada, nunca como scraping.
+Fase 2 implementa **exclusivamente** `MockConnector` (fixture local versionada y
+anonimizada, `app/connectors/mock/catalog_v1.json`) y `ManualEntryConnector`
+(ficha aportada por el usuario bajo acción humana). El registro
+`app/connectors/registry.py` solo expone `mock` y `manual`; cualquier otra clave
+devuelve `UnknownConnectorError` → HTTP 404. No existe ningún conector de portal
+real, ni siquiera deshabilitado. Las filas `mock` y `manual` de `sources` y sus
+`source_compliance_reviews` se siembran por la migración de datos `20260906_0003`
+con los valores de esta tabla. Habilitar un `Provider` para Wallapop, Coches.net,
+AutoScout24 o Milanuncios exige el proceso completo de esta sección y una nueva
+revisión de threat model antes de escribir una sola línea.

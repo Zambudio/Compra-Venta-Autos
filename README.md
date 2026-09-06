@@ -34,7 +34,7 @@ El proyecto se rige por [`PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md`](PLAN_MAESTRO_
 | :-----: | ------------------------------ | :-----------------------------------------------------------------------------------------: | ---------------------------------------------------------------------------------------- |
 |  **0**  | **Inspecci�n y Planning**      |   ![Completada](https://img.shields.io/badge/Estado-Completada-success?style=flat-square)   | Inventario, arquitectura, modelo de datos, 11 ADRs iniciales y compliance de fuentes.    |
 |  **1**  | **Foundation**                 |   ![Completada](https://img.shields.io/badge/Estado-Completada-success?style=flat-square)   | Monorepo, Auth (Argon2id, sesiones opacas, CSRF), UI accesible, Docker stack verificado. |
-|  **2**  | **Search y Adquisici�n**       |   ![En Espera](https://img.shields.io/badge/Estado-En_Espera-lightgrey?style=flat-square)   | Conectores Mock/Manual, ingesta estructurada y deduplicaci�n.                            |
+|  **2**  | **Search y Adquisici�n**       |   ![Completada](https://img.shields.io/badge/Estado-Completada-success?style=flat-square)   | Conectores Mock/Manual, `SearchFilter`, normalizaci�n, ingesta idempotente, snapshots, worker Dramatiq y frontend de exploraci�n y alta manual. |
 | **3�9** | **Market Data, Scoring & MVP** | ![Planificado](https://img.shields.io/badge/Estado-Planificado-lightgrey?style=flat-square) | Opportunity Score determinista, Wiki automotriz, Inspecci�n, Garage y Hardening.         |
 
 ---

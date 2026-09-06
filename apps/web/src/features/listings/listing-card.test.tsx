@@ -41,7 +41,9 @@ test("renders key data and calls onOpen", async () => {
   const onOpen = vi.fn();
   render(<ListingCard listing={listing()} onOpen={onOpen} />);
 
-  expect(screen.getByRole("heading", { name: /SEAT Ibiza/ })).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: /SEAT Ibiza/ }),
+  ).toBeInTheDocument();
   expect(screen.getByText(/168.000 km/)).toBeInTheDocument();
   expect(screen.getByText("Particular")).toBeInTheDocument();
 
@@ -52,7 +54,12 @@ test("renders key data and calls onOpen", async () => {
 test("hides the original-ad link and shows a manual badge for manual listings", () => {
   render(
     <ListingCard
-      listing={listing({ url: null, source_key: "manual", trim: null, seller_type: "DEALER" })}
+      listing={listing({
+        url: null,
+        source_key: "manual",
+        trim: null,
+        seller_type: "DEALER",
+      })}
       onOpen={vi.fn()}
     />,
   );

@@ -12,7 +12,8 @@ import { ManualListingForm } from "@/features/listings/manual-listing-form";
 import type { ListingFilters } from "@/features/listings/types";
 import { ApiError } from "@/lib/api";
 
-type Mode = { name: "list" } | { name: "detail"; id: string } | { name: "manual" };
+type Mode =
+  { name: "list" } | { name: "detail"; id: string } | { name: "manual" };
 
 const PAGE_SIZE = 12;
 

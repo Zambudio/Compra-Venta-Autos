@@ -1,6 +1,9 @@
 # Modelo de dominio y datos
 
-Estado: modelo lógico del MVP; Foundation implementa únicamente identidad, sesión y auditoría. Fecha: 2026-09-06.
+Estado: modelo lógico del MVP. Fase 1 implementó identidad, sesión y auditoría;
+Fase 2 implementa fuentes y anuncios (`sources`, `source_compliance_reviews`,
+`source_sync_runs`, `vehicle_listings`, `raw_listing_payloads`, `listing_snapshots`).
+Fecha: 2026-09-06.
 
 ## Principios
 
@@ -50,16 +53,39 @@ Notification → User + evento
 
 ## Entidades de adquisición y mercado
 
-- `Source`: catálogo de portales/importadores y estado.
-- `SourceComplianceReview`: método, permitido, auth, rate limit, términos, fecha y notas; historial, no simple sobrescritura.
-- `Search` / `SearchFilter`: ejecución y filtros tipados del Plan Maestro.
-- `Listing`: anuncio por `(source_id, external_id)`, URL y campos observados normalizados.
-- `ListingSnapshot`: observación append-only con precio, km, estado y hash de descripción.
-- `Vehicle`: vehículo normalizado independiente de sus anuncios.
+**Implementadas en Fase 2** (ver [ADR-0012](../adr/0012-listing-ingestion-and-dedup.md)):
+
+- `Source` (`sources`): `key` único (`mock`, `manual`), `name`, `provider_kind`
+  (`MOCK|MANUAL|CONNECTOR`), `is_active`, `is_automatable`, timestamps.
+- `SourceComplianceReview` (`source_compliance_reviews`): `acquisition_method`,
+  `automated_allowed`, `authentication_required`, `rate_limit`, `terms_url`,
+  `checked_at`, `notes`. Append-only; se siembra por migración de datos `20260906_0003`.
+- `SourceSyncRun` (`source_sync_runs`): `status` (`PENDING|RUNNING|SUCCESS|PARTIAL|FAILED`),
+  `mode`, `filters` JSONB saneado, `request_id`, contadores (`listings_seen/created/updated`,
+  `snapshots_created`), `error_summary` sin trazas, `started_at`/`finished_at`.
+- `VehicleListing` (`vehicle_listings`): anuncio por `(source_id, external_id)` (único).
+  Campos normalizados del Plan Maestro §11; dinero `Numeric(12,2)` + moneda; enums
+  con CHECK; `entry_channel` (`MOCK_SYNC|MANUAL_ENTRY`); `payload_hash` del último
+  payload; `first_seen_at`, `last_seen_at`, `published_at`. Índices por
+  `(brand, model)`, `price_amount`, `year`, `last_seen_at`, `status`.
+- `RawListingPayload` (`raw_listing_payloads`): payload original **inmutable** (JSONB),
+  `payload_hash`, `connector_version`, `retrieved_at`. Único `(source_id, payload_hash)`.
+  Nunca se expone por API.
+- `ListingSnapshot` (`listing_snapshots`): observación append-only con precio, moneda,
+  km, estado y `description_hash`. Se añade solo cuando cambia precio, km o descripción.
+
+**Pendientes (Fase 3+):**
+
+- `Vehicle`: vehículo normalizado independiente de sus anuncios. `VehicleListing.vehicle_id`
+  se añadirá como columna nullable; la asociación es tardía y no destructiva.
 - `VehicleMatchCandidate`: par de vehículos/listings, confianza, razones y decisión manual.
 - `MarketEstimate`: intervalo, método, cantidad de comparables, confianza y fecha.
+- `Search` / `SearchFilter` persistidos: la Fase 2 usa `SearchFilter` tipado en memoria
+  (`app/search/schemas.py`) y registra las sincronizaciones en `SourceSyncRun`.
 
-`Listing` puede existir antes de enlazarse a un `Vehicle`; varios listings pueden apuntar al mismo vehículo. Nunca se colapsan por una única señal.
+`VehicleListing` existe sin `Vehicle`; la deduplicación de Fase 2 es solo
+`payload_hash` + `(source_id, external_id)`. La deduplicación entre fuentes por
+señales del anuncio nunca colapsa por una única señal (Fase 3).
 
 ## Knowledge Base
 

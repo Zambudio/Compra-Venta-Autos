@@ -22,7 +22,10 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
           <h2 className="text-base font-semibold">
             {listing.brand} {listing.model}
             {listing.trim ? (
-              <span className="font-normal text-[var(--muted)]"> · {listing.trim}</span>
+              <span className="font-normal text-[var(--muted)]">
+                {" "}
+                · {listing.trim}
+              </span>
             ) : null}
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
