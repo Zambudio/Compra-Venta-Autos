@@ -1,4 +1,4 @@
-﻿import { expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test("owner navigates vehicles catalog, inspects market data and deduplication review", async ({
   page,

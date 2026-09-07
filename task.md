@@ -273,7 +273,7 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Documentación afectada:** `.trivyignore`, `.github/workflows/security.yml`, `web.Dockerfile`.
 - **Resultado:** Completado en commit `02482fb`. Contenedor `motorscope-web-1` reconstruido y verificado _healthy_ en el Synology NAS (`http://192.168.1.3:3080/` responde 200).
 
-### [ ] F3.1 — Entidad `Vehicle` y enlace tardío
+### [x] F3.1 — Entidad `Vehicle` y enlace tardío
 
 - **Objetivo:** materializar el modelo de vehículo unificado y su relación no destructiva con los anuncios.
 - **Alcance:** modelo SQLAlchemy 2.0 `Vehicle` (`vehicles`) con atributos canónicos (marca, modelo, generación, versión/trim, motor, combustible, transmisión, año, contadores agregados `first_listed_at`, `listing_count`); columna foránea `VehicleListing.vehicle_id` nullable (`ondelete="SET NULL"`); migración de esquema `20260906_0004_vehicles_and_market.py`.
@@ -281,8 +281,9 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Criterios de aceptación:** migración reversible y no destructiva; DTOs Pydantic sin exponer datos internos; `app/models.py` sincronizado.
 - **Pruebas necesarias:** unit tests de modelos, integración con PostgreSQL real (`test_migration_0004.py`).
 - **Documentación afectada:** `docs/domain/data-model.md`, `docs/architecture/architecture.md`.
+- **Resultado:** Completado en commit `8331b67`. Modelos `Vehicle`, `VehicleMatchCandidate`, `MarketEstimate` creados; migración `0004` probada; unit tests pasando al 100%.
 
-### [ ] F3.2 — Deduplicación asistida y candidatos de matching
+### [x] F3.2 — Deduplicación asistida y candidatos de matching
 
 - **Objetivo:** detectar automáticamente posibles duplicados entre fuentes distintas sin emplear datos personales restringidos.
 - **Alcance:** modelo `VehicleMatchCandidate` (`vehicle_match_candidates`) con par único ordenado `(listing_a_id < listing_b_id)`, score y razones explicables en JSONB; función pura `score_match(listing_a, listing_b) -> MatchResult`; orquestación de generación de candidatos idempotente tras sincronización o alta manual; endpoints `GET /match-candidates`, `POST /match-candidates/{id}/confirm`, `POST /match-candidates/{id}/reject` con CSRF y rol `OWNER|ADMIN`; emisión de `AuditEvent` (`manual_match`).
@@ -290,8 +291,9 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Criterios de aceptación:** función pura determinista sin I/O (100% cobertura de ramas); ponderación multicriterio; confirmación vincula o crea `Vehicle` propagando `vehicle_id`; rechazo permanente.
 - **Pruebas necesarias:** unit `test_matching.py`; integración `test_matching_flow.py` (PG real).
 - **Documentación afectada:** [ADR-0013](docs/adr/0013-vehicle-matching-and-market-estimates.md), `docs/domain/data-model.md`.
+- **Resultado:** Completado en commit `a9675f8`. Algoritmo determinista multicriterio ponderado (marca/modelo/año/combustible/transmisión/km/precio/ubicación); umbral 0.60; confirmación 1-clic con creación o fusión no destructiva de `Vehicle`; auditoría con `manual_match`.
 
-### [ ] F3.3 — Histórico y métricas derivadas
+### [x] F3.3 — Histórico y métricas derivadas
 
 - **Objetivo:** extraer dinámicamente métricas de evolución temporal a partir de `ListingSnapshot` sin redundancia de persistencia.
 - **Alcance:** funciones puras de cálculo (`price_delta`, `price_delta_percentage`, `days_on_market`, `number_of_price_changes`, precio inicial vs actual, reaparición de anuncio); agregación en detalle de `VehicleListing` y cálculo consolidado a nivel de `Vehicle`.
@@ -299,8 +301,9 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Criterios de aceptación:** exactitud matemática con `Decimal`; manejo robusto de anuncios con un solo snapshot; respuestas coherentes en DTOs.
 - **Pruebas necesarias:** unit `test_history_metrics.py`.
 - **Documentación afectada:** `docs/domain/data-model.md`.
+- **Resultado:** Completado en commit `a9675f8`. Módulo `app/vehicles/history.py` implementado con precisión decimal y manejo robusto de snapshots singulares o múltiples.
 
-### [ ] F3.4 — Comparables y `MarketEstimate`
+### [x] F3.4 — Comparables y `MarketEstimate`
 
 - **Objetivo:** calcular un valor de mercado realista con intervalo de confianza a partir de anuncios homogéneos reales de la BD.
 - **Alcance:** modelo y DTO `MarketEstimate`; función pura `estimate_market_price(subject, comparables_pool)`; algoritmo con filtro intercuartil (IQR), mediana y percentiles P25-P75; función de confianza dependiente del tamaño de muestra $N$ y homogeneidad; endpoint `GET /vehicles/{id}/market-estimate`.
@@ -308,8 +311,9 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Criterios de aceptación:** estimación determinista y auditable; sin invención de valores de mercado; distinción clara en API y UI entre observado y estimado.
 - **Pruebas necesarias:** unit `test_market_estimate.py` (muestras vacías, pocas muestras, alta dispersión, clusters homogéneos).
 - **Documentación afectada:** [ADR-0013](docs/adr/0013-vehicle-matching-and-market-estimates.md), `docs/domain/data-model.md`.
+- **Resultado:** Completado en commit `a9675f8`. Algoritmo determinista en `app/vehicles/market.py` con exclusión de outliers IQR, cálculo de percentiles y penalización por dispersión. Cobertura global backend 87.30%.
 
-### [ ] F3.5 — Frontend (Vehículos, Histórico, Candidatos y Estimación)
+### [x] F3.5 — Frontend (Vehículos, Histórico, Candidatos y Estimación)
 
 - **Objetivo:** proporcionar la interfaz de usuario para explorar vehículos, analizar histórico y revisar la cola de deduplicación.
 - **Alcance:** pestaña `Vehículos` en `app-shell`; lista de vehículos con tarjetas, badges y enlaces; vista detalle con evolución gráfica/tabular accesible (no solo color) y estimación de mercado; pantalla o bandeja de candidatos de matching (cola PENDING, desglose de razones coincidentes/discrepantes, botones de acción Confirmar/Rechazar con mutaciones TanStack Query accesibles).
@@ -317,8 +321,9 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Criterios de aceptación:** navegación completa por teclado; cero violaciones de accesibilidad (`vitest-axe`); formularios y validaciones Zod estrictas; responsive.
 - **Pruebas necesarias:** Vitest + Testing Library + `vitest-axe` para cada componente y vista.
 - **Documentación afectada:** `README.md`.
+- **Resultado:** Completado en commit `7d3a8d7`. 18 suites de pruebas unitarias en Vitest con 77 tests pasando al 100%, cobertura de líneas del 90.37%; compilación de producción (`npm run build`) verificada y limpia.
 
-### [ ] F3.6 — Testing, Calidad, Despliegue en NAS y Cierre de Fase 3
+### [x] F3.6 — Testing, Calidad, Despliegue en NAS y Cierre de Fase 3
 
 - **Objetivo:** validar todos los gates de calidad, aplicar la migración en el NAS, comprobar funcionamiento en vivo y emitir el informe de cierre.
 - **Alcance:** suites completas (unit, integración con PG real, E2E Playwright `tests/e2e/vehicles.spec.ts`); linters y tipado estricto al 100%; `export_openapi.py` sincronizado; migración `20260906_0004` ejecutada en el NAS; smoke test en vivo; emisión de `INFORME_CIERRE_FASE_3.md`.
@@ -326,6 +331,7 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 - **Criterios de aceptación:** Definition of Done de Fase 3 cumplida al 100%; 6 contenedores saludables en el NAS; informe de cierre emitido sin avanzar a Fase 4.
 - **Pruebas necesarias:** matriz completa de gates de calidad y smoke tests en NAS.
 - **Documentación afectada:** toda la documentación del proyecto.
+- **Resultado:** Despliegue en Synology NAS completado exitosamente: migración `0004` aplicada en `motorscope-postgres-1`; imágenes `motorscope-api`, `motorscope-worker` y `motorscope-web` reconstruidas; 6 contenedores en estado _healthy_. Smoke test automatizado en vivo (`infrastructure/scripts/smoke_test_fase3.py`) 100% exitoso: login OWNER, sync Mock, alta manual, deduplicación asistida en 1-clic, catálogo de vehículos unificados, detalle consolidado, estimación de mercado IQR, histórico de precios y frontend web 200 OK. Informe de cierre emitido en `INFORME_CIERRE_FASE_3.md`.
 
 ## Fases posteriores — no autorizadas en este cambio
 

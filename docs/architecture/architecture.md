@@ -58,7 +58,7 @@ límites declarados sin lógica de negocio hasta su fase.
 | core                       | configuración, DB, Redis, errores, observabilidad, broker | 1 / 2      |
 | auth/users/audit           | identidad, sesiones, roles y eventos auditables          | 1           |
 | search/connectors/listings/sources | filtros, adquisición permitida, normalización, ingesta, snapshots, health | 2 |
-| vehicles                   | identidad normalizada y deduplicación                    | 3           |
+| vehicles                   | identidad normalizada, deduplicación asistida, histórico y estimación de mercado | 3 (completada) |
 | knowledge                  | jerarquía técnica, problemas, fuentes y evidencias       | 4           |
 | scoring/opportunities      | perfiles, score y valoración explicable                  | 5           |
 | watchlist/inspections      | seguimiento y checklists                                 | 6           |

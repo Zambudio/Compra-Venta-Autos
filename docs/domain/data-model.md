@@ -74,18 +74,30 @@ Notification → User + evento
 - `ListingSnapshot` (`listing_snapshots`): observación append-only con precio, moneda,
   km, estado y `description_hash`. Se añade solo cuando cambia precio, km o descripción.
 
-**Pendientes (Fase 3+):**
+## Entidades de vehículos y mercado (Fase 3)
 
-- `Vehicle`: vehículo normalizado independiente de sus anuncios. `VehicleListing.vehicle_id`
-  se añadirá como columna nullable; la asociación es tardía y no destructiva.
-- `VehicleMatchCandidate`: par de vehículos/listings, confianza, razones y decisión manual.
-- `MarketEstimate`: intervalo, método, cantidad de comparables, confianza y fecha.
-- `Search` / `SearchFilter` persistidos: la Fase 2 usa `SearchFilter` tipado en memoria
+**Implementadas en Fase 3** (ver [ADR-0013](../adr/0013-assisted-deduplication-and-market-data.md)):
+
+- `Vehicle` (`vehicles`): vehículo físico unificado independiente de sus anuncios.
+  Campos: `id` (UUID), `brand`, `model`, `year`, `mileage`, `fuel_type`, `transmission`,
+  `body_type`, `power_cv`, `color`, `vin` (opcional/hash), `first_seen_at`, `last_seen_at`,
+  `created_at`, `updated_at`. Relación 1-a-muchos con `VehicleListing` mediante
+  clave foránea `VehicleListing.vehicle_id` (nullable).
+- `VehicleMatchCandidate` (`vehicle_match_candidates`): registro de concordancia asistida
+  entre un `listing_id` y un `vehicle_id`.
+  Campos: `id`, `listing_id`, `vehicle_id`, `score` (0.00-1.00), `match_reasons` (JSONB con desglose),
+  `status` (`PENDING|CONFIRMED|REJECTED`), `reviewed_by_user_id`, `reviewed_at`, `created_at`.
+  Constraint única `(listing_id, vehicle_id)`.
+- `MarketEstimate` (`market_estimates`): estimación estadística de precio de mercado para un vehículo.
+  Campos: `id`, `vehicle_id`, `estimated_amount`, `low_amount`, `high_amount`, `currency`,
+  `number_of_comparables`, `confidence_score`, `method` (`COMPARABLES_MEDIAN_IQR`),
+  `method_parameters` (JSONB con métricas y factores IQR), `calculated_at`, `created_at`.
+  Relación muchos-a-1 con `Vehicle`.
+
+**Pendientes (Fase 4+):**
+
+- `Search` / `SearchFilter` persistidos: la Fase 2/3 usa `SearchFilter` tipado en memoria
   (`app/search/schemas.py`) y registra las sincronizaciones en `SourceSyncRun`.
-
-`VehicleListing` existe sin `Vehicle`; la deduplicación de Fase 2 es solo
-`payload_hash` + `(source_id, external_id)`. La deduplicación entre fuentes por
-señales del anuncio nunca colapsa por una única señal (Fase 3).
 
 ## Knowledge Base
 
