@@ -9,8 +9,6 @@ from uuid import uuid4
 import pytest
 from app.auth.dependencies import AuthContext, get_db, require_auth, require_csrf
 from app.auth.models import AuthSession
-from pydantic import SecretStr
-
 from app.core.config import Environment, Settings
 from app.listings.vocab import FuelType, Transmission
 from app.main import create_app
@@ -24,6 +22,7 @@ from app.vehicles.models import MarketEstimate, Vehicle, VehicleMatchCandidate
 from app.vehicles.schemas import VehicleHistoryMetrics
 from app.vehicles.vocab import MarketEstimateMethod, MatchCandidateStatus
 from httpx import ASGITransport, AsyncClient
+from pydantic import SecretStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.unit
