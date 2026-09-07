@@ -17,3 +17,4 @@ Formato: ADR numerados e inmutables tras aceptación; un cambio se registra en u
 | 0011 | uv + pnpm y runtimes fijados  | Aceptado |
 | 0012 | Ingesta y dedup de anuncios F2 | Aceptado |
 | 0013 | Matching asistido y market data F3 | Aceptado |
+| 0014 | Base de conocimiento y evidencias F4 | Aceptado |
