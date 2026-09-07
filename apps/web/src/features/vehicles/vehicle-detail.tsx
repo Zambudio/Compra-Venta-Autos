@@ -14,6 +14,7 @@ import {
   STATUS_LABELS,
   TRANSMISSION_LABELS,
 } from "@/features/vehicles/format";
+import { VehicleReliabilityWidget } from "@/features/knowledge/vehicle-reliability-widget";
 import type { VehicleDetail as TVehicleDetail } from "@/features/vehicles/types";
 
 type VehicleDetailProps = {
@@ -213,6 +214,9 @@ export function VehicleDetail({ vehicleId, onBack }: VehicleDetailProps) {
           )}
         </section>
       </div>
+
+      {/* Widget de Fiabilidad Técnica y Averías Conocidas */}
+      <VehicleReliabilityWidget vehicle={vehicle} />
 
       {/* Histórico Consolidado */}
       {history && (

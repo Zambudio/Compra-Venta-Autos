@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 
+import { KnowledgeView } from "@/features/knowledge/knowledge-view";
 import { ListingsView } from "@/features/listings/listings-view";
 import { StatusView } from "@/features/system/status-view";
 import { VehiclesView } from "@/features/vehicles/vehicles-view";
@@ -14,11 +15,12 @@ type AppShellProps = {
   isLoggingOut: boolean;
 };
 
-type Tab = "listings" | "vehicles" | "status";
+type Tab = "listings" | "vehicles" | "knowledge" | "status";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "listings", label: "Anuncios" },
   { id: "vehicles", label: "Vehículos" },
+  { id: "knowledge", label: "Conocimiento" },
   { id: "status", label: "Estado" },
 ];
 
@@ -65,6 +67,7 @@ export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
       <main>
         {active === "listings" && <ListingsView />}
         {active === "vehicles" && <VehiclesView />}
+        {active === "knowledge" && <KnowledgeView />}
         {active === "status" && <StatusView />}
       </main>
     </div>

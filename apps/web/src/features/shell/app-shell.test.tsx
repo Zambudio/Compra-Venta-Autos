@@ -4,6 +4,7 @@ import { axe } from "vitest-axe";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import * as authApi from "@/features/auth/api";
+import * as knowledgeApi from "@/features/knowledge/api";
 import * as listingsApi from "@/features/listings/api";
 import * as vehiclesApi from "@/features/vehicles/api";
 import { AppShell } from "@/features/shell/app-shell";
@@ -39,9 +40,16 @@ beforeEach(() => {
     total: 0,
     has_more: false,
   });
+  vi.spyOn(knowledgeApi, "getKnownIssues").mockResolvedValue({
+    items: [],
+    page: 1,
+    page_size: 20,
+    total: 0,
+    has_more: false,
+  });
 });
 
-test("opens on the Anuncios tab and switches to Vehículos and Estado", async () => {
+test("opens on the Anuncios tab and switches to Vehículos, Conocimiento and Estado", async () => {
   const kbUser = userEvent.setup();
   renderWithClient(
     <AppShell user={user} onLogout={vi.fn()} isLoggingOut={false} />,
@@ -55,6 +63,12 @@ test("opens on the Anuncios tab and switches to Vehículos and Estado", async ()
   await kbUser.click(screen.getByRole("button", { name: "Vehículos" }));
   expect(
     await screen.findByRole("heading", { name: "Vehículos y Mercado" }),
+  ).toBeInTheDocument();
+
+  // Switch to Conocimiento
+  await kbUser.click(screen.getByRole("button", { name: "Conocimiento" }));
+  expect(
+    await screen.findByRole("heading", { name: /Base de Conocimiento/i }),
   ).toBeInTheDocument();
 
   // Switch to Estado

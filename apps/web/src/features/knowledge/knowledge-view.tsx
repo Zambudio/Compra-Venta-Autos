@@ -1,0 +1,416 @@
+import { useQuery } from "@tanstack/react-query";
+import {
+  AlertOctagon,
+  AlertTriangle,
+  BookOpen,
+  CheckCircle2,
+  Cpu,
+  Layers,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
+import { useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import {
+  getClassifications,
+  getEngines,
+  getGenerations,
+  getKnownIssues,
+  getManufacturers,
+  getModels,
+} from "./api";
+import {
+  CLASSIFICATION_LABELS,
+  classificationBadgeTone,
+  COMPONENT_LABELS,
+  SEVERITY_LABELS,
+} from "./format";
+import { KnownIssueCard } from "./known-issue-card";
+import type {
+  ClassificationStatus,
+  Engine,
+  IssueSeverity,
+  Manufacturer,
+  VehicleComponent,
+  VehicleGeneration,
+  VehicleModel,
+} from "./types";
+
+type KnowledgeTab = "issues" | "classifications" | "catalog";
+
+export function KnowledgeView() {
+  const [activeTab, setActiveTab] = useState<KnowledgeTab>("issues");
+
+  // Filtros de problemas conocidos
+  const [selectedComponent, setSelectedComponent] = useState<string>("");
+  const [selectedSeverity, setSelectedSeverity] = useState<string>("");
+
+  // Filtros de clasificaciones
+  const [selectedClassificationStatus, setSelectedClassificationStatus] =
+    useState<string>("");
+
+  // Catálogo jerárquico
+  const [selectedManufacturerId, setSelectedManufacturerId] = useState<string>("");
+  const [selectedModelId, setSelectedModelId] = useState<string>("");
+
+  // Consultas
+  const { data: issuesPage, isLoading: isLoadingIssues } = useQuery({
+    queryKey: ["known-issues", selectedComponent, selectedSeverity],
+    queryFn: () =>
+      getKnownIssues({
+        component: selectedComponent || undefined,
+        severity: selectedSeverity || undefined,
+        status: "VERIFIED", // Mostrar por defecto problemas con evidencias trazables (Plan Maestro §15)
+        pageSize: 50,
+      }),
+    enabled: activeTab === "issues",
+  });
+
+  const { data: classificationsPage, isLoading: isLoadingClassifications } =
+    useQuery({
+      queryKey: ["classifications", selectedClassificationStatus],
+      queryFn: () =>
+        getClassifications({
+          status: selectedClassificationStatus || undefined,
+          pageSize: 50,
+        }),
+      enabled: activeTab === "classifications",
+    });
+
+  const { data: manufacturers } = useQuery<Manufacturer[]>({
+    queryKey: ["manufacturers"],
+    queryFn: getManufacturers,
+    enabled: activeTab === "catalog",
+  });
+
+  const { data: models } = useQuery<VehicleModel[]>({
+    queryKey: ["models", selectedManufacturerId],
+    queryFn: () => getModels(selectedManufacturerId || undefined),
+    enabled: activeTab === "catalog" && Boolean(selectedManufacturerId),
+  });
+
+  const { data: generations } = useQuery<VehicleGeneration[]>({
+    queryKey: ["generations", selectedModelId],
+    queryFn: () => getGenerations(selectedModelId || undefined),
+    enabled: activeTab === "catalog" && Boolean(selectedModelId),
+  });
+
+  const { data: engines } = useQuery<Engine[]>({
+    queryKey: ["engines", selectedManufacturerId],
+    queryFn: () => getEngines({ manufacturerId: selectedManufacturerId || undefined }),
+    enabled: activeTab === "catalog" && Boolean(selectedManufacturerId),
+  });
+
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 sm:px-10">
+      {/* Cabecera */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <BookOpen aria-hidden size={28} className="text-[var(--accent)]" />
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
+            Base de Conocimiento Técnico y Fiabilidad
+          </h1>
+        </div>
+        <p className="text-sm text-[var(--muted)] max-w-3xl">
+          Evidencias mecánicas objetivas y trazables basadas en datos de fuentes oficiales, estadísticas
+          independientes (TÜV, ADAC) y literatura técnica de taller (Plan Maestro §15). Cero decisiones por IA no verificadas.
+        </p>
+      </div>
+
+      {/* Navegación interna */}
+      <nav aria-label="Subsecciones de conocimiento" className="flex border-b border-[var(--border)]">
+        <button
+          type="button"
+          onClick={() => setActiveTab("issues")}
+          aria-current={activeTab === "issues" ? "page" : undefined}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === "issues"
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <AlertTriangle aria-hidden size={16} />
+          Problemas Conocidos y Averías
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("classifications")}
+          aria-current={activeTab === "classifications" ? "page" : undefined}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === "classifications"
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <ShieldCheck aria-hidden size={16} />
+          Clasificaciones (White / Watch / Blacklist)
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("catalog")}
+          aria-current={activeTab === "catalog" ? "page" : undefined}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === "catalog"
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <Cpu aria-hidden size={16} />
+          Catálogo Mecánico Canónico
+        </button>
+      </nav>
+
+      {/* Pestaña: Problemas Conocidos */}
+      {activeTab === "issues" && (
+        <section aria-labelledby="issues-heading" className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+            <h2 id="issues-heading" className="text-base font-bold text-[var(--foreground)]">
+              Averías y Defectos Sistémicos Verificados
+            </h2>
+
+            {/* Filtros */}
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="component-filter" className="sr-only">
+                Filtrar por componente
+              </label>
+              <select
+                id="component-filter"
+                value={selectedComponent}
+                onChange={(e) => setSelectedComponent(e.target.value)}
+                className="rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)]"
+              >
+                <option value="">Todos los componentes</option>
+                {Object.entries(COMPONENT_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="severity-filter" className="sr-only">
+                Filtrar por severidad
+              </label>
+              <select
+                id="severity-filter"
+                value={selectedSeverity}
+                onChange={(e) => setSelectedSeverity(e.target.value)}
+                className="rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)]"
+              >
+                <option value="">Todas las severidades</option>
+                {Object.entries(SEVERITY_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {isLoadingIssues ? (
+            <div className="flex min-h-[200px] items-center justify-center">
+              <p className="text-sm text-[var(--muted)]">Cargando base de averías conocidas…</p>
+            </div>
+          ) : issuesPage && issuesPage.items.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              {issuesPage.items.map((issue) => (
+                <KnownIssueCard key={issue.id} issue={issue} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-white p-8 text-center">
+              <CheckCircle2 aria-hidden size={32} className="text-[var(--success)]" />
+              <p className="text-sm font-medium text-[var(--foreground)]">
+                No hay problemas registrados con los filtros seleccionados.
+              </p>
+              <p className="text-xs text-[var(--muted)]">
+                Intente seleccionar otro componente o severidad.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Pestaña: Clasificaciones de Mercado */}
+      {activeTab === "classifications" && (
+        <section aria-labelledby="classifications-heading" className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+            <div>
+              <h2 id="classifications-heading" className="text-base font-bold text-[var(--foreground)]">
+                Clasificación de Modelos y Motores
+              </h2>
+              <p className="text-xs text-[var(--muted)]">
+                Categorización auditable y justificada de combinaciones mecánicas.
+              </p>
+            </div>
+
+            <label htmlFor="classification-status-filter" className="sr-only">
+              Filtrar por estatus
+            </label>
+            <select
+              id="classification-status-filter"
+              value={selectedClassificationStatus}
+              onChange={(e) => setSelectedClassificationStatus(e.target.value)}
+              className="rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)]"
+            >
+              <option value="">Todos los estatus</option>
+              <option value="WHITELIST">Lista Blanca (Recomendados)</option>
+              <option value="WATCHLIST">Bajo Observación (Precaución)</option>
+              <option value="BLACKLIST">Lista Negra (Desaconsejados)</option>
+            </select>
+          </div>
+
+          {isLoadingClassifications ? (
+            <div className="flex min-h-[200px] items-center justify-center">
+              <p className="text-sm text-[var(--muted)]">Cargando clasificaciones…</p>
+            </div>
+          ) : classificationsPage && classificationsPage.items.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {classificationsPage.items.map((cls) => {
+                const tone = classificationBadgeTone(cls.status);
+                return (
+                  <article
+                    key={cls.id}
+                    className="flex flex-col justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+                          Objetivo: {cls.target_type}
+                        </span>
+                        <Badge tone={tone}>{CLASSIFICATION_LABELS[cls.status]}</Badge>
+                      </div>
+                      <p className="text-sm font-medium text-[var(--foreground)]">
+                        {cls.rationale}
+                      </p>
+                    </div>
+                    <span className="text-[0.75rem] text-[var(--muted)]">
+                      ID Objetivo: {cls.target_id}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-white p-8 text-center">
+              <p className="text-sm font-medium text-[var(--foreground)]">
+                No hay clasificaciones con el filtro seleccionado.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Pestaña: Catálogo Mecánico Canónico */}
+      {activeTab === "catalog" && (
+        <section aria-labelledby="catalog-heading" className="flex flex-col gap-6">
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs">
+            <h2 id="catalog-heading" className="text-base font-bold text-[var(--foreground)] mb-1">
+              Jerarquía Técnica Canónica
+            </h2>
+            <p className="text-xs text-[var(--muted)] mb-4">
+              Seleccione un fabricante para explorar sus modelos, generaciones y motores asociados.
+            </p>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="catalog-mfg-select" className="block text-xs font-semibold mb-1">
+                  1. Fabricante / Marca:
+                </label>
+                <select
+                  id="catalog-mfg-select"
+                  value={selectedManufacturerId}
+                  onChange={(e) => {
+                    setSelectedManufacturerId(e.target.value);
+                    setSelectedModelId("");
+                  }}
+                  className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-white p-2 text-sm"
+                >
+                  <option value="">Seleccione marca…</option>
+                  {manufacturers?.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} {m.country ? `(${m.country})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedManufacturerId && (
+                <div>
+                  <label htmlFor="catalog-model-select" className="block text-xs font-semibold mb-1">
+                    2. Modelo:
+                  </label>
+                  <select
+                    id="catalog-model-select"
+                    value={selectedModelId}
+                    onChange={(e) => setSelectedModelId(e.target.value)}
+                    className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-white p-2 text-sm"
+                  >
+                    <option value="">Seleccione modelo…</option>
+                    {models?.map((mod) => (
+                      <option key={mod.id} value={mod.id}>
+                        {mod.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Motores del fabricante */}
+          {selectedManufacturerId && engines && engines.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs">
+              <h3 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
+                <Cpu aria-hidden size={16} /> Motores Registrados ({engines.length})
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {engines.map((eng) => (
+                  <div
+                    key={eng.id}
+                    className="flex flex-col gap-1 rounded border border-[var(--border)] bg-[var(--surface)] p-3 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-[var(--foreground)]">
+                        {eng.name}
+                      </span>
+                      <Badge tone="neutral">{eng.family_code}</Badge>
+                    </div>
+                    <p className="text-[var(--muted)]">
+                      Combustible: {eng.fuel_type} • Aspiración: {eng.aspiration}
+                      {eng.displacement_cc && ` • ${eng.displacement_cc} cc`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Generaciones del modelo seleccionado */}
+          {selectedModelId && generations && generations.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs">
+              <h3 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
+                <Layers aria-hidden size={16} /> Generaciones Documentadas
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {generations.map((gen) => (
+                  <div
+                    key={gen.id}
+                    className="flex flex-col gap-1 rounded border border-[var(--border)] bg-[var(--surface)] p-3 text-xs"
+                  >
+                    <span className="font-bold text-sm text-[var(--foreground)]">
+                      {gen.name}
+                    </span>
+                    <p className="text-[var(--muted)]">
+                      Años de producción: {gen.year_start} – {gen.year_end ?? "presente"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
