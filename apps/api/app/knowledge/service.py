@@ -273,6 +273,7 @@ class KnowledgeService:
         )
         session.add(ev)
         await session.flush()
+        ev.source = src
         return ev
 
     @staticmethod
@@ -444,7 +445,14 @@ class KnowledgeService:
         total = (await session.execute(total_stmt)).scalar_one()
 
         stmt = (
-            base_stmt.order_by(KnownIssue.severity.desc(), KnownIssue.title)
+            base_stmt.options(
+                selectinload(KnownIssue.evidences).selectinload(Evidence.source),
+                selectinload(KnownIssue.engines),
+                selectinload(KnownIssue.engine_variants),
+                selectinload(KnownIssue.generations),
+                selectinload(KnownIssue.transmissions),
+            )
+            .order_by(KnownIssue.severity.desc(), KnownIssue.title)
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
@@ -708,6 +716,7 @@ class KnowledgeService:
         )
         session.add(mit)
         await session.flush()
+        mit.known_issue = issue
         return mit
 
     @staticmethod
@@ -717,7 +726,15 @@ class KnowledgeService:
         stmt = (
             select(VehicleMitigation)
             .where(VehicleMitigation.vehicle_id == vehicle_id)
-            .options(selectinload(VehicleMitigation.known_issue))
+            .options(
+                selectinload(VehicleMitigation.known_issue)
+                .selectinload(KnownIssue.evidences)
+                .selectinload(Evidence.source),
+                selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.engines),
+                selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.engine_variants),
+                selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.generations),
+                selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.transmissions),
+            )
             .order_by(VehicleMitigation.applied_at.desc())
         )
         res = await session.execute(stmt)

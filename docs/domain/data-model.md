@@ -99,15 +99,36 @@ Notification → User + evento
 - `Search` / `SearchFilter` persistidos: la Fase 2/3 usa `SearchFilter` tipado en memoria
   (`app/search/schemas.py`) y registra las sincronizaciones en `SourceSyncRun`.
 
-## Knowledge Base
+## Knowledge Base (Implementado en Fase 4 — Migración 20260907_0005)
 
-- Jerarquía: `Manufacturer → Model → Generation → Engine → EngineVariant`; `Transmission` es independiente y relacionable.
-- `KnowledgeSource`: tipo, nombre, URL, publisher, fechas y nivel A–D.
-- `Evidence`: componente, problema, resumen/cita limitada, severidad, confianza y verificación.
-- `KnownIssue`: afirmación técnica con estado `DRAFT|REVIEWED|VERIFIED|DEPRECATED`; no existe como verificada sin evidencia suficiente.
-- `VehicleClassification`: `WHITELIST|WATCHLIST|BLACKLIST|UNKNOWN` sobre un objetivo tipado, con vigencia y evidencias.
+- **Jerarquía Técnica Canónica:**
+  - `manufacturers`: `id` (UUID PK), `name` (unique), `country`, timestamps.
+  - `vehicle_models`: `id` (UUID PK), `manufacturer_id` (FK), `name`, `(manufacturer_id, name)` unique.
+  - `vehicle_generations`: `id` (UUID PK), `model_id` (FK), `name`, `year_start`, `year_end`.
+  - `engines`: `id` (UUID PK), `manufacturer_id` (FK), `family_code` (unique por fabricante), `name`, `displacement_cc`, `fuel_type`, `aspiration`.
+  - `engine_variants`: `id` (UUID PK), `engine_id` (FK), `version_code`, `power_kw`, `power_cv`, `torque_nm`, `year_start`, `year_end`.
+  - `transmission_specs`: `id` (UUID PK), `manufacturer_id` (FK nullable), `code`, `name`, `type` (MANUAL, DUAL_CLUTCH, TORQUE_CONVERTER, CVT...), `gears`.
 
-Las mitigaciones de una unidad se vinculan a `Vehicle`/`Inspection`; nunca reescriben la reputación general.
+- **Fuentes Documentales Trazables (Plan Maestro §15):**
+  - `knowledge_sources`: `id` (UUID PK), `source_type` (`OFFICIAL_RECALL`, `STATISTICAL_REPORT`, `TECHNICAL_MEDIA`, `COMMUNITY_EXPERIENCE`), `name` (unique), `url`, `publisher`, `published_at`, `retrieved_at`, `trust_level` (`A` = oficial/recalls, `B` = estadística independiente TÜV/ADAC, `C` = prensa/talleres, `D` = foros), `notes`.
+  - `evidences`: `id` (UUID PK), `source_id` (FK), `component` (`TIMING_SYSTEM`, `ENGINE_INTERNAL`, etc.), `summary`, `severity` (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), `confidence_score` (`Numeric(4,3)` entre 0.0 y 1.0), `verified` (bool), `verified_by_user_id` (FK), `verified_at`.
+
+- **Problemas Conocidos y Afecciones Mecánicas:**
+  - `known_issues`: `id` (UUID PK), `title`, `description`, `component`, `severity`, `frequency` (`RARE`, `OCCASIONAL`, `FREQUENT`, `SYSTEMIC`), `typical_mileage_km`, `estimated_repair_cost_min` / `max` (`Numeric(10,2)`), `currency`, `symptoms`, `prevention`, `definitive_repair`, `has_recall_campaign` (bool), `recall_details`, `status` (`DRAFT`, `REVIEWED`, `VERIFIED`, `DEPRECATED`).
+  - Regla de integridad: No se permite estado `VERIFIED` sin evidencias asociadas.
+  - Tablas intermedias many-to-many:
+    - `known_issue_evidences`: `(known_issue_id, evidence_id)`
+    - `known_issue_engines`: `(known_issue_id, engine_id)`
+    - `known_issue_engine_variants`: `(known_issue_id, engine_variant_id)`
+    - `known_issue_generations`: `(known_issue_id, generation_id)`
+    - `known_issue_transmissions`: `(known_issue_id, transmission_id)`
+
+- **Clasificaciones de Fiabilidad:**
+  - `vehicle_classifications`: `id` (UUID PK), `target_type` (`MANUFACTURER`, `MODEL`, `GENERATION`, `ENGINE`, `ENGINE_VARIANT`, `TRANSMISSION`), `target_id` (UUID), `status` (`WHITELIST`, `WATCHLIST`, `BLACKLIST`, `UNKNOWN`), `rationale`, `validity_start`, `validity_end`.
+
+- **Mitigaciones a Nivel de Unidad:**
+  - `vehicle_mitigations`: `id` (UUID PK), `vehicle_id` (FK `vehicles`), `known_issue_id` (FK `known_issues`), `mitigation_type` (ej. `INVOICE_PROVED_REPLACEMENT`, `RECALL_COMPLETED`), `description`, `applied_at`, `verified_by_user_id`.
+  - Las mitigaciones acreditan que una unidad concreta ha solventado un defecto documentado sin modificar la clasificación general del motor en la base de conocimiento.
 
 ## Scoring y oportunidades
 

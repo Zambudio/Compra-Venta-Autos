@@ -59,7 +59,7 @@ límites declarados sin lógica de negocio hasta su fase.
 | auth/users/audit           | identidad, sesiones, roles y eventos auditables          | 1           |
 | search/connectors/listings/sources | filtros, adquisición permitida, normalización, ingesta, snapshots, health | 2 |
 | vehicles                   | identidad normalizada, deduplicación asistida, histórico y estimación de mercado | 3 (completada) |
-| knowledge                  | jerarquía técnica, problemas, fuentes y evidencias       | 4           |
+| knowledge                  | jerarquía técnica canónica, fuentes trazables A-D, evidencias, problemas conocidos, clasificaciones y lookup de fiabilidad | 4 (completada) |
 | scoring/opportunities      | perfiles, score y valoración explicable                  | 5           |
 | watchlist/inspections      | seguimiento y checklists                                 | 6           |
 | garage/finance             | propiedad, ledger, venta y ROI                           | 7           |

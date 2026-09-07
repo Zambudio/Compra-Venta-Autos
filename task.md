@@ -338,61 +338,68 @@ Reglas vigentes: CERO scraping; CERO uso de matrículas ni teléfonos en matchin
 Iniciada el 2026-09-07 en rama `feature/fase-4-knowledge-base`. Diseño registrado en [ADR-0014](docs/adr/0014-knowledge-base-and-evidence-system.md).
 Reglas vigentes: ninguna afirmación mecánica sin fuentes trazables (Plan Maestro §15); niveles de confianza A–D; clasificaciones White/Watch/Blacklist basadas en datos; mitigaciones a nivel de vehículo sin reescribir reputación general; cero agentes LLM decisores en MVP.
 
-### [ ] F4.1 — Jerarquía técnica de catálogo
+### [x] F4.1 — Jerarquía técnica de catálogo
 - **Objetivo:** modelar la taxonomía mecánica canónica para referenciar cualquier motorización y versión.
 - **Alcance:** modelos SQLAlchemy 2.0 `Manufacturer`, `VehicleModel`, `VehicleGeneration`, `Engine`, `EngineVariant`, `TransmissionSpec`; atributos estructurados (código de motor, cilindrada, combustible, potencias en kW/CV, par motor, rango de años); migración de esquema `20260907_0005_knowledge_base.py`.
 - **Dependencias:** cierre de Fase 3.
 - **Criterios de aceptación:** modelos con constraints e índices adecuados; sin duplicidades de códigos canónicos; tests de modelos limpios.
 - **Pruebas necesarias:** unit tests de modelos técnicos; migración probada con SQLite y PostgreSQL.
 - **Documentación afectada:** `docs/domain/data-model.md`, `docs/architecture/architecture.md`.
+- **Resultado:** Implementado en `apps/api/app/knowledge/models.py`. Modelos para taxonomía técnica completa, con tablas intermedias many-to-many. Migración `20260907_0005_knowledge_base.py` creada y aplicada. 8 tests unitarios específicos pasando al 100%.
 
-### [ ] F4.2 — Fuentes de conocimiento y Sistema de Evidencias
+### [x] F4.2 — Fuentes de conocimiento y Sistema de Evidencias
 - **Objetivo:** garantizar la trazabilidad obligatoria de toda afirmación técnica.
 - **Alcance:** modelos `KnowledgeSource` (tipo, nombre, url, editor, fechas, nivel de confianza A/B/C/D) y `Evidence` (componente, resumen, severidad, confianza, estado verificado); DTOs Pydantic sin exponer datos internos.
 - **Dependencias:** F4.1.
 - **Criterios de aceptación:** validación estricta de niveles A–D; prohibición de crear afirmaciones sin al menos una evidencia asociada.
 - **Pruebas necesarias:** unit `test_knowledge_sources_and_evidence.py`.
 - **Documentación afectada:** `docs/domain/data-model.md`, [ADR-0014](docs/adr/0014-knowledge-base-and-evidence-system.md).
+- **Resultado:** Modelos `KnowledgeSource` y `Evidence` con enums estrictos (`SourceTrustLevel` A-D, `KnowledgeSourceType`). Regla de dominio: imposible verificar un problema sin evidencias. DTOs Pydantic con validación de rangos y fechas UTC. Tests unitarios pasando.
 
-### [ ] F4.3 — Problemas conocidos y Afecciones Técnicas
+### [x] F4.3 — Problemas conocidos y Afecciones Técnicas
 - **Objetivo:** documentar y diagnosticar averías recurrentes, riesgos mecánicos y costes estimados.
 - **Alcance:** modelo `KnownIssue` (título, descripción, componente, severidad, frecuencia, kilometraje típico, costes mín/máx de reparación, síntomas, prevención, reparación definitiva, estado del ciclo de vida `DRAFT|REVIEWED|VERIFIED|DEPRECATED`); relaciones muchos-a-muchos con motores, variantes, generaciones y evidencias.
 - **Dependencias:** F4.1, F4.2.
 - **Criterios de aceptación:** sólo problemas en estado `VERIFIED` impactan en el diagnóstico de fiabilidad; cálculos de costes en `Decimal`; auditoría en cambios de estado.
 - **Pruebas necesarias:** unit `test_known_issues.py`.
 - **Documentación afectada:** `docs/domain/data-model.md`.
+- **Resultado:** Modelo `KnownIssue` con soporte para costes estimados en `Decimal`, severidad (`CRITICAL|HIGH|MEDIUM|LOW`), frecuencia (`SYSTEMIC|FREQUENT|OCCASIONAL|RARE`), indicador de campañas de retirada oficiales (`has_recall_campaign`) y 5 relaciones many-to-many. Tests de ciclo de vida pasando al 100%.
 
-### [ ] F4.4 — Clasificaciones basadas en datos (White / Watch / Blacklist)
+### [x] F4.4 — Clasificaciones basadas en datos (White / Watch / Blacklist)
 - **Objetivo:** categorizar modelos, motores y combinaciones según evidencia objetiva.
 - **Alcance:** modelo `VehicleClassification` con `target_type` (`MODEL|GENERATION|ENGINE|ENGINE_VARIANT|TRANSMISSION|COMBINATION`), `status` (`WHITELIST|WATCHLIST|BLACKLIST|UNKNOWN`), justificación técnica y vigencia temporal; soporte para mitigaciones específicas a nivel de vehículo.
 - **Dependencias:** F4.1, F4.3.
 - **Criterios de aceptación:** sin listas estáticas en código; derivación y resolución explicable de la clasificación más específica.
 - **Pruebas necesarias:** unit `test_classifications.py`.
 - **Documentación afectada:** [ADR-0014](docs/adr/0014-knowledge-base-and-evidence-system.md).
+- **Resultado:** Modelo `VehicleClassification` persistente con justificación técnica obligatoria. Modelo `VehicleMitigation` para registrar mitigaciones a nivel de unidad física sin alterar la reputación global del motor. Algoritmo explicable jerárquico (`BLACKLIST` > `WATCHLIST` > `WHITELIST`). Tests unitarios de clasificación y mitigación pasando al 100%.
 
-### [ ] F4.5 — Servicios, API REST y Lookup de Fiabilidad
+### [x] F4.5 — Servicios, API REST y Lookup de Fiabilidad
 - **Objetivo:** exponer los contratos de consulta y gestión de la base de conocimiento y resolver la fiabilidad de cualquier vehículo.
 - **Alcance:** servicio `KnowledgeService`; función de resolución `lookup_vehicle_reliability(brand, model, year, fuel_type, engine_code)`; endpoints REST bajo `/api/v1/knowledge` para jerarquía, fuentes, evidencias, problemas, clasificaciones y consulta rápida; control de acceso con CSRF y roles (`OWNER|ADMIN` para mutaciones); exportación de `openapi.json`.
 - **Dependencias:** F4.1–F4.4.
 - **Criterios de aceptación:** respuestas tipadas en DTOs; endpoints cubiertos; `export_openapi.py` sincronizado.
 - **Pruebas necesarias:** unit `test_knowledge_endpoints.py`.
 - **Documentación afectada:** `docs/api/openapi.json`.
+- **Resultado:** Servicio `KnowledgeService` con método puro determinista `lookup_vehicle_reliability` (cálculo de severidad máxima, acumulación de costes estimados mín/máx, detección de recalls oficiales y recomendaciones preventivas). Router completo `/api/v1/knowledge` con RBAC y CSRF. `docs/api/openapi.json` actualizado. 227 tests unitarios de backend pasando con 86.80% de cobertura.
 
-### [ ] F4.6 — Frontend (Wiki Técnica y Diagnóstico de Fiabilidad)
+### [x] F4.6 — Frontend (Wiki Técnica y Diagnóstico de Fiabilidad)
 - **Objetivo:** proporcionar interfaz web para consultar la base de conocimiento, explorar problemas conocidos con sus evidencias y visualizar la fiabilidad en la ficha del vehículo.
 - **Alcance:** pestaña `Conocimiento` en la barra de navegación; vista de catálogo técnico y jerarquía; vista de detalle de problema conocido con desglose de severidad, costes y evidencias (con badges de nivel de confianza A–D); vista de clasificaciones (Whitelist/Watchlist/Blacklist); widget integrado en la vista de detalle de vehículo (`VehicleDetail`).
 - **Dependencias:** F4.5.
 - **Criterios de aceptación:** diseño limpio y responsivo con Tailwind; navegación por teclado; cero violaciones de accesibilidad (`vitest-axe`); mutaciones con TanStack Query.
 - **Pruebas necesarias:** Vitest + Testing Library + `vitest-axe` para todos los componentes nuevos.
 - **Documentación afectada:** `README.md`.
+- **Resultado:** Creado módulo `apps/web/src/features/knowledge/` con `KnowledgeView` (3 subpestañas: Problemas Conocidos, Clasificaciones, Catálogo Mecánico Canónico), `KnownIssueCard` (acordeón accesible de evidencias y costes), `VehicleReliabilityWidget` integrado en `VehicleDetail` (diagnóstico explicable, indicador de recall, recomendación y alta de mitigaciones). 99/99 tests pasando al 100% con 91.73% de cobertura y 0 violaciones de accesibilidad (`vitest-axe`). `next build --webpack` compilado con éxito.
 
-### [ ] F4.7 — Testing, Calidad, Despliegue en NAS y Cierre de Fase 4
+### [x] F4.7 — Testing, Calidad, Despliegue en NAS y Cierre de Fase 4
 - **Objetivo:** validar todos los gates de calidad, aplicar la migración en el NAS, comprobar funcionamiento en vivo y emitir el informe de cierre.
 - **Alcance:** seed de casos de referencia del mercado español (1.2 PureTech EB2 como Blacklist por correa bañada; 1.9 TDI 90/110cv como Whitelist; 1.4 TSI EA111 como Watchlist por cadena); linters y tipado estricto al 100%; migración `0005` ejecutada en PostgreSQL del NAS; smoke test automatizado en vivo; emisión de `INFORME_CIERRE_FASE_4.md`.
 - **Dependencias:** F4.1–F4.6.
 - **Criterios de aceptación:** 6 contenedores saludables en el NAS; smoke test en vivo 100% exitoso; informe de cierre emitido sin avanzar a Fase 5.
 - **Pruebas necesarias:** matriz completa de gates de calidad y smoke tests en NAS.
 - **Documentación afectada:** toda la documentación del proyecto.
+- **Resultado:** Stack Docker reconstruido y desplegado en Synology NAS (`motorscope-api-1`, `motorscope-web-1`, `motorscope-worker-1`). Migración `20260907_0005_knowledge_base.py` ejecutada en PostgreSQL 18. Script `smoke_test_fase4.py` ejecutado contra el NAS con 8/8 pasos superados (100% OK), poblando y verificando los 3 casos canónicos (Peugeot EB2 Blacklist con recall, SEAT 1.9 TDI Whitelist, VW EA111 Watchlist), alta de mitigación y comprobación de interfaz web en `http://192.168.1.3:3080`. Documentación y cierre completados.
 
 ## Fases posteriores — no autorizadas en este cambio
 

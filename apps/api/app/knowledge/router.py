@@ -294,8 +294,9 @@ async def create_evidence(
     del auth
     try:
         ev = await KnowledgeService.create_evidence(db, data)
+        result = EvidenceRead.model_validate(ev)
         await db.commit()
-        return EvidenceRead.model_validate(ev)
+        return result
     except KnowledgeSourceNotFoundError as exc:
         raise APIError(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -350,8 +351,9 @@ async def create_known_issue(
 ) -> KnownIssueRead:
     try:
         issue = await KnowledgeService.create_known_issue(db, data, user_id=auth.user.id)
+        result = KnownIssueRead.model_validate(issue)
         await db.commit()
-        return KnownIssueRead.model_validate(issue)
+        return result
     except IssueCannotBeVerifiedWithoutEvidenceError as exc:
         raise APIError(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -398,8 +400,9 @@ async def update_known_issue(
 ) -> KnownIssueRead:
     try:
         issue = await KnowledgeService.update_known_issue(db, issue_id, data, user_id=auth.user.id)
+        result = KnownIssueRead.model_validate(issue)
         await db.commit()
-        return KnownIssueRead.model_validate(issue)
+        return result
     except KnownIssueNotFoundError as exc:
         raise APIError(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -457,8 +460,9 @@ async def create_classification(
 ) -> VehicleClassificationRead:
     del auth
     c = await KnowledgeService.create_classification(db, data)
+    result = VehicleClassificationRead.model_validate(c)
     await db.commit()
-    return VehicleClassificationRead.model_validate(c)
+    return result
 
 
 # --- Diagnóstico y Lookup de Fiabilidad ---
@@ -546,5 +550,25 @@ async def add_vehicle_mitigation(
 ) -> VehicleMitigationRead:
     data.vehicle_id = vehicle_id
     mit = await KnowledgeService.add_vehicle_mitigation(db, data, user_id=auth.user.id)
+    result = VehicleMitigationRead.model_validate(mit)
     await db.commit()
-    return VehicleMitigationRead.model_validate(mit)
+    return result
+
+
+@router.post(
+    "/mitigations",
+    response_model=VehicleMitigationRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Acreditar mitigación en un vehículo (ruta directa)",
+    responses={403: {"model": ErrorBody}},
+)
+async def add_vehicle_mitigation_direct(
+    data: VehicleMitigationCreate,
+    auth: CsrfDependency,
+    db: DbDependency,
+    _roles: _MutatingAuth,
+) -> VehicleMitigationRead:
+    mit = await KnowledgeService.add_vehicle_mitigation(db, data, user_id=auth.user.id)
+    result = VehicleMitigationRead.model_validate(mit)
+    await db.commit()
+    return result
