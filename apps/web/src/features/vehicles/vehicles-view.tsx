@@ -1,5 +1,14 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { Car, Filter, GitMerge, Layers, Search } from "lucide-react";
+import {
+  CarFront,
+  ChevronLeft,
+  ChevronRight,
+  GitMerge,
+  Layers3,
+  Search,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,18 +18,18 @@ import { getMatchCandidates, getVehicles } from "@/features/vehicles/api";
 import { MatchCandidatesView } from "@/features/vehicles/match-candidates-view";
 import { VehicleCard } from "@/features/vehicles/vehicle-card";
 import { VehicleDetail } from "@/features/vehicles/vehicle-detail";
-import type { Vehicle } from "@/features/vehicles/types";
 
 type SubTab = "catalog" | "candidates";
 
 export function VehiclesView() {
   const [activeTab, setActiveTab] = useState<SubTab>("catalog");
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(
+    null,
+  );
   const [brandFilter, setBrandFilter] = useState("");
   const [modelFilter, setModelFilter] = useState("");
   const [page, setPage] = useState(1);
 
-  // Consulta de candidatos pendientes para mostrar el contador en el badge
   const { data: candidatesData } = useQuery({
     queryKey: ["match-candidates", "PENDING"],
     queryFn: () => getMatchCandidates("PENDING", 1, 1),
@@ -28,8 +37,12 @@ export function VehiclesView() {
 
   const pendingCount = candidatesData?.total ?? 0;
 
-  // Consulta de vehículos
-  const { data: vehiclesData, isLoading, isError, error } = useQuery({
+  const {
+    data: vehiclesData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["vehicles", page, brandFilter, modelFilter],
     queryFn: () =>
       getVehicles({
@@ -43,7 +56,7 @@ export function VehiclesView() {
 
   if (selectedVehicleId) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-8 sm:px-10">
+      <div className="page-frame">
         <VehicleDetail
           vehicleId={selectedVehicleId}
           onBack={() => setSelectedVehicleId(null)}
@@ -53,180 +66,217 @@ export function VehiclesView() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8 sm:px-10">
-      {/* Navegación interna de la sección Vehículos */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div className="flex items-center gap-2">
-          <Car aria-hidden size={24} className="text-[var(--accent)]" />
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
-            Vehículos y Mercado
-          </h1>
+    <div className="page-frame">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <p className="eyebrow">Inventario / Identidad</p>
+          <h1 className="page-title mt-1">Vehículos y Mercado</h1>
+          <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
+            Reúne anuncios del mismo vehículo, valida coincidencias y analiza
+            cada unidad como una única oportunidad.
+          </p>
         </div>
 
-        <nav aria-label="Subsecciones de vehículos" className="flex items-center gap-2">
+        <nav
+          aria-label="Subsecciones de vehículos"
+          className="inline-flex self-start rounded-[0.625rem] bg-[var(--surface-inset)] p-1"
+        >
           <button
             type="button"
             onClick={() => setActiveTab("catalog")}
             aria-current={activeTab === "catalog" ? "true" : undefined}
-            className={`inline-flex min-h-10 items-center gap-2 rounded-[var(--radius)] px-4 text-sm font-medium transition-colors ${
-              activeTab === "catalog"
-                ? "bg-[var(--surface-hover)] text-[var(--foreground)]"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
+            className={`inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-control)] px-3.5 text-xs font-semibold transition-[background-color,color,box-shadow] ${activeTab === "catalog" ? "bg-[var(--surface-raised)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
           >
-            <Layers aria-hidden size={16} />
+            <Layers3 aria-hidden size={16} />
             Catálogo Unificado
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("candidates")}
             aria-current={activeTab === "candidates" ? "true" : undefined}
-            className={`inline-flex min-h-10 items-center gap-2 rounded-[var(--radius)] px-4 text-sm font-medium transition-colors ${
-              activeTab === "candidates"
-                ? "bg-[var(--surface-hover)] text-[var(--foreground)]"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
+            className={`inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-control)] px-3.5 text-xs font-semibold transition-[background-color,color,box-shadow] ${activeTab === "candidates" ? "bg-[var(--surface-raised)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
           >
             <GitMerge aria-hidden size={16} />
             Deduplicación
-            {pendingCount > 0 && (
-              <Badge tone="warning">
-                {pendingCount}
-              </Badge>
-            )}
+            {pendingCount > 0 ? (
+              <Badge tone="warning">{pendingCount}</Badge>
+            ) : null}
           </button>
         </nav>
       </div>
 
       {activeTab === "candidates" ? (
-        <MatchCandidatesView />
+        <div className="mt-8">
+          <MatchCandidatesView />
+        </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {/* Filtros de búsqueda */}
+        <div className="mt-8 flex flex-col gap-7">
           <section
             aria-labelledby="vehicles-search-heading"
-            className="flex flex-wrap items-end gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs"
+            className="workbench-panel flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:p-5"
           >
-            <h2 id="vehicles-search-heading" className="sr-only">
-              Búsqueda de vehículos unificados
-            </h2>
-            <div className="flex-1 min-w-[200px]">
-              <label htmlFor="vehicle-brand-filter" className="mb-1 block text-xs font-semibold text-[var(--foreground)]">
+            <div className="flex items-center gap-3 sm:self-center">
+              <span className="grid h-9 w-9 place-items-center rounded-[var(--radius-control)] bg-[var(--accent-soft)] text-[var(--accent)]">
+                <Search aria-hidden size={17} />
+              </span>
+              <div>
+                <h2 id="vehicles-search-heading" className="section-title">
+                  Buscar unidad
+                </h2>
+                <p className="text-xs text-[var(--muted)]">
+                  Marca y modelo canónicos
+                </p>
+              </div>
+            </div>
+            <div className="min-w-[12rem] flex-1">
+              <label
+                htmlFor="vehicle-brand-filter"
+                className="mb-1.5 block text-xs font-semibold text-[var(--foreground-secondary)]"
+              >
                 Marca
               </label>
               <Input
                 id="vehicle-brand-filter"
                 type="search"
-                placeholder="Ej. SEAT, Volkswagen…"
+                placeholder="SEAT, Volkswagen…"
                 value={brandFilter}
-                onChange={(e) => {
-                  setBrandFilter(e.target.value);
+                onChange={(event) => {
+                  setBrandFilter(event.target.value);
                   setPage(1);
                 }}
               />
             </div>
-            <div className="flex-1 min-w-[200px]">
-              <label htmlFor="vehicle-model-filter" className="mb-1 block text-xs font-semibold text-[var(--foreground)]">
+            <div className="min-w-[12rem] flex-1">
+              <label
+                htmlFor="vehicle-model-filter"
+                className="mb-1.5 block text-xs font-semibold text-[var(--foreground-secondary)]"
+              >
                 Modelo
               </label>
               <Input
                 id="vehicle-model-filter"
                 type="search"
-                placeholder="Ej. Ibiza, Golf…"
+                placeholder="Ibiza, Golf…"
                 value={modelFilter}
-                onChange={(e) => {
-                  setModelFilter(e.target.value);
+                onChange={(event) => {
+                  setModelFilter(event.target.value);
                   setPage(1);
                 }}
               />
             </div>
-            {(brandFilter || modelFilter) && (
-              <button
-                type="button"
+            {brandFilter || modelFilter ? (
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setBrandFilter("");
                   setModelFilter("");
                   setPage(1);
                 }}
-                className="min-h-10 px-3 text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                Limpiar filtros
-              </button>
-            )}
+                Limpiar
+              </Button>
+            ) : null}
           </section>
 
-          {/* Estado de carga */}
-          {isLoading && (
-            <div className="flex min-h-[250px] items-center justify-center" aria-live="polite">
-              <p className="text-sm text-[var(--muted)]">Cargando vehículos unificados…</p>
+          {isLoading ? (
+            <div
+              className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+              aria-live="polite"
+              aria-label="Cargando vehículos unificados"
+            >
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-inset)]"
+                />
+              ))}
             </div>
-          )}
+          ) : null}
 
-          {/* Error */}
-          {isError && (
-            <div className="p-4" role="alert">
-              <p className="text-sm font-medium text-[var(--danger)]">
-                {error instanceof Error ? error.message : "Error al cargar la lista de vehículos."}
+          {isError ? (
+            <div className="empty-state text-[var(--danger)]" role="alert">
+              <p className="font-semibold">
+                {error instanceof Error
+                  ? error.message
+                  : "Error al cargar la lista de vehículos."}
               </p>
             </div>
-          )}
+          ) : null}
 
-          {/* Catálogo vacío */}
-          {!isLoading && !isError && vehiclesData?.items.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-12 text-center">
-              <Car aria-hidden size={40} className="text-[var(--muted)]" />
-              <h3 className="text-base font-bold text-[var(--foreground)]">
-                No se encontraron vehículos unificados
-              </h3>
-              <p className="max-w-md text-sm text-[var(--muted)]">
-                Los vehículos se generan al confirmar coincidencias entre anuncios duplicados en la sección de Deduplicación.
-              </p>
+          {!isLoading && !isError && vehiclesData?.items.length === 0 ? (
+            <div className="empty-state">
+              <CarFront aria-hidden size={38} className="text-[var(--muted)]" />
+              <div>
+                <h3 className="font-semibold">
+                  No se encontraron vehículos unificados
+                </h3>
+                <p className="mt-1 max-w-md text-sm text-[var(--muted)]">
+                  Confirma coincidencias entre anuncios en Deduplicación para
+                  construir el inventario consolidado.
+                </p>
+              </div>
             </div>
-          )}
+          ) : null}
 
-          {/* Grid de vehículos */}
-          {!isLoading && !isError && vehiclesData && vehiclesData.items.length > 0 && (
+          {!isLoading &&
+          !isError &&
+          vehiclesData &&
+          vehiclesData.items.length > 0 ? (
             <>
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Inventario consolidado</p>
+                  <p className="mt-0.5 text-sm font-semibold">
+                    <span className="font-data">{vehiclesData.total}</span>{" "}
+                    unidades identificadas
+                  </p>
+                </div>
+                <p className="text-xs text-[var(--muted)]">
+                  Página <span className="font-data">{page}</span>
+                </p>
+              </div>
               <div
-                className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
                 aria-label="Catálogo de vehículos"
               >
                 {vehiclesData.items.map((vehicle) => (
                   <VehicleCard
                     key={vehicle.id}
                     vehicle={vehicle}
-                    onSelect={(v) => setSelectedVehicleId(v.id)}
+                    onSelect={(selected) => setSelectedVehicleId(selected.id)}
                   />
                 ))}
               </div>
-
-              {/* Paginación */}
-              <div className="flex items-center justify-between border-t border-[var(--border)] pt-4">
+              <div className="flex items-center justify-between border-t border-[var(--border)] pt-5">
                 <span className="text-xs text-[var(--muted)]">
-                  Total: {vehiclesData.total} {vehiclesData.total === 1 ? "vehículo" : "vehículos"}
+                  Total: <span className="font-data">{vehiclesData.total}</span>{" "}
+                  {vehiclesData.total === 1 ? "vehículo" : "vehículos"}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  <Button
+                    variant="secondary"
+                    size="compact"
+                    onClick={() =>
+                      setPage((current) => Math.max(1, current - 1))
+                    }
                     disabled={page === 1}
-                    className="min-h-9 rounded-[var(--radius)] border border-[var(--border)] px-3 text-xs font-medium disabled:opacity-50"
                   >
+                    <ChevronLeft aria-hidden size={16} />
                     Anterior
-                  </button>
-                  <span className="text-xs text-[var(--muted)]">Página {page}</span>
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => p + 1)}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="compact"
+                    onClick={() => setPage((current) => current + 1)}
                     disabled={!vehiclesData.has_more}
-                    className="min-h-9 rounded-[var(--radius)] border border-[var(--border)] px-3 text-xs font-medium disabled:opacity-50"
                   >
                     Siguiente
-                  </button>
+                    <ChevronRight aria-hidden size={16} />
+                  </Button>
                 </div>
               </div>
             </>
-          )}
+          ) : null}
         </div>
       )}
     </div>

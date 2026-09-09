@@ -1,15 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #101820;
-  --muted: #5f666d;
-  --border: #d7d9dc;
-  --accent: #004b70;
-  --accent-hover: #003b59;
-  --success: #00866a;
-  --danger: #a6262e;
+  --canvas: #f2f2ed;
+  --background: #f7f7f3;
+  --surface: #fbfbf8;
+  --surface-raised: #ffffff;
+  --surface-inset: #eeeee8;
+  --surface-hover: #e9ece6;
+  --foreground: #17201d;
+  --foreground-secondary: #3e4945;
+  --muted: #68726e;
+  --muted-soft: #929a96;
+  --border: rgba(23, 32, 29, 0.11);
+  --border-strong: rgba(23, 32, 29, 0.2);
+  --accent: #0f6656;
+  --accent-hover: #0a5145;
+  --accent-soft: #e2eee9;
+  --success: #1b725f;
+  --success-soft: #e1efe9;
+  --warning: #956116;
+  --warning-soft: #f5ead7;
+  --danger: #a3433c;
+  --danger-soft: #f7e7e4;
+  --control-bg: #efefe9;
+  --control-border: rgba(23, 32, 29, 0.14);
+  --focus-ring: rgba(15, 102, 86, 0.22);
   --radius: 0.5rem;
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-panel: 1rem;
+  --shadow-card:
+    0 0 0 1px rgba(23, 32, 29, 0.025), 0 1px 2px rgba(23, 32, 29, 0.04),
+    0 6px 18px rgba(23, 32, 29, 0.035);
+  --shadow-raised:
+    0 0 0 1px rgba(23, 32, 29, 0.04), 0 2px 4px rgba(23, 32, 29, 0.05),
+    0 16px 40px rgba(23, 32, 29, 0.08);
 }
 
 * {
@@ -21,26 +46,122 @@ body {
   min-height: 100%;
 }
 
+html {
+  background: var(--canvas);
+}
+
 body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1rem;
+  font-family: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-size: 0.9375rem;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
+}
+
+button,
+a,
+select {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+.font-display {
+  font-family: "Bahnschrift", "Aptos Display", "Segoe UI Variable", sans-serif;
+  font-stretch: condensed;
+}
+
+.font-data {
+  font-family: "Bahnschrift", "Aptos", "Segoe UI Variable", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-frame {
+  width: min(100%, 90rem);
+  margin-inline: auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.workbench-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.eyebrow {
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1.25rem;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: var(--foreground);
+  font-family: "Bahnschrift", "Aptos Display", "Segoe UI Variable", sans-serif;
+  font-size: clamp(1.75rem, 1.3rem + 1vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.section-title {
+  color: var(--foreground);
+  font-family: "Bahnschrift", "Aptos Display", "Segoe UI Variable", sans-serif;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.empty-state {
+  display: flex;
+  min-height: 16rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  padding: 2rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .page-frame {
+    padding: 2.5rem 2rem 5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-frame {
+    padding-inline: 2.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

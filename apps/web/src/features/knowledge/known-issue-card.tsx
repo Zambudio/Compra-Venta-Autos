@@ -1,4 +1,11 @@
-import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink, ShieldAlert, Wrench } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  ShieldAlert,
+  Wrench,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +32,7 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
 
   return (
     <article
-      className="flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-white p-5 shadow-xs transition-shadow hover:shadow-sm"
+      className="flex flex-col rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-raised)]"
       aria-labelledby={`issue-title-${issue.id}`}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -56,7 +63,11 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
             Componente: {COMPONENT_LABELS[issue.component] ?? issue.component} •{" "}
             Frecuencia: {FREQUENCY_LABELS[issue.frequency] ?? issue.frequency}
             {issue.typical_mileage_km != null && (
-              <> • Kilometraje típico: ~{issue.typical_mileage_km.toLocaleString("es-ES")} km</>
+              <>
+                {" "}
+                • Kilometraje típico: ~
+                {issue.typical_mileage_km.toLocaleString("es-ES")} km
+              </>
             )}
           </p>
         </div>
@@ -65,12 +76,13 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
         <div className="text-left sm:text-right">
           <span className="text-xs text-[var(--muted)]">Coste estimado:</span>
           <p className="text-sm font-bold text-[var(--foreground)]">
-            {formatEuro(issue.estimated_repair_cost_min)} – {formatEuro(issue.estimated_repair_cost_max)}
+            {formatEuro(issue.estimated_repair_cost_min)} –{" "}
+            {formatEuro(issue.estimated_repair_cost_max)}
           </p>
         </div>
       </div>
 
-      <p className="mt-3 text-sm text-[var(--foreground)] leading-relaxed">
+      <p className="mt-3 text-sm leading-relaxed text-[var(--foreground)]">
         {issue.description}
       </p>
 
@@ -89,7 +101,8 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
             </>
           ) : (
             <>
-              <ChevronDown aria-hidden size={14} /> Síntomas, prevención y evidencias ({issue.evidences?.length ?? 0})
+              <ChevronDown aria-hidden size={14} /> Síntomas, prevención y
+              evidencias ({issue.evidences?.length ?? 0})
             </>
           )}
         </button>
@@ -98,12 +111,16 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
       {expanded && (
         <div
           id={`issue-details-${issue.id}`}
-          className="mt-4 flex flex-col gap-4 rounded-[var(--radius)] bg-[var(--surface)] p-4 text-xs"
+          className="mt-4 flex flex-col gap-4 rounded-[var(--radius-card)] bg-[var(--surface-inset)] p-4 text-xs"
         >
           {issue.symptoms && (
             <div>
-              <span className="font-semibold text-[var(--foreground)] flex items-center gap-1">
-                <AlertTriangle aria-hidden size={13} className="text-[var(--warning)]" />
+              <span className="flex items-center gap-1 font-semibold text-[var(--foreground)]">
+                <AlertTriangle
+                  aria-hidden
+                  size={13}
+                  className="text-[var(--warning)]"
+                />
                 Síntomas y alertas tempranas:
               </span>
               <p className="mt-1 text-[var(--muted)]">{issue.symptoms}</p>
@@ -121,21 +138,25 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
 
           {issue.definitive_repair && (
             <div>
-              <span className="font-semibold text-[var(--foreground)] flex items-center gap-1">
+              <span className="flex items-center gap-1 font-semibold text-[var(--foreground)]">
                 <Wrench aria-hidden size={13} />
                 Solución o reparación definitiva:
               </span>
-              <p className="mt-1 text-[var(--muted)]">{issue.definitive_repair}</p>
+              <p className="mt-1 text-[var(--muted)]">
+                {issue.definitive_repair}
+              </p>
             </div>
           )}
 
           {issue.recall_details && (
             <div className="rounded border border-[var(--danger)]/30 bg-[var(--danger)]/5 p-2.5">
-              <span className="font-semibold text-[var(--danger)] flex items-center gap-1">
+              <span className="flex items-center gap-1 font-semibold text-[var(--danger)]">
                 <ShieldAlert aria-hidden size={13} />
                 Detalles del Recall / Campaña:
               </span>
-              <p className="mt-1 text-[var(--danger)]">{issue.recall_details}</p>
+              <p className="mt-1 text-[var(--danger)]">
+                {issue.recall_details}
+              </p>
             </div>
           )}
 
@@ -149,13 +170,16 @@ export function KnownIssueCard({ issue }: KnownIssueCardProps) {
                 {issue.evidences.map((ev) => (
                   <li
                     key={ev.id}
-                    className="flex flex-col gap-1 rounded border border-[var(--border)] bg-white p-2.5"
+                    className="flex flex-col gap-1 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-raised)] p-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         {ev.source && (
-                          <Badge tone={trustLevelBadgeTone(ev.source.trust_level)}>
-                            {TRUST_LEVEL_LABELS[ev.source.trust_level] ?? ev.source.trust_level}
+                          <Badge
+                            tone={trustLevelBadgeTone(ev.source.trust_level)}
+                          >
+                            {TRUST_LEVEL_LABELS[ev.source.trust_level] ??
+                              ev.source.trust_level}
                           </Badge>
                         )}
                         <span className="font-medium text-[var(--foreground)]">

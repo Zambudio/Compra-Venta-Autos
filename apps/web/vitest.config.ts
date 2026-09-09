@@ -4,8 +4,9 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-// Anchor to this file's directory, not the invocation cwd: pnpm workspace runs
-// and UNC-mapped drives otherwise resolve the root inconsistently.
+// Keep aliases anchored to the config, but let Vitest resolve its root from the
+// package cwd. Passing an absolute UNC root makes Vite duplicate the share path
+// on Windows network drives.
 const webRoot = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
@@ -17,7 +18,7 @@ export default defineConfig({
   },
 
   test: {
-    root: webRoot,
+    root: ".",
     include: ["src/**/*.test.{ts,tsx}"],
     exclude: ["tests/e2e/**", "node_modules/**"],
     environment: "jsdom",

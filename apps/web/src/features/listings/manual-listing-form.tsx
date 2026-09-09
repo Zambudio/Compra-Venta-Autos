@@ -218,7 +218,7 @@ export function ManualListingForm({
         >
           {(p) => (
             <textarea
-              className="min-h-24 w-full rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-2 text-[0.9375rem] outline-none focus:border-[var(--accent)]"
+              className="min-h-28 w-full resize-y rounded-[var(--radius-control)] border border-[var(--control-border)] bg-[var(--control-bg)] px-3.5 py-3 text-sm transition-[background-color,border-color,box-shadow] outline-none focus:border-[var(--accent)] focus:bg-[var(--surface-raised)] focus:ring-4 focus:ring-[var(--focus-ring)]"
               {...p}
               {...register("description")}
             />

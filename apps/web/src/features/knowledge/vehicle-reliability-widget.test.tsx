@@ -36,7 +36,8 @@ const mockReliability: ReliabilityLookupResponse = {
   fuel_type: "PETROL",
   engine_code: "EB2",
   classification: "BLACKLIST",
-  classification_rationale: "Motor EB2 PureTech con correa en baño de aceite y avería catastrófica documentada.",
+  classification_rationale:
+    "Motor EB2 PureTech con correa en baño de aceite y avería catastrófica documentada.",
   issues_count: 1,
   max_severity: "CRITICAL",
   total_estimated_repair_min: "1000.00",
@@ -83,10 +84,7 @@ const mockMitigations: VehicleMitigation[] = [
     verified_by_user_id: null,
     created_at: "2026-01-15T00:00:00Z",
     updated_at: "2026-01-15T00:00:00Z",
-    known_issue: {
-      id: "iss-1",
-      title: "Degradación de correa húmeda",
-    } as any,
+    known_issue: mockReliability.issues[0]!,
   },
 ];
 
@@ -104,28 +102,36 @@ test("renders reliability diagnosis with Blacklist badge, recalls and recommenda
     expect(screen.getByText(/Lista Negra/i)).toBeInTheDocument();
   });
 
-  expect(screen.getByText(/Motor EB2 PureTech con correa en baño de aceite/i)).toBeInTheDocument();
-  expect(screen.getByText(/Campaña oficial de revisión o recall detectada/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Motor EB2 PureTech con correa en baño de aceite/i),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Campaña oficial de revisión o recall detectada/i),
+  ).toBeInTheDocument();
   expect(screen.getAllByText(/1\.?000/).length).toBeGreaterThan(0);
   expect(screen.getAllByText(/4\.?000/).length).toBeGreaterThan(0);
   expect(screen.getByText(/PSA B71 2010/i)).toBeInTheDocument();
-  expect(screen.getByText(/Correa sustituida a los 75\.000 km/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Correa sustituida a los 75\.000 km/i),
+  ).toBeInTheDocument();
 });
 
 test("allows adding a vehicle-level mitigation", async () => {
   vi.spyOn(api, "lookupVehicleReliability").mockResolvedValue(mockReliability);
   vi.spyOn(api, "getVehicleMitigations").mockResolvedValue([]);
-  const addMitigationSpy = vi.spyOn(api, "addVehicleMitigation").mockResolvedValue({
-    id: "mit-2",
-    vehicle_id: "veh-123",
-    known_issue_id: "iss-1",
-    mitigation_type: "INVOICE_PROVED_REPLACEMENT",
-    description: "Nueva correa instalada",
-    applied_at: "2026-02-01T00:00:00Z",
-    verified_by_user_id: null,
-    created_at: "2026-02-01T00:00:00Z",
-    updated_at: "2026-02-01T00:00:00Z",
-  });
+  const addMitigationSpy = vi
+    .spyOn(api, "addVehicleMitigation")
+    .mockResolvedValue({
+      id: "mit-2",
+      vehicle_id: "veh-123",
+      known_issue_id: "iss-1",
+      mitigation_type: "INVOICE_PROVED_REPLACEMENT",
+      description: "Nueva correa instalada",
+      applied_at: "2026-02-01T00:00:00Z",
+      verified_by_user_id: null,
+      created_at: "2026-02-01T00:00:00Z",
+      updated_at: "2026-02-01T00:00:00Z",
+    });
 
   renderWithClient(<VehicleReliabilityWidget vehicle={mockVehicle} />);
 
@@ -133,7 +139,9 @@ test("allows adding a vehicle-level mitigation", async () => {
     expect(screen.getByText(/Registrar mitigación/i)).toBeInTheDocument();
   });
 
-  await userEvent.click(screen.getByRole("button", { name: /registrar mitigación/i }));
+  await userEvent.click(
+    screen.getByRole("button", { name: /registrar mitigación/i }),
+  );
 
   const input = screen.getByLabelText(/Evidencia \/ Factura acreditativa:/i);
   await userEvent.type(input, "Factura de concesionario oficial");
@@ -154,7 +162,9 @@ test("vehicle reliability widget has no accessibility violations", async () => {
   vi.spyOn(api, "lookupVehicleReliability").mockResolvedValue(mockReliability);
   vi.spyOn(api, "getVehicleMitigations").mockResolvedValue(mockMitigations);
 
-  const { container } = renderWithClient(<VehicleReliabilityWidget vehicle={mockVehicle} />);
+  const { container } = renderWithClient(
+    <VehicleReliabilityWidget vehicle={mockVehicle} />,
+  );
 
   await waitFor(() => {
     expect(screen.getByText(/Lista Negra/i)).toBeInTheDocument();

@@ -18,8 +18,11 @@ export function Field({ id, label, error, hint, children }: FieldProps) {
   const describedBy = [errorId, hintId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div>
-      <label className="mb-1.5 block text-sm font-medium" htmlFor={id}>
+    <div className="min-w-0">
+      <label
+        className="mb-1.5 block text-xs font-semibold text-[var(--foreground-secondary)]"
+        htmlFor={id}
+      >
         {label}
       </label>
       {children({
@@ -28,12 +31,15 @@ export function Field({ id, label, error, hint, children }: FieldProps) {
         "aria-describedby": describedBy,
       })}
       {hint ? (
-        <p id={hintId} className="mt-1 text-xs text-[var(--muted)]">
+        <p id={hintId} className="mt-1.5 text-xs text-[var(--muted)]">
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} className="mt-1.5 text-sm text-[var(--danger)]">
+        <p
+          id={errorId}
+          className="mt-1.5 text-xs font-medium text-[var(--danger)]"
+        >
           {error}
         </p>
       ) : null}

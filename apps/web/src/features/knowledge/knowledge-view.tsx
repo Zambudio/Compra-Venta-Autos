@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertOctagon,
   AlertTriangle,
   BookOpen,
   CheckCircle2,
   Cpu,
   Layers,
-  Search,
   ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
@@ -28,11 +26,8 @@ import {
 } from "./format";
 import { KnownIssueCard } from "./known-issue-card";
 import type {
-  ClassificationStatus,
   Engine,
-  IssueSeverity,
   Manufacturer,
-  VehicleComponent,
   VehicleGeneration,
   VehicleModel,
 } from "./types";
@@ -51,7 +46,8 @@ export function KnowledgeView() {
     useState<string>("");
 
   // Catálogo jerárquico
-  const [selectedManufacturerId, setSelectedManufacturerId] = useState<string>("");
+  const [selectedManufacturerId, setSelectedManufacturerId] =
+    useState<string>("");
   const [selectedModelId, setSelectedModelId] = useState<string>("");
 
   // Consultas
@@ -98,36 +94,44 @@ export function KnowledgeView() {
 
   const { data: engines } = useQuery<Engine[]>({
     queryKey: ["engines", selectedManufacturerId],
-    queryFn: () => getEngines({ manufacturerId: selectedManufacturerId || undefined }),
+    queryFn: () =>
+      getEngines({ manufacturerId: selectedManufacturerId || undefined }),
     enabled: activeTab === "catalog" && Boolean(selectedManufacturerId),
   });
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 sm:px-10">
+    <div className="page-frame flex flex-col gap-7">
       {/* Cabecera */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <BookOpen aria-hidden size={28} className="text-[var(--accent)]" />
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
+      <div className="flex items-start gap-4">
+        <span className="mt-1 hidden h-11 w-11 shrink-0 place-items-center rounded-[var(--radius-card)] bg-[var(--accent-soft)] text-[var(--accent)] sm:grid">
+          <BookOpen aria-hidden size={21} />
+        </span>
+        <div>
+          <p className="eyebrow">Taller / Evidencia</p>
+          <h1 className="page-title mt-1">
             Base de Conocimiento Técnico y Fiabilidad
           </h1>
+          <p className="mt-2 max-w-3xl text-sm text-[var(--muted)]">
+            Evidencias mecánicas trazables de fuentes oficiales, estadísticas
+            independientes y literatura técnica. Ninguna decisión se apoya en
+            inferencias no verificadas.
+          </p>
         </div>
-        <p className="text-sm text-[var(--muted)] max-w-3xl">
-          Evidencias mecánicas objetivas y trazables basadas en datos de fuentes oficiales, estadísticas
-          independientes (TÜV, ADAC) y literatura técnica de taller (Plan Maestro §15). Cero decisiones por IA no verificadas.
-        </p>
       </div>
 
       {/* Navegación interna */}
-      <nav aria-label="Subsecciones de conocimiento" className="flex border-b border-[var(--border)]">
+      <nav
+        aria-label="Subsecciones de conocimiento"
+        className="flex self-start overflow-x-auto rounded-[0.625rem] bg-[var(--surface-inset)] p-1"
+      >
         <button
           type="button"
           onClick={() => setActiveTab("issues")}
           aria-current={activeTab === "issues" ? "page" : undefined}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+          className={`flex min-h-10 shrink-0 items-center gap-2 rounded-[var(--radius-control)] px-3.5 text-xs font-semibold transition-[background-color,color,box-shadow] ${
             activeTab === "issues"
-              ? "border-[var(--accent)] text-[var(--accent)]"
-              : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+              ? "bg-[var(--surface-raised)] text-[var(--foreground)] shadow-sm"
+              : "text-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
           <AlertTriangle aria-hidden size={16} />
@@ -137,10 +141,10 @@ export function KnowledgeView() {
           type="button"
           onClick={() => setActiveTab("classifications")}
           aria-current={activeTab === "classifications" ? "page" : undefined}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+          className={`flex min-h-10 shrink-0 items-center gap-2 rounded-[var(--radius-control)] px-3.5 text-xs font-semibold transition-[background-color,color,box-shadow] ${
             activeTab === "classifications"
-              ? "border-[var(--accent)] text-[var(--accent)]"
-              : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+              ? "bg-[var(--surface-raised)] text-[var(--foreground)] shadow-sm"
+              : "text-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
           <ShieldCheck aria-hidden size={16} />
@@ -150,10 +154,10 @@ export function KnowledgeView() {
           type="button"
           onClick={() => setActiveTab("catalog")}
           aria-current={activeTab === "catalog" ? "page" : undefined}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+          className={`flex min-h-10 shrink-0 items-center gap-2 rounded-[var(--radius-control)] px-3.5 text-xs font-semibold transition-[background-color,color,box-shadow] ${
             activeTab === "catalog"
-              ? "border-[var(--accent)] text-[var(--accent)]"
-              : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+              ? "bg-[var(--surface-raised)] text-[var(--foreground)] shadow-sm"
+              : "text-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
           <Cpu aria-hidden size={16} />
@@ -163,9 +167,12 @@ export function KnowledgeView() {
 
       {/* Pestaña: Problemas Conocidos */}
       {activeTab === "issues" && (
-        <section aria-labelledby="issues-heading" className="flex flex-col gap-5">
-          <div className="flex flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-xs">
-            <h2 id="issues-heading" className="text-base font-bold text-[var(--foreground)]">
+        <section
+          aria-labelledby="issues-heading"
+          className="flex flex-col gap-5"
+        >
+          <div className="workbench-panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <h2 id="issues-heading" className="section-title">
               Averías y Defectos Sistémicos Verificados
             </h2>
 
@@ -178,7 +185,7 @@ export function KnowledgeView() {
                 id="component-filter"
                 value={selectedComponent}
                 onChange={(e) => setSelectedComponent(e.target.value)}
-                className="rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)]"
+                className="min-h-10 rounded-[var(--radius-control)] border border-[var(--control-border)] bg-[var(--control-bg)] px-3 text-xs font-medium text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
               >
                 <option value="">Todos los componentes</option>
                 {Object.entries(COMPONENT_LABELS).map(([k, v]) => (
@@ -195,7 +202,7 @@ export function KnowledgeView() {
                 id="severity-filter"
                 value={selectedSeverity}
                 onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)]"
+                className="min-h-10 rounded-[var(--radius-control)] border border-[var(--control-border)] bg-[var(--control-bg)] px-3 text-xs font-medium text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
               >
                 <option value="">Todas las severidades</option>
                 {Object.entries(SEVERITY_LABELS).map(([k, v]) => (
@@ -209,7 +216,9 @@ export function KnowledgeView() {
 
           {isLoadingIssues ? (
             <div className="flex min-h-[200px] items-center justify-center">
-              <p className="text-sm text-[var(--muted)]">Cargando base de averías conocidas…</p>
+              <p className="text-sm text-[var(--muted)]">
+                Cargando base de averías conocidas…
+              </p>
             </div>
           ) : issuesPage && issuesPage.items.length > 0 ? (
             <div className="flex flex-col gap-4">
@@ -218,8 +227,12 @@ export function KnowledgeView() {
               ))}
             </div>
           ) : (
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-white p-8 text-center">
-              <CheckCircle2 aria-hidden size={32} className="text-[var(--success)]" />
+            <div className="empty-state">
+              <CheckCircle2
+                aria-hidden
+                size={32}
+                className="text-[var(--success)]"
+              />
               <p className="text-sm font-medium text-[var(--foreground)]">
                 No hay problemas registrados con los filtros seleccionados.
               </p>
@@ -233,14 +246,21 @@ export function KnowledgeView() {
 
       {/* Pestaña: Clasificaciones de Mercado */}
       {activeTab === "classifications" && (
-        <section aria-labelledby="classifications-heading" className="flex flex-col gap-5">
-          <div className="flex flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+        <section
+          aria-labelledby="classifications-heading"
+          className="flex flex-col gap-5"
+        >
+          <div className="workbench-panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
-              <h2 id="classifications-heading" className="text-base font-bold text-[var(--foreground)]">
+              <h2
+                id="classifications-heading"
+                className="text-base font-bold text-[var(--foreground)]"
+              >
                 Clasificación de Modelos y Motores
               </h2>
               <p className="text-xs text-[var(--muted)]">
-                Categorización auditable y justificada de combinaciones mecánicas.
+                Categorización auditable y justificada de combinaciones
+                mecánicas.
               </p>
             </div>
 
@@ -251,7 +271,7 @@ export function KnowledgeView() {
               id="classification-status-filter"
               value={selectedClassificationStatus}
               onChange={(e) => setSelectedClassificationStatus(e.target.value)}
-              className="rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)]"
+              className="min-h-10 rounded-[var(--radius-control)] border border-[var(--control-border)] bg-[var(--control-bg)] px-3 text-xs font-medium text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
             >
               <option value="">Todos los estatus</option>
               <option value="WHITELIST">Lista Blanca (Recomendados)</option>
@@ -262,7 +282,9 @@ export function KnowledgeView() {
 
           {isLoadingClassifications ? (
             <div className="flex min-h-[200px] items-center justify-center">
-              <p className="text-sm text-[var(--muted)]">Cargando clasificaciones…</p>
+              <p className="text-sm text-[var(--muted)]">
+                Cargando clasificaciones…
+              </p>
             </div>
           ) : classificationsPage && classificationsPage.items.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -271,14 +293,16 @@ export function KnowledgeView() {
                 return (
                   <article
                     key={cls.id}
-                    className="flex flex-col justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs"
+                    className="flex flex-col justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-card)]"
                   >
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+                        <span className="text-xs font-bold tracking-wider text-[var(--muted)] uppercase">
                           Objetivo: {cls.target_type}
                         </span>
-                        <Badge tone={tone}>{CLASSIFICATION_LABELS[cls.status]}</Badge>
+                        <Badge tone={tone}>
+                          {CLASSIFICATION_LABELS[cls.status]}
+                        </Badge>
                       </div>
                       <p className="text-sm font-medium text-[var(--foreground)]">
                         {cls.rationale}
@@ -292,7 +316,7 @@ export function KnowledgeView() {
               })}
             </div>
           ) : (
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-white p-8 text-center">
+            <div className="empty-state">
               <p className="text-sm font-medium text-[var(--foreground)]">
                 No hay clasificaciones con el filtro seleccionado.
               </p>
@@ -303,18 +327,28 @@ export function KnowledgeView() {
 
       {/* Pestaña: Catálogo Mecánico Canónico */}
       {activeTab === "catalog" && (
-        <section aria-labelledby="catalog-heading" className="flex flex-col gap-6">
-          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs">
-            <h2 id="catalog-heading" className="text-base font-bold text-[var(--foreground)] mb-1">
+        <section
+          aria-labelledby="catalog-heading"
+          className="flex flex-col gap-6"
+        >
+          <div className="workbench-panel p-5">
+            <h2
+              id="catalog-heading"
+              className="mb-1 text-base font-bold text-[var(--foreground)]"
+            >
               Jerarquía Técnica Canónica
             </h2>
-            <p className="text-xs text-[var(--muted)] mb-4">
-              Seleccione un fabricante para explorar sus modelos, generaciones y motores asociados.
+            <p className="mb-4 text-xs text-[var(--muted)]">
+              Seleccione un fabricante para explorar sus modelos, generaciones y
+              motores asociados.
             </p>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="catalog-mfg-select" className="block text-xs font-semibold mb-1">
+                <label
+                  htmlFor="catalog-mfg-select"
+                  className="mb-1 block text-xs font-semibold"
+                >
                   1. Fabricante / Marca:
                 </label>
                 <select
@@ -324,7 +358,7 @@ export function KnowledgeView() {
                     setSelectedManufacturerId(e.target.value);
                     setSelectedModelId("");
                   }}
-                  className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-white p-2 text-sm"
+                  className="min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--control-border)] bg-[var(--control-bg)] px-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
                 >
                   <option value="">Seleccione marca…</option>
                   {manufacturers?.map((m) => (
@@ -337,14 +371,17 @@ export function KnowledgeView() {
 
               {selectedManufacturerId && (
                 <div>
-                  <label htmlFor="catalog-model-select" className="block text-xs font-semibold mb-1">
+                  <label
+                    htmlFor="catalog-model-select"
+                    className="mb-1 block text-xs font-semibold"
+                  >
                     2. Modelo:
                   </label>
                   <select
                     id="catalog-model-select"
                     value={selectedModelId}
                     onChange={(e) => setSelectedModelId(e.target.value)}
-                    className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-white p-2 text-sm"
+                    className="min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--control-border)] bg-[var(--control-bg)] px-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
                   >
                     <option value="">Seleccione modelo…</option>
                     {models?.map((mod) => (
@@ -360,9 +397,10 @@ export function KnowledgeView() {
 
           {/* Motores del fabricante */}
           {selectedManufacturerId && engines && engines.length > 0 && (
-            <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs">
-              <h3 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
-                <Cpu aria-hidden size={16} /> Motores Registrados ({engines.length})
+            <div className="workbench-panel flex flex-col gap-3 p-5">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--foreground)]">
+                <Cpu aria-hidden size={16} /> Motores Registrados (
+                {engines.length})
               </h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {engines.map((eng) => (
@@ -371,13 +409,14 @@ export function KnowledgeView() {
                     className="flex flex-col gap-1 rounded border border-[var(--border)] bg-[var(--surface)] p-3 text-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-[var(--foreground)]">
+                      <span className="text-sm font-bold text-[var(--foreground)]">
                         {eng.name}
                       </span>
                       <Badge tone="neutral">{eng.family_code}</Badge>
                     </div>
                     <p className="text-[var(--muted)]">
-                      Combustible: {eng.fuel_type} • Aspiración: {eng.aspiration}
+                      Combustible: {eng.fuel_type} • Aspiración:{" "}
+                      {eng.aspiration}
                       {eng.displacement_cc && ` • ${eng.displacement_cc} cc`}
                     </p>
                   </div>
@@ -388,8 +427,8 @@ export function KnowledgeView() {
 
           {/* Generaciones del modelo seleccionado */}
           {selectedModelId && generations && generations.length > 0 && (
-            <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-white p-4 shadow-xs">
-              <h3 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
+            <div className="workbench-panel flex flex-col gap-3 p-5">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--foreground)]">
                 <Layers aria-hidden size={16} /> Generaciones Documentadas
               </h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -398,11 +437,12 @@ export function KnowledgeView() {
                     key={gen.id}
                     className="flex flex-col gap-1 rounded border border-[var(--border)] bg-[var(--surface)] p-3 text-xs"
                   >
-                    <span className="font-bold text-sm text-[var(--foreground)]">
+                    <span className="text-sm font-bold text-[var(--foreground)]">
                       {gen.name}
                     </span>
                     <p className="text-[var(--muted)]">
-                      Años de producción: {gen.year_start} – {gen.year_end ?? "presente"}
+                      Años de producción: {gen.year_start} –{" "}
+                      {gen.year_end ?? "presente"}
                     </p>
                   </div>
                 ))}

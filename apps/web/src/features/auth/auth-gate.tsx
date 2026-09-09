@@ -47,10 +47,16 @@ export function AuthGate() {
   if (session.isPending) {
     return (
       <main
-        className="grid min-h-dvh place-items-center bg-white"
+        className="grid min-h-dvh place-items-center bg-[var(--background)]"
         aria-busy="true"
       >
-        <p className="text-sm text-[var(--muted)]">Comprobando sesión…</p>
+        <div className="flex flex-col items-center gap-3">
+          <span
+            className="h-7 w-7 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"
+            aria-hidden
+          />
+          <p className="text-sm text-[var(--muted)]">Comprobando sesión…</p>
+        </div>
       </main>
     );
   }

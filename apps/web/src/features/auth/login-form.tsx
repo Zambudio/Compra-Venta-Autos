@@ -33,13 +33,12 @@ export function LoginForm({ onSubmit, serverError }: LoginFormProps) {
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
   return (
-    <form
-      className="mt-8 space-y-5"
-      noValidate
-      onSubmit={handleSubmit(onSubmit)}
-    >
+    <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
       <div>
-        <label className="mb-1.5 block text-sm font-medium" htmlFor="email">
+        <label
+          className="mb-1.5 block text-xs font-semibold text-[var(--foreground-secondary)]"
+          htmlFor="email"
+        >
           Correo electrónico
         </label>
         <Input
@@ -58,7 +57,10 @@ export function LoginForm({ onSubmit, serverError }: LoginFormProps) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium" htmlFor="password">
+        <label
+          className="mb-1.5 block text-xs font-semibold text-[var(--foreground-secondary)]"
+          htmlFor="password"
+        >
           Contraseña
         </label>
         <div className="relative">
@@ -105,8 +107,8 @@ export function LoginForm({ onSubmit, serverError }: LoginFormProps) {
       <Button className="w-full" type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Comprobando…" : "Entrar"}
       </Button>
-      <p className="flex items-center gap-2 text-sm text-[var(--muted)]">
-        <LockKeyhole aria-hidden size={17} />
+      <p className="flex items-center justify-center gap-2 text-xs text-[var(--muted)]">
+        <LockKeyhole aria-hidden size={15} />
         Sesión segura y privada
       </p>
     </form>

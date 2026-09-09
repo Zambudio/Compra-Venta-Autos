@@ -97,7 +97,7 @@ export function FilterForm({ onApply }: FilterFormProps) {
 
   return (
     <form
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
       aria-label="Filtros de anuncios"
       onSubmit={handleSubmit(submit)}
     >
@@ -161,18 +161,18 @@ export function FilterForm({ onApply }: FilterFormProps) {
           </Select>
         )}
       </Field>
-      <div className="flex items-end gap-3">
+      <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-3 xl:col-span-1">
         <Button type="submit">Aplicar filtros</Button>
-        <button
+        <Button
+          variant="ghost"
           type="button"
-          className="min-h-11 px-2 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
           onClick={() => {
             reset(EMPTY);
             onApply({ sort: "newest", page: 1 });
           }}
         >
           Limpiar
-        </button>
+        </Button>
       </div>
     </form>
   );

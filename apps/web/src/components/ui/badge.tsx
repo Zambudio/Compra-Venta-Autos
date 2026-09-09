@@ -8,17 +8,21 @@ type BadgeProps = {
 };
 
 const TONES: Record<NonNullable<BadgeProps["tone"]>, string> = {
-  neutral: "border-[var(--border)] text-[var(--muted)]",
-  success: "border-[var(--success)] text-[var(--success)]",
-  warning: "border-[#b7791f] text-[#b7791f]",
-  danger: "border-[var(--danger)] text-[var(--danger)]",
+  neutral:
+    "border-[var(--border)] bg-[var(--surface-hover)] text-[var(--foreground-secondary)]",
+  success:
+    "border-[color-mix(in_srgb,var(--success)_22%,transparent)] bg-[var(--success-soft)] text-[var(--success)]",
+  warning:
+    "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[var(--warning-soft)] text-[var(--warning)]",
+  danger:
+    "border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-[var(--danger-soft)] text-[var(--danger)]",
 };
 
 export function Badge({ tone = "neutral", children }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+        "inline-flex min-h-6 items-center rounded-full border px-2 py-0.5 text-[0.6875rem] leading-none font-semibold whitespace-nowrap",
         TONES[tone],
       )}
     >
