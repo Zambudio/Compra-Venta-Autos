@@ -15,6 +15,7 @@ from app.core.redis_client import RedisClient
 from app.health import router as health_router
 from app.knowledge.router import router as knowledge_router
 from app.listings.router import router as listings_router
+from app.scoring.router import router as scoring_router
 from app.sources.router import router as sources_router
 from app.vehicles.router import router as vehicles_router
 
@@ -58,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(listings_router, prefix="/api/v1")
     app.include_router(vehicles_router, prefix="/api/v1")
     app.include_router(knowledge_router, prefix="/api/v1")
+    app.include_router(scoring_router, prefix="/api/v1")
     return app
 
 

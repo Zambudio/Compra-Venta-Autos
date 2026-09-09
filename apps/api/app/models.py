@@ -19,6 +19,12 @@ from app.knowledge.models import (
     VehicleModel,
 )
 from app.listings.models import ListingSnapshot, RawListingPayload, VehicleListing
+from app.scoring.models import (
+    Opportunity,
+    OpportunityScore,
+    ScoringProfile,
+    ScoringProfileVersion,
+)
 from app.sources.models import Source, SourceComplianceReview, SourceSyncRun
 from app.users.models import User
 from app.vehicles.models import MarketEstimate, Vehicle, VehicleMatchCandidate
@@ -34,7 +40,11 @@ __all__ = [
     "ListingSnapshot",
     "Manufacturer",
     "MarketEstimate",
+    "Opportunity",
+    "OpportunityScore",
     "RawListingPayload",
+    "ScoringProfile",
+    "ScoringProfileVersion",
     "Source",
     "SourceComplianceReview",
     "SourceSyncRun",

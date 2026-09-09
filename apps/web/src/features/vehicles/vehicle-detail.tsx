@@ -18,6 +18,7 @@ import {
   TRANSMISSION_LABELS,
 } from "@/features/vehicles/format";
 import { VehicleReliabilityWidget } from "@/features/knowledge/vehicle-reliability-widget";
+import { VehicleOpportunityWidget } from "@/features/opportunities/vehicle-opportunity-widget";
 import type { VehicleDetail as TVehicleDetail } from "@/features/vehicles/types";
 
 type VehicleDetailProps = {
@@ -275,6 +276,9 @@ export function VehicleDetail({ vehicleId, onBack }: VehicleDetailProps) {
 
       {/* Widget de Fiabilidad Técnica y Averías Conocidas */}
       <VehicleReliabilityWidget vehicle={vehicle} />
+
+      {/* Widget de Oportunidad y Scoring */}
+      <VehicleOpportunityWidget vehicle={vehicle} />
 
       {/* Histórico Consolidado */}
       {history && (

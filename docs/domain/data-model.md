@@ -130,13 +130,25 @@ Notification → User + evento
   - `vehicle_mitigations`: `id` (UUID PK), `vehicle_id` (FK `vehicles`), `known_issue_id` (FK `known_issues`), `mitigation_type` (ej. `INVOICE_PROVED_REPLACEMENT`, `RECALL_COMPLETED`), `description`, `applied_at`, `verified_by_user_id`.
   - Las mitigaciones acreditan que una unidad concreta ha solventado un defecto documentado sin modificar la clasificación general del motor en la base de conocimiento.
 
-## Scoring y oportunidades
+## Scoring y oportunidades (Fase 5 — Implementado)
 
-- `ScoringProfile` agrupa versiones.
-- `ScoringProfileVersion` es inmutable y almacena pesos/configuración, suma validada y vigencia.
-- `OpportunityScore` persiste total, nueve componentes, explicación, instante y versión.
-- `Opportunity` referencia la unidad y la observación base; conserva valores económicos como estimaciones con intervalo/confianza, no certezas.
-- `WatchlistEntry` tiene estado controlado y precio al guardar.
+- **`scoring_profiles`:**
+  - `id` (UUID PK), `name` (String 120), `slug` (String 80 unique), `description` (Text), `is_active` (Boolean), `created_at`, `updated_at`.
+  - Contenedor de versiones evolutivas de perfiles de scoring (ej. `reventa-rapida`).
+
+- **`scoring_profile_versions`:**
+  - `id` (UUID PK), `profile_id` (FK `scoring_profiles.id`), `version_number` (Integer, unique por perfil), `weights` (JSONB con 9 pesos obligatorios cuya suma es exactamente 1.000), `config` (JSONB con parámetros financieros: fast sale discount, ITP, tasas DGT, preparación), `is_immutable` (Boolean), `created_at`.
+  - Versión inmutable para garantizar reproducibilidad histórica absoluta.
+
+- **`opportunity_scores`:**
+  - `id` (UUID PK), `vehicle_id` (FK `vehicles.id` opcional), `listing_id` (FK `vehicle_listings.id` opcional), `profile_version_id` (FK `scoring_profile_versions.id`), `total_score` (Numeric 5,2), 9 subpuntuaciones (`price_score`, `reliability_score`, `liquidity_score`, `mechanical_risk_score`, `mileage_score`, `age_score`, `history_score`, `condition_score`, `listing_age_score`), `score_breakdown` (JSONB con explicabilidad detallada por componente), `calculated_at`.
+
+- **`opportunities`:**
+  - `id` (UUID PK), `vehicle_id` (FK `vehicles.id`), `listing_id` (FK `vehicle_listings.id`), `current_score_id` (FK `opportunity_scores.id`), `status` (`IDENTIFIED`, `ANALYZING`, `VALIDATED`, `DISCARDED`, `PURCHASED`, `SOLD`), `currency` (String 3, 'EUR').
+  - Valoraciones económicas con intervalos de confianza: `asking_price`, `estimated_market_price`, `estimated_fast_sale_price`, `target_purchase_price`.
+  - Estructura de costes: `estimated_transfer_cost` (Tasa DGT 55,70€), `estimated_tax` (ITP España 4%), `estimated_repair_min`, `estimated_repair_max`, `estimated_preparation_cost` (200€), `estimated_total_cost_min`, `estimated_total_cost_max`.
+  - Proyecciones de rentabilidad: `estimated_margin_min`, `estimated_margin_max`, `estimated_roi_min`, `estimated_roi_max`.
+  - Niveles de confianza y presión del vendedor: `confidence_level` (`LOW|MEDIUM|HIGH`), `seller_pressure_level` (`LOW|MEDIUM|HIGH`), `seller_pressure_reasons` (JSONB list[str]), `notes` (Text), `created_at`, `updated_at`.
 
 ## Inspección, propiedad y finanzas
 

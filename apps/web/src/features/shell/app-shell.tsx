@@ -7,12 +7,14 @@ import {
   LogOut,
   Radar,
   Rows3,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 
 import type { User } from "@/features/auth/types";
 import { KnowledgeView } from "@/features/knowledge/knowledge-view";
 import { ListingsView } from "@/features/listings/listings-view";
+import { OpportunitiesView } from "@/features/opportunities/opportunities-view";
 import { StatusView } from "@/features/system/status-view";
 import { VehiclesView } from "@/features/vehicles/vehicles-view";
 
@@ -22,9 +24,15 @@ type AppShellProps = {
   isLoggingOut: boolean;
 };
 
-type Tab = "listings" | "vehicles" | "knowledge" | "status";
+type Tab = "opportunities" | "listings" | "vehicles" | "knowledge" | "status";
 
 const TABS = [
+  {
+    id: "opportunities",
+    label: "Oportunidades",
+    hint: "Scoring y Margen",
+    icon: Sparkles,
+  },
   { id: "listings", label: "Anuncios", hint: "Mercado", icon: Rows3 },
   { id: "vehicles", label: "Vehículos", hint: "Unidades", icon: CarFront },
   {
@@ -129,6 +137,7 @@ export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
 
       <p className="sr-only">Sesión iniciada como {user.email}</p>
       <main className="min-w-0">
+        {active === "opportunities" && <OpportunitiesView />}
         {active === "listings" && <ListingsView />}
         {active === "vehicles" && <VehiclesView />}
         {active === "knowledge" && <KnowledgeView />}

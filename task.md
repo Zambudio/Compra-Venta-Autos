@@ -401,12 +401,65 @@ Reglas vigentes: ninguna afirmación mecánica sin fuentes trazables (Plan Maest
 - **Documentación afectada:** toda la documentación del proyecto.
 - **Resultado:** Stack Docker reconstruido y desplegado en Synology NAS (`motorscope-api-1`, `motorscope-web-1`, `motorscope-worker-1`). Migración `20260907_0005_knowledge_base.py` ejecutada en PostgreSQL 18. Script `smoke_test_fase4.py` ejecutado contra el NAS con 8/8 pasos superados (100% OK), poblando y verificando los 3 casos canónicos (Peugeot EB2 Blacklist con recall, SEAT 1.9 TDI Whitelist, VW EA111 Watchlist), alta de mitigación y comprobación de interfaz web en `http://192.168.1.3:3080`. Documentación y cierre completados.
 
+## Fase 5 — Scoring y opportunities
+
+### [x] F5.1 — ADR-0015 y Especificación del Motor de Scoring Determinista
+- **Objetivo:** formalizar la arquitectura de scoring explicable de 9 componentes y valoración económica.
+- **Alcance:** ADR-0015 aceptado; ponderaciones fijas que suman 1.000 (100%); regla anti-caja negra (cero LLM en toma de decisiones); modelo fiscal español (ITP 4% + tasa DGT 55,70€ + preparación 200€).
+- **Dependencias:** Fases 1 a 4.
+- **Criterios de aceptación:** pesos inmutables por versión; justificaciones textuales en cada subpuntuación; intervalos de rentabilidad [mín, máx].
+- **Documentación afectada:** `docs/adr/0015-opportunity-scoring-and-economic-valuation.md`, `docs/adr/README.md`.
+- **Resultado:** ADR-0015 aceptado y registrado en el índice general de ADRs.
+
+### [x] F5.2 — Modelos, Esquemas y Migración de Base de Datos
+- **Objetivo:** persistir perfiles de scoring, versiones inmutables, puntuaciones y oportunidades.
+- **Alcance:** modelos SQLAlchemy 2.0 `ScoringProfile`, `ScoringProfileVersion`, `OpportunityScore`, `Opportunity`; DTOs Pydantic con validación de suma de pesos = 1.000; migración Alembic `20260909_0006_scoring_and_opportunities.py` con seed del perfil por defecto `reventa-rapida` (v1).
+- **Dependencias:** F5.1.
+- **Criterios de aceptación:** relaciones bidireccionales con `VehicleListing` y `Vehicle`; tipos estrictos en `Decimal`; validación de unicidad de slug.
+- **Pruebas necesarias:** unit `test_scoring_models.py`.
+- **Documentación afectada:** `docs/domain/data-model.md`.
+- **Resultado:** Esquema de base de datos creado y migrado en PostgreSQL 18. Modelos registrados en `app.models`. Validación Pydantic completa. Tests de modelos pasando.
+
+### [x] F5.3 — Motor de Scoring Multicriterio y Valoración Económica
+- **Objetivo:** computar los 9 componentes deterministas, justificaciones explicables, presión del vendedor y valoración financiera.
+- **Alcance:** módulos `app/scoring/engine.py` y `app/scoring/valuation.py`; cálculo de `price`, `reliability`, `liquidity`, `mechanical_risk`, `mileage`, `age`, `history`, `condition`, `listing_age`; cálculo de ITP, tasas DGT, preparación, reparación mín/máx, coste total [mín, máx], margen [mín, máx], ROI [mín, máx] y precio objetivo de compra sugerido (`target_purchase_price`).
+- **Dependencias:** F5.2.
+- **Criterios de aceptación:** 100% determinista y puro; justificación obligatoria en cada componente; presión del vendedor basada en días y reducciones reales.
+- **Pruebas necesarias:** unit `test_scoring_engine.py`, `test_valuation.py`.
+- **Documentación afectada:** Plan Maestro §18 y §19.
+- **Resultado:** 14 tests pasando al 100% con >90% de cobertura en módulos de cálculo determinista.
+
+### [x] F5.4 — Servicios de Scoring, Gestión de Oportunidades y API REST
+- **Objetivo:** orquestar la evaluación de anuncios y vehículos, transiciones de estado y contratos OpenAPI.
+- **Alcance:** `ScoringService` (`evaluate_listing`, `evaluate_vehicle`, `get_opportunity`, `list_opportunities`, `update_opportunity_status`); router REST bajo `/api/v1/scoring` y `/api/v1/opportunities`; control de acceso RBAC y CSRF; regeneración de `docs/api/openapi.json`.
+- **Dependencias:** F5.3.
+- **Criterios de aceptación:** endpoints tipados; transición de estados auditada; exportación limpia de OpenAPI.
+- **Pruebas necesarias:** unit `test_scoring_service.py`, `test_scoring_endpoints.py`.
+- **Documentación afectada:** `docs/api/openapi.json`.
+- **Resultado:** Suite de 254 tests de backend unitarios pasando al 100% con 87.80% de cobertura. `openapi.json` sincronizado.
+
+### [x] F5.5 — Frontend Web (Mesa de Oportunidades y Widgets)
+- **Objetivo:** interfaz accesible de visualización de oportunidades, explicabilidad de scoring y valoración de márgenes.
+- **Alcance:** módulo `apps/web/src/features/opportunities/` con `OpportunitiesView`, `OpportunityCard`, `OpportunityScoreBreakdown` (9 componentes accesibles), `OpportunityValuationPanel` (intervalos de rentabilidad y costes), `VehicleOpportunityWidget` integrado en `VehicleDetail`; pestaña `Oportunidades` en navegación principal.
+- **Dependencias:** F5.4.
+- **Criterios de aceptación:** responsive con Tailwind; navegación por teclado; cero violaciones de accesibilidad (`vitest-axe`); compilación de producción exitosa.
+- **Pruebas necesarias:** unit y axe `test` en `src/features/opportunities/`.
+- **Documentación afectada:** `README.md`.
+- **Resultado:** 4 suites de frontend (10 tests) pasando con 0 violaciones de accesibilidad. `next build --webpack` completado con éxito sin errores de TypeScript.
+
+### [x] F5.6 — Testing, Despliegue en NAS y Cierre de Fase 5
+- **Objetivo:** validar en entorno real en el Synology NAS, aplicar migraciones y comprobar el flujo E2E.
+- **Alcance:** imágenes Docker `api`, `worker` y `web` reconstruidas y desplegadas en NAS (`192.168.1.3`); migración `20260909_0006` ejecutada en PostgreSQL del NAS; script `infrastructure/scripts/smoke_test_fase5.py` ejecutado en vivo con 9/9 pasos superados.
+- **Dependencias:** F5.1–F5.5.
+- **Criterios de aceptación:** 6 contenedores saludables; smoke test en vivo 100% exitoso; emisión de `INFORME_CIERRE_FASE_5.md`.
+- **Documentación afectada:** toda la documentación del proyecto.
+- **Resultado:** Despliegue y verificación en vivo 100% exitosos en `http://192.168.1.3:3080`.
+
 ## Fases posteriores — no autorizadas en este cambio
 
-- [ ] Fase 5 — Scoring y opportunities.
 - [ ] Fase 6 — Watchlist e inspección.
 - [ ] Fase 7 — Garage y finance.
 - [ ] Fase 8 — Hardening.
 - [ ] Fase 9 — Release MVP.
 
-No se iniciará Fase 5 sin aprobación explícita del usuario.
+No se iniciará Fase 6 sin aprobación explícita del usuario.
