@@ -1,8 +1,8 @@
-import pytest
-from httpx import AsyncClient
 from uuid import uuid4
+
+import pytest
 from fastapi import status
-from io import BytesIO
+from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 
@@ -12,7 +12,7 @@ async def test_watchlist_inspections_flow(client: AsyncClient, admin_token: str,
     # Since we don't have a fixture for Opportunity here, we might get a 400 or 404
     # But let's test the malicious file upload at least
     
-    # 1. Test malicious file upload (e.g. invalid extension disguised, or just a large file if we had limits)
+    # 1. Test malicious file upload (e.g. invalid ext or large file)
     # Actually, the file upload requires an inspection ID. Let's create a fake one if the DB allows,
     # or just test that the endpoint rejects bad requests.
     

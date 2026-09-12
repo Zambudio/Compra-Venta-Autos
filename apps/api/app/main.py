@@ -13,6 +13,7 @@ from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.core.redis_client import RedisClient
 from app.files.endpoints import router as files_router
+from app.garage.endpoints import router as garage_router
 from app.health import router as health_router
 from app.inspections.endpoints import router as inspections_router
 from app.knowledge.router import router as knowledge_router
@@ -66,6 +67,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(watchlist_router, prefix="/api/v1")
     app.include_router(inspections_router, prefix="/api/v1")
     app.include_router(files_router, prefix="/api/v1")
+    app.include_router(garage_router, prefix="/api/v1")
     return app
 
 

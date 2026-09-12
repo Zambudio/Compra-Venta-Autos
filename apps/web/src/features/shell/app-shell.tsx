@@ -8,7 +8,7 @@ import {
   LogOut,
   Radar,
   Rows3,
-  Sparkles,
+  Sparkles, Warehouse,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -18,6 +18,7 @@ import { ListingsView } from "@/features/listings/listings-view";
 import { OpportunitiesView } from "@/features/opportunities/opportunities-view";
 import { WatchlistView } from "@/features/watchlist/watchlist-view";
 import { StatusView } from "@/features/system/status-view";
+import { GarageView } from "@/features/garage/garage-view";
 import { VehiclesView } from "@/features/vehicles/vehicles-view";
 
 type AppShellProps = {
@@ -26,14 +27,14 @@ type AppShellProps = {
   isLoggingOut: boolean;
 };
 
-type Tab = "opportunities" | "watchlist" | "listings" | "vehicles" | "knowledge" | "status";
+type Tab = "opportunities" | "watchlist" | "garage" | "listings" | "vehicles" | "knowledge" | "status";
 
 const TABS = [
   {
     id: "opportunities",
     label: "Oportunidades",
     hint: "Scoring y Margen",
-    icon: Sparkles,
+    icon: Sparkles, Warehouse,
   },
   {
     id: "watchlist",
@@ -41,7 +42,8 @@ const TABS = [
     hint: "Watchlist y Taller",
     icon: ClipboardCheck,
   },
-  { id: "listings", label: "Anuncios", hint: "Mercado", icon: Rows3 },
+  { id: "garage", label: "Garage", hint: "Inventario", icon: Warehouse },
+    { id: "listings", label: "Anuncios", hint: "Mercado", icon: Rows3 },
   { id: "vehicles", label: "Vehículos", hint: "Unidades", icon: CarFront },
   {
     id: "knowledge",
@@ -147,6 +149,7 @@ export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
       <main className="min-w-0">
         {active === "opportunities" && <OpportunitiesView />}
         {active === "watchlist" && <WatchlistView />}
+        {active === "garage" && <GarageView />}
         {active === "listings" && <ListingsView />}
         {active === "vehicles" && <VehiclesView />}
         {active === "knowledge" && <KnowledgeView />}

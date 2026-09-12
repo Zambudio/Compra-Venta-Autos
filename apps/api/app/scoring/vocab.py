@@ -8,6 +8,8 @@ class OpportunityStatus(StrEnum):
     ANALYZING = "ANALYZING"
     VALIDATED = "VALIDATED"
     DISCARDED = "DISCARDED"
+    PURCHASED = "PURCHASED"
+    SOLD = "SOLD"
 
 
 class SellerPressureLevel(StrEnum):

@@ -87,7 +87,9 @@ def _fake_vehicle(vid: Any = None) -> Vehicle:
     return v
 
 
-def _fake_candidate(cid: Any = None, status: MatchCandidateStatus = MatchCandidateStatus.PENDING) -> VehicleMatchCandidate:
+def _fake_candidate(
+    cid: Any = None, status: MatchCandidateStatus = MatchCandidateStatus.PENDING
+) -> VehicleMatchCandidate:
     c = VehicleMatchCandidate()
     c.id = cid or uuid4()
     c.listing_a_id = uuid4()

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import typing
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
-import typing
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
