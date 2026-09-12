@@ -34,7 +34,7 @@ const TABS = [
     id: "opportunities",
     label: "Oportunidades",
     hint: "Scoring y Margen",
-    icon: Sparkles, Warehouse,
+    icon: Sparkles,
   },
   {
     id: "watchlist",
