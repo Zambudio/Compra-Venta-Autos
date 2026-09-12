@@ -12,7 +12,9 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.core.redis_client import RedisClient
+from app.files.endpoints import router as files_router
 from app.health import router as health_router
+from app.inspections.endpoints import router as inspections_router
 from app.knowledge.router import router as knowledge_router
 from app.listings.router import router as listings_router
 from app.scoring.router import router as scoring_router
@@ -62,6 +64,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(knowledge_router, prefix="/api/v1")
     app.include_router(scoring_router, prefix="/api/v1")
     app.include_router(watchlist_router, prefix="/api/v1")
+    app.include_router(inspections_router, prefix="/api/v1")
+    app.include_router(files_router, prefix="/api/v1")
     return app
 
 

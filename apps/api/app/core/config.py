@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     login_rate_window_seconds: int = Field(default=900, ge=60, le=86_400)
     owner_email: EmailStr | None = None
     owner_password: SecretStr | None = None
+    storage_dir: str = Field(default="./storage")
 
     @field_validator("database_url")
     @classmethod
