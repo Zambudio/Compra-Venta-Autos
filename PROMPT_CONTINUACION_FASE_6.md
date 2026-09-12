@@ -31,7 +31,8 @@ documentación, CI/Security verdes, despliegue y smoke test en el Synology NAS.
 
 ## Estado exacto de partida
 
-- Rama `main`; `HEAD` y `origin/main`: `3e93e3c`.
+- Rama `main`; debe incluir el commit de relevo `f3f3aeb`. El último commit de
+  implementación funcional auditado es `3e93e3c`.
 - Fases 0–5 implementadas. Última migración:
   `20260909_0006_scoring_and_opportunities.py`.
 - Fase 5 desplegada en NAS `192.168.1.3:3080`, migración `0006`, smoke 9/9 y 6
