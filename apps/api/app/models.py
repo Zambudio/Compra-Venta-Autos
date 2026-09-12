@@ -5,6 +5,8 @@ Importing this module registers every ORM model on the shared metadata.
 
 from app.audit.models import AuditEvent
 from app.auth.models import AuthSession
+from app.files.models import FileAttachment
+from app.inspections.models import Inspection, InspectionCheck
 from app.knowledge.models import (
     Engine,
     EngineVariant,
@@ -28,6 +30,7 @@ from app.scoring.models import (
 from app.sources.models import Source, SourceComplianceReview, SourceSyncRun
 from app.users.models import User
 from app.vehicles.models import MarketEstimate, Vehicle, VehicleMatchCandidate
+from app.watchlist.models import WatchlistEntry
 
 __all__ = [
     "AuditEvent",
@@ -35,6 +38,9 @@ __all__ = [
     "Engine",
     "EngineVariant",
     "Evidence",
+    "FileAttachment",
+    "Inspection",
+    "InspectionCheck",
     "KnowledgeSource",
     "KnownIssue",
     "ListingSnapshot",
@@ -57,4 +63,5 @@ __all__ = [
     "VehicleMatchCandidate",
     "VehicleMitigation",
     "VehicleModel",
+    "WatchlistEntry",
 ]
