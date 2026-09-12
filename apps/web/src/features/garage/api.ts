@@ -1,9 +1,9 @@
-import { api } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 import type { OwnedVehicleWithDetails, Expense, Sale } from "./types";
 
 export async function getGarageVehicles(): Promise<OwnedVehicleWithDetails[]> {
-  const res = await api.get("/garage/vehicles");
-  return res.data;
+  const res = await apiRequest<OwnedVehicleWithDetails[]>('/garage/vehicles');
+  return res;
 }
 
 export async function purchaseVehicle(payload: {
@@ -13,8 +13,8 @@ export async function purchaseVehicle(payload: {
   license_plate?: string;
   notes?: string;
 }): Promise<OwnedVehicleWithDetails> {
-  const res = await api.post("/garage/purchase", payload);
-  return res.data;
+  const res = await apiRequest<OwnedVehicleWithDetails>('/garage/purchase', { method: 'POST', body: JSON.stringify(payload) });
+  return res;
 }
 
 export async function addExpense(
@@ -26,8 +26,8 @@ export async function addExpense(
     expense_date: string;
   }
 ): Promise<Expense> {
-  const res = await api.post(`/garage/vehicles/${vehicleId}/expenses`, payload);
-  return res.data;
+  const res = await apiRequest<Expense>(`/garage/vehicles/${vehicleId}/expenses`, { method: 'POST', body: JSON.stringify(payload) });
+  return res;
 }
 
 export async function registerSale(
@@ -39,6 +39,6 @@ export async function registerSale(
     notes?: string;
   }
 ): Promise<Sale> {
-  const res = await api.post(`/garage/vehicles/${vehicleId}/sale`, payload);
-  return res.data;
+  const res = await apiRequest<Sale>(`/garage/vehicles/${vehicleId}/sale`, { method: 'POST', body: JSON.stringify(payload) });
+  return res;
 }
