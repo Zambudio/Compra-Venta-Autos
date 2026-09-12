@@ -1,9 +1,8 @@
 # Modelo de dominio y datos
 
-Estado: modelo lógico del MVP. Fase 1 implementó identidad, sesión y auditoría;
-Fase 2 implementa fuentes y anuncios (`sources`, `source_compliance_reviews`,
-`source_sync_runs`, `vehicle_listings`, `raw_listing_payloads`, `listing_snapshots`).
-Fecha: 2026-09-06.
+Estado: modelo implementado hasta Fase 5 (migraciones `0001`–`0006`); Watchlist,
+Inspección, Garage, finanzas, archivos y notificaciones siguen como diseño lógico.
+Fecha: 2026-09-12.
 
 ## Principios
 
@@ -76,7 +75,7 @@ Notification → User + evento
 
 ## Entidades de vehículos y mercado (Fase 3)
 
-**Implementadas en Fase 3** (ver [ADR-0013](../adr/0013-assisted-deduplication-and-market-data.md)):
+**Implementadas en Fase 3** (ver [ADR-0013](../adr/0013-vehicle-matching-and-market-estimates.md)):
 
 - `Vehicle` (`vehicles`): vehículo físico unificado independiente de sus anuncios.
   Campos: `id` (UUID), `brand`, `model`, `year`, `mileage`, `fuel_type`, `transmission`,
@@ -94,9 +93,9 @@ Notification → User + evento
   `method_parameters` (JSONB con métricas y factores IQR), `calculated_at`, `created_at`.
   Relación muchos-a-1 con `Vehicle`.
 
-**Pendientes (Fase 4+):**
+**Pendiente del MVP:**
 
-- `Search` / `SearchFilter` persistidos: la Fase 2/3 usa `SearchFilter` tipado en memoria
+- `Search` / `SearchFilter` persistidos: las fases actuales usan `SearchFilter` tipado en memoria
   (`app/search/schemas.py`) y registra las sincronizaciones en `SourceSyncRun`.
 
 ## Knowledge Base (Implementado en Fase 4 — Migración 20260907_0005)

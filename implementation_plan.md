@@ -1,98 +1,183 @@
 # Plan de implementación
 
-Última actualización: 2026-09-06. El estado ejecutable vive en `task.md`; este documento describe el orden y los gates.
+Última actualización: 2026-09-12. `task.md` es la fuente operativa de verdad; este
+documento conserva la secuencia, las dependencias y los gates del MVP.
 
-## Resultado de la inspección
+## Estado actual
 
-El directorio contenía únicamente `PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md` (47.119 bytes). No era un repositorio Git y no había código, dependencias, configuración, secretos, artefactos compilados ni instrucciones locales adicionales. Por tanto:
+MotorScope tiene completas y desplegadas las fases 0–5. El producto ya permite:
 
-- no existe código reutilizable ni deuda de compatibilidad;
-- la estructura propuesta por el Plan Maestro puede adoptarse sin adaptación;
-- Git se inicializa como parte de Foundation, sin crear remoto ni publicar contenido;
-- Docker no está instalado en la máquina de trabajo; los gates que exigen contenedores deberán ejecutarse en CI o en un host con Docker antes de declarar Fase 1 completa.
+```text
+login → adquisición Mock/Manual → anuncios normalizados → vehículo unificado
+      → histórico/comparables → Knowledge Base → score explicable → oportunidades
+```
 
-## Alcance confirmado del MVP
+El `HEAD` auditado es `3e93e3c` en `main`, sincronizado con `origin/main`. La última
+migración es `20260909_0006_scoring_and_opportunities.py`; el informe de Fase 5
+registra despliegue en el NAS y smoke 9/9.
 
-Producto privado, inicialmente para un único `OWNER`, orientado a pocas operaciones anuales y un vehículo simultáneo. El vertical slice prioritario es: login → búsqueda → resultados normalizados → wiki técnica → score explicable → watchlist → compra → gastos → venta → beneficio y ROI.
+La siguiente capacidad funcional es Watchlist e Inspección, pero antes hay que
+recuperar el baseline de calidad: el CI actual está rojo por formato, el frontend no
+alcanza el umbral de cobertura de ramas y quedan incidencias de lint, tipos y Trivy.
 
-Quedan fuera del MVP: scraping no autorizado, ML, agentes LLM decisores, microservicios, Kubernetes, Kafka, event sourcing, CQRS complejo y bases vectoriales. Fase 1 no implementa ninguna función de vehículos; solo la plataforma segura que las soportará.
+## Progreso por fase
 
-## Orden obligatorio
-
-| Fase   | Entrega                                                                              | Gate de salida                                                                |
-| ------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| 0 ✅   | Inspección, alcance, documentación, riesgos y ADRs                                   | Completada.                                                                   |
-| 1 ✅   | Monorepo, entorno, persistencia, observabilidad, CI, seguridad y auth                | Completada; informe de cierre de Foundation emitido.                          |
-| 2 ✅   | Search, contratos de adquisición, conectores mock/manual, normalización, ingesta idempotente y snapshots | Completada 2026-09-06; `INFORME_CIERRE_FASE_2.md`. Conectores, compliance (ADR-0012), pruebas sin portales reales, despliegue y smoke test en el NAS. |
-| 3      | Vehicle/Listing, deduplicación, comparables e histórico                              | PostgreSQL real, decisiones manuales para matches inciertos                   |
-| 4    | Knowledge Base, evidencias y clasificación                                           | Ninguna afirmación mecánica sin fuente trazable                               |
-| 5    | Scoring, valoración y oportunidades                                                  | Score determinista, versionado, explicable y cubierto                         |
-| 6    | Watchlist e inspección                                                               | Estados y checklists verificados                                              |
-| 7    | Garage, ledger, venta y ROI                                                          | Flujo financiero completo con `Decimal/Numeric`                               |
-| 8    | Hardening ASVS L2, DAST, rendimiento, accesibilidad y restore                        | Sin HIGH/CRITICAL abiertos; restore probado                                   |
-| 9    | Release MVP                                                                          | Release, migración, rollback y smoke tests reproducibles                      |
-
-## Foundation: diseño técnico
-
-- **Backend:** monolito modular FastAPI bajo `/api/v1`; límites por dominio y dependencias explícitas.
-- **Persistencia:** PostgreSQL como única fuente persistente. SQLAlchemy async + psycopg; Alembic es la única vía de esquema.
-- **Jobs:** Dramatiq con Redis. Los actores de negocio comienzan en Fase 2; Foundation entrega broker y worker saludable.
-- **Frontend:** Next.js App Router, Server Components por defecto y cliente solo donde hay interacción. TanStack Query para estado remoto; React Hook Form + Zod para formularios.
-- **Autenticación:** sesiones opacas de alta entropía persistidas como hash SHA-256, contraseñas Argon2id, CSRF sincronizado, roles explícitos y denegación por defecto.
-- **Operación:** Docker Compose con Caddy; PostgreSQL y Redis solo en red interna. Logs JSON, request ID, métricas, liveness y readiness.
-- **Tooling:** `uv` para Python y workspace `pnpm` para TypeScript; lockfiles obligatorios.
-
-## Estrategia de entrega y pruebas
-
-Cada slice sigue red → verde → refactor. Unit tests no requieren infraestructura; integración y migraciones usan PostgreSQL real, y los tests que validan Redis usan Redis real. La suite normal nunca llama portales externos. CI separa checks rápidos, integración, E2E y seguridad.
-
-No se declara una fase completa si falla: formato, lint, tipos, unit, integración aplicable, frontend, E2E aplicable, migraciones, seguridad o documentación. Un check no ejecutado no equivale a aprobado.
-
-## Riesgos y mitigaciones
-
-| ID   | Riesgo                                       | Impacto                              | Mitigación / estado                                                                    | Responsable                       |
-| ---- | -------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------- |
-| R-01 | Condiciones de portales impiden scraping     | Alto/legal y continuidad             | Solo importación manual/mock hasta autorización; revisión previa por fuente            | Product Owner + responsable legal |
-| R-02 | Docker no disponible en el host actual       | Alto para pruebas integradas y build | CI con servicios reales; ejecutar también localmente al instalar Docker                | Tech Lead                         |
-| R-03 | Datos personales de vendedores/matrículas    | Alto/privacidad                      | Minimización, retención, cifrado, acceso y auditoría; diseño detallado antes de Fase 2 | Security Owner                    |
-| R-04 | Datos mecánicos o de mercado incorrectos     | Alto/decisión de compra              | Evidencias obligatorias, confianza, comparables y revisión humana                      | Domain Owner                      |
-| R-05 | Dependencias de versiones muy recientes      | Medio/compatibilidad                 | Versiones estables fijadas, lockfiles, CI y Renovate/Dependabot                        | Tech Lead                         |
-| R-06 | Copias de seguridad no restauradas aún       | Alto/operación                       | Runbook definido; prueba real obligatoria en Fase 8 antes de release                   | Operations Owner                  |
-| R-07 | Aplicación privada expuesta por error        | Alto/seguridad                       | Auth por defecto, Caddy/TLS, firewall, DB/Redis internos, ASVS L2                      | Security Owner                    |
-| R-08 | El filesystem UNC no admite symlinks de pnpm | Bajo/tooling local                   | `node-linker=hoisted`, pins exactos y strict peers; decisión registrada en ADR-0011    | Tech Lead                         |
-
-## Decisiones pendientes
-
-No hay una decisión pendiente que bloquee Foundation. Antes de producción deberán decidirse y documentarse: proveedor/host de secretos, dominio, VPS/plataforma, correo de recuperación (si se incorpora), responsable nominal de backups y base jurídica/retención definitiva de cada dato personal. Ninguna de ellas se presupone en el código.
-
-## Fallos de CI detectados y corregidos al cerrar Fase 2
-
-El pipeline completo (`ci.yml` + `security.yml`) se ejecutó por primera vez en `main`
-tras Fase 2 (antes, los jobs `frontend`/`e2e` no llegaban a correr). Fallos
-preexistentes —no causados por el código de Fase 2— corregidos en el mismo cierre:
-
-| Ítem | Job | Corrección aplicada |
+| Fase | Estado | Entrega / gate |
 | --- | --- | --- |
-| `actions/setup-node` con `cache: pnpm` antes de instalar pnpm | `ci.yml`, `security.yml` | `pnpm/action-setup` se ejecuta antes de `setup-node`. |
-| `test_migration_0002` con `asyncio.run()` anidado | `ci.yml → backend` | Tests de migración pasados a síncronos con engine sync. |
-| E2E: base URL `http://localhost` (Caddy publica en `:3080`); locators de `getByLabel` no exactos; proyecto `mobile` con WebKit y colisión de datos en paralelo | `ci.yml → e2e` | `PLAYWRIGHT_BASE_URL=http://localhost:3080` + espera a Caddy; `getByLabel(..., { exact: true })`; `pnpm e2e` fija `--project=chromium` (queda `e2e:all` para local); alta manual con modelo único por ejecución (retry-safe). |
-| Semgrep `uv-missing-dependency-cooldown` (MEDIUM) | `security.yml → sast` | `exclude-newer` (fecha absoluta) en `[tool.uv]`; `uv.toml` consolidado en `pyproject.toml`; `uv.lock` regenerado sin cambio de versiones; la regla se excluye del job (`--exclude-rule`) porque solo admite duraciones relativas. |
-| Trivy: `msgpack`/`setuptools` vendorizados por `pip` en la imagen base (HIGH) | `security.yml → containers` | `api.Dockerfile` borra `pip`/`setuptools`/`wheel` del `site-packages` del sistema en la etapa runtime. |
+| 0 | ✅ Completa | Inspección, alcance, documentación, riesgos y ADRs. |
+| 1 | ✅ Completa | Monorepo, auth, PostgreSQL, Redis, Docker, observabilidad y CI. |
+| 2 | ✅ Completa | Search, Mock/Manual, normalización, ingesta y snapshots. |
+| 3 | ✅ Completa | Vehicle/Listing, matching asistido, histórico y market estimate. |
+| 4 | ✅ Completa | Knowledge Base, evidencias, problemas y clasificaciones. |
+| 5 | ✅ Completa funcionalmente | Scoring versionado, valoración y oportunidades; NAS smoke 9/9. El baseline de calidad requiere saneamiento. |
+| 6 | ⏳ Siguiente | Watchlist, seguimiento de precio, inspección y fotos seguras. |
+| 7 | ⏳ Pendiente | Compra, Garage, ledger, venta, beneficio y ROI real. |
+| 8 | ⏳ Pendiente | Hardening ASVS L2, DAST, rendimiento y restore probado. |
+| 9 | ⏳ Pendiente | Release reproducible y aceptación completa del MVP. |
 
-### Pendiente — endurecimiento de dependencias de contenedores
+## Evidencia de la auditoría de 2026-09-12
 
-`security.yml → containers` (Trivy) sigue en rojo por CVE HIGH que la base de
-datos de Trivy incorpora de forma continua en **imágenes base y dependencias
-transitivas** (a fecha de cierre: `libcrypto3` en la imagen Alpine de `web`,
-`brace-expansion`, `ip-address`, `tar` como deps npm transitivas del build de
-Next.js). No son código de MotorScope. Requiere un paso dedicado en Fase 3 /
-Hardening: subir los digests de las imágenes base (`python`, `node`, `caddy`),
-regenerar `pnpm-lock.yaml`/`uv.lock` y, si algún CVE no tiene fix, un
-`.trivyignore` con dueño y fecha de revisión. Hasta entonces, `backend`,
-`frontend`, `sast` y `codeql` (Python + JS/TS) están en verde.
+| Gate | Resultado actual |
+| --- | --- |
+| Backend unit tests | ✅ 254/254; cobertura total 85,42%. |
+| Frontend tests | ✅ 109/109. |
+| Frontend cobertura | ❌ ramas 72,81%; mínimo configurado 75%. Statements 84,64%, funciones 82,21%, líneas 87,78%. |
+| TypeScript | ✅ `tsc --noEmit`. |
+| Ruff | ❌ 17 incidencias y 4 archivos sin formato. |
+| mypy strict | ❌ 13 errores en 7 archivos. |
+| ESLint | ❌ 1 error y 13 warnings en oportunidades. |
+| Prettier | ❌ 25 archivos no conformes. |
+| CI de `main` | ❌ backend y frontend se detienen en formato; E2E no llega a ejecutarse. |
+| Security de `main` | ⚠️ SAST, secretos, dependencias y CodeQL pasan; Trivy falla en la imagen web. |
+| NAS Fase 5 | ✅ evidencia histórica: 6 contenedores saludables, migración `0006` y smoke 9/9. |
 
-## Regla de parada
+Los primeros fallos de pytest observados desde la raíz eran un problema de invocación:
+sin usar `apps/api` como directorio de trabajo no se cargaba `pyproject.toml`. La
+ejecución canónica desde `apps/api` pasa 254/254 y es la que cuenta.
 
-El informe de la sección 60 se emitió al cerrar Fase 1. El usuario autorizó Fase 2 el
-2026-09-06; su alcance y decisiones están en `task.md` (F2.1–F2.10), [ADR-0012](docs/adr/0012-listing-ingestion-and-dedup.md)
-y ADR-0006. Fase 3 vuelve a requerir aprobación explícita: no se inicia sin ella.
+## Orden de ejecución restante
+
+### 1. F6.0 — Saneamiento del baseline
+
+Resolver primero formato, Ruff, mypy, ESLint y Prettier; añadir pruebas dirigidas a
+las ramas sin cubrir de oportunidades; revisar el hallazgo Trivy de la imagen web.
+Regenerar OpenAPI y confirmar CI + Security completos, incluido E2E. No mezclar este
+saneamiento con la migración funcional de Fase 6.
+
+**Gate:** todos los lanes verdes o excepción de seguridad formal según §55 del Plan
+Maestro. Este bloque debe ser uno o varios commits aislados y fáciles de revisar.
+
+### 2. F6.1 — ADR-0016 y contratos
+
+Definir antes del esquema:
+
+- agregado `WatchlistEntry` y transiciones de estado;
+- relación con `Opportunity`, `VehicleListing` y `Vehicle`;
+- `Inspection` e `InspectionItem`, con snapshot inmutable del checklist generado;
+- procedencia de cada check: genérico o `KnownIssue` trazable;
+- puerto `FileStorage`, implementación local y autorización de adjuntos;
+- política de retención, backup, eliminación y auditoría.
+
+**Gate:** ADR aceptado, data model/data flow/threat model actualizados y casos de
+prueba definidos. No introducir S3 ni notificaciones externas; son V2.
+
+### 3. F6.2 — Watchlist vertical
+
+Crear migración `0007`, modelos, schemas, servicio y API. El precio al guardar se
+persiste como evidencia; el precio actual y su evolución se derivan del anuncio y sus
+snapshots. Implementar notas privadas y estados `WATCHING`, `CONTACTED`,
+`VISIT_PLANNED`, `INSPECTED`, `REJECTED`, `PURCHASED` con matriz de transiciones.
+
+**Gate:** idempotencia, RBAC, CSRF, auditoría, constraints PostgreSQL y OpenAPI.
+
+### 4. F6.3 — Inspección dinámica
+
+Crear inspecciones vinculadas a una entrada de watchlist. Generar los checks genéricos
+del Plan Maestro y añadir checks específicos para modelo/generación/motor/cambio a
+partir de la Knowledge Base. Cada ítem admite `PASS`, `WARNING`, `FAIL` o
+`NOT_CHECKED`, notas y adjuntos. El checklist queda congelado al crearse.
+
+**Gate:** lógica determinista altamente cubierta, sin afirmaciones mecánicas sin
+evidencia y sin mutación retroactiva de inspecciones cerradas.
+
+### 5. F6.4 — Archivos seguros
+
+Implementar `FileAttachment` y almacenamiento local fuera de webroot: nombres
+internos aleatorios, allowlist de MIME comprobada por contenido, tamaño máximo, hash,
+descarga autorizada, prevención de ejecución y eliminación controlada. Incorporar los
+archivos al runbook de backup/restore.
+
+**Gate:** tests negativos de MIME falso, tamaño, path traversal, autorización y
+contenido corrupto; revisión ASVS V5.
+
+### 6. F6.5–F6.6 — UI, E2E y despliegue
+
+Añadir Watchlist e Inspección al workspace, empezando desde las oportunidades. La UI
+debe cubrir loading/error/empty/success, teclado, mobile y axe. Cerrar con migración
+en NAS, smoke del flujo completo, informe de Fase 6 y documentación sincronizada.
+
+**Gate:** guardar oportunidad → registrar bajada de precio → planificar visita →
+completar checklist → adjuntar foto → aceptar/rechazar, con 6 contenedores saludables.
+
+### 7. Fase 7 — Garage y finance
+
+1. Diseñar `OwnedVehicle`, `Expense`, `Sale` y adjuntos contractuales.
+2. Convertir una oportunidad validada en compra mediante una transacción idempotente.
+3. Implementar ledger append-only; no persistir totales derivados.
+4. Registrar venta y calcular beneficio/ROI con `Decimal/Numeric`.
+5. Entregar Garage, dashboard, permisos, migración, E2E y smoke NAS.
+
+**Gate:** vertical slice financiero completo y conciliable: compra, todos los gastos y
+venta producen un beneficio y ROI reproducibles.
+
+### 8. Fase 8 — Hardening
+
+Revisar ASVS 5.0 L2 requisito por requisito; actualizar threat model; ejecutar SAST,
+secret scanning, audits, CodeQL, Trivy y DAST; revisar permisos/privacidad/retención;
+medir accesibilidad y rendimiento; probar backup/restore, migración y rollback reales;
+cerrar propietarios y runbooks operativos.
+
+**Gate:** cero HIGH/CRITICAL sin resolver o excepción vigente, restore probado dentro
+del RPO/RTO aprobado y staging listo para release.
+
+### 9. Fase 9 — Release MVP
+
+Congelar versión y alcance, producir artefactos reproducibles, validar migración desde
+la versión desplegada, rollback, smoke y alertas. La aceptación final recorre:
+
+```text
+login → search → vehículo → wiki → score → watchlist → inspección
+      → compra → gastos → venta → beneficio/ROI
+```
+
+## Riesgos activos
+
+| ID | Riesgo | Estado / mitigación |
+| --- | --- | --- |
+| R-01 | Scraping no autorizado | Activo. Solo Mock/Manual hasta revisión formal por fuente. |
+| R-02 | Entorno local sobre UNC | Mitigado parcialmente con `N:`/`Z:`; Vitest desde UNC duplica la ruta. Ejecutar frontend desde unidad mapeada. |
+| R-03 | Datos personales y documentos | Activo. Minimización y política definitiva antes de F6.4/F7. |
+| R-04 | Conocimiento/estimaciones incorrectas | Mitigado con evidencia, confianza y cálculos deterministas; mantener revisión humana. |
+| R-05 | Dependencias recientes | Activo. Pins, lockfiles y CI; actualizar cooldown al regenerar locks. |
+| R-06 | Restore no probado | Bloquea release; ejecutar en F8. |
+| R-07 | Exposición de la aplicación privada | Activo. Auth default-deny, Caddy, red interna y revisión ASVS. |
+| R-08 | Baseline de calidad rojo | Activo y prioritario. Resolver en F6.0 antes de nueva funcionalidad. |
+| R-09 | Archivos maliciosos o fuga de fotos/documentos | Nuevo. FileStorage fuera de webroot, validación por contenido, RBAC y límites. |
+
+## Reglas permanentes
+
+- No scraping real sin compliance aprobado.
+- No ML ni LLM como decisor; scoring y checklists deben ser explicables.
+- No almacenar dinero en `float`, archivos binarios en PostgreSQL ni totales
+  financieros duplicados.
+- Toda migración se hace con Alembic y se prueba desde la versión anterior.
+- Una fase no termina sin tests, calidad, seguridad, documentación, migración y smoke.
+- Conservar los activos no versionados de `apps/web/public/brand/`; no pertenecen a
+  esta auditoría y no deben borrarse ni incluirse sin revisar su procedencia.
+
+## Punto de relevo
+
+El siguiente agente debe comenzar por `PROMPT_CONTINUACION_FASE_6.md`, ejecutar F6.0
+y detenerse si no puede recuperar un baseline verde. El desglose canónico está en
+`task.md`; los informes `INFORME_CIERRE_FASE_3.md` a
+`INFORME_CIERRE_FASE_5.md` son evidencia histórica, no sustituyen el estado actual.

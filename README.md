@@ -1,222 +1,129 @@
 # MotorScope
 
-<div align="center">
+Plataforma privada para localizar, auditar y valorar oportunidades de vehículos de
+ocasión. Usa un monolito modular con FastAPI, Next.js, PostgreSQL, Redis/Dramatiq,
+Docker Compose y Caddy. Las decisiones de compra permanecen deterministas,
+explicables y auditables.
 
-![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-16.3-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.6-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-8.8-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Caddy](https://img.shields.io/badge/Caddy-2.10-22B573?style=for-the-badge&logo=caddy&logoColor=white)
-![Security](https://img.shields.io/badge/Security-OWASP_ASVS_L2-blueviolet?style=for-the-badge)
+## Estado del proyecto
 
-**Plataforma privada de an�lisis, scoring determinista y gesti�n de oportunidades de veh�culos de ocasi�n.**
+| Fase | Estado | Capacidad principal |
+| --- | --- | --- |
+| 0 — Planning | ✅ Completa | Arquitectura, roadmap, riesgos y ADRs. |
+| 1 — Foundation | ✅ Completa | Auth, observabilidad, Docker, PostgreSQL, Redis y CI. |
+| 2 — Search | ✅ Completa | Mock/Manual, normalización, ingesta y snapshots. |
+| 3 — Vehicles | ✅ Completa | Vehicle/Listing, matching, histórico y comparables. |
+| 4 — Knowledge | ✅ Completa | Evidencias, problemas conocidos y fiabilidad. |
+| 5 — Scoring | ✅ Completa funcionalmente | Score versionado, valoración y oportunidades. |
+| 6 — Watchlist | ⏳ Siguiente | Seguimiento, inspección y fotos seguras. |
+| 7–9 | ⏳ Pendientes | Garage/Finance, Hardening y Release MVP. |
 
-[Arquitectura](#-arquitectura) � [Puesta en Marcha](#-puesta-en-marcha) � [Calidad y Testing](#-calidad-y-testing) � [Seguridad](#-seguridad) � [Documentaci�n](#-documentaci�n)
+La Fase 5 está desplegada en el Synology NAS con la migración `0006` y smoke 9/9.
+La auditoría del 12-09-2026 detectó deuda de calidad pendiente antes de Fase 6: CI de
+formato rojo, incidencias Ruff/mypy/ESLint/Prettier, cobertura frontend de ramas en
+72,81% frente al 75% requerido y Trivy rojo para la imagen web. Véase
+[`INFORME_ESTADO_Y_RELEVO_2026-09-12.md`](INFORME_ESTADO_Y_RELEVO_2026-09-12.md).
 
-</div>
+## Capacidades actuales
 
----
+- sesiones opacas, Argon2id, CSRF, roles y rate limiting;
+- fuentes Mock y Manual sin scraping de portales reales;
+- anuncios normalizados, snapshots e ingesta idempotente;
+- vehículos unificados, matching asistido e histórico de precio;
+- comparables y estimación de mercado mediante mediana/IQR;
+- Knowledge Base trazable con evidencias y clasificaciones;
+- score de oportunidad versionado con 9 componentes explicables;
+- estimación de costes, margen, ROI y presión del vendedor;
+- workspace web responsive para anuncios, vehículos, Wiki y oportunidades.
 
-## ?? Visi�n General
-
-**MotorScope** es un sistema modular dise�ado para localizar, auditar y valorar oportunidades en el mercado de veh�culos de segunda mano. Construido con arquitectura de **Monolito Modular** y seguridad de grado empresarial (**OWASP ASVS Nivel 2**), prioriza la **calidad, auditabilidad y explicabilidad determinista** sobre algoritmos opacos.
-
-El proyecto se rige por [`PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md`](PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md) y mantiene [`task.md`](task.md) como la fuente operativa de verdad de sus fases de desarrollo.
-
----
-
-## ??? Estado del Proyecto
-
-|  Fase   | Nombre                         |                                           Estado                                            | Criterios Clave                                                                          |
-| :-----: | ------------------------------ | :-----------------------------------------------------------------------------------------: | ---------------------------------------------------------------------------------------- |
-|  **0**  | **Inspecci�n y Planning**      |   ![Completada](https://img.shields.io/badge/Estado-Completada-success?style=flat-square)   | Inventario, arquitectura, modelo de datos, 11 ADRs iniciales y compliance de fuentes.    |
-|  **1**  | **Foundation**                 |   ![Completada](https://img.shields.io/badge/Estado-Completada-success?style=flat-square)   | Monorepo, Auth (Argon2id, sesiones opacas, CSRF), UI accesible, Docker stack verificado. |
-|  **2**  | **Search y Adquisici�n**       |   ![Completada](https://img.shields.io/badge/Estado-Completada-success?style=flat-square)   | Conectores Mock/Manual, `SearchFilter`, normalizaci�n, ingesta idempotente, snapshots, worker Dramatiq y frontend de exploraci�n y alta manual. |
-| **3�9** | **Market Data, Scoring & MVP** | ![Planificado](https://img.shields.io/badge/Estado-Planificado-lightgrey?style=flat-square) | Opportunity Score determinista, Wiki automotriz, Inspecci�n, Garage y Hardening.         |
-
----
-
-## ??? Arquitectura del Sistema
-
-El sistema implementa un monolito modular con separaci�n estricta de dominios de negocio y topolog�a de red aislada:
+## Arquitectura
 
 ```text
-                               +-----------------------------+
-                               �       Cliente Web / UI      �
-                               �   (Navegador / Dispositivo) �
-                               +-----------------------------+
-                                              � HTTP/S (:3080 / :443)
-                                              ?
-+-----------------------------------------------------------------------------+
-�  REVERSE PROXY (Caddy 2.10)                                                  �
-�  - Terminaci�n TLS & Cabeceras de Seguridad (CSP, HSTS, X-Frame-Options)    �
-�  - Enrutamiento unificado / y /api/*                                         �
-+-----------------------------------------------------------------------------+
-                        � /                           � /api/*
-                        ?                             ?
-+-------------------------------+     +---------------------------------------+
-�  FRONTEND (Next.js 16)        �     �  BACKEND API (FastAPI 0.115)          �
-�  - App Router & Server Comp.  �     �  - Dominios: auth, audit, users       �
-�  - TanStack React Query       �     �  - Request ID & Logs JSON RFC 7807    �
-�  - Tailwind CSS + Lucide      �     �  - Rate Limiter por sliding window    �
-+-------------------------------+     +---------------------------------------+
-                                                      �
-                       +-----------------------------------------------------+
-                       �                                                     �
-                       ?                                                     ?
-+---------------------------------------+     +---------------------------------------+
-�  PERSISTENCIA RELACIONAL              �     �  MEMORIA & COLAS                      �
-�  PostgreSQL 18 (Alpine)               �     �  Redis 8.8 (Alpine) + Dramatiq Worker �
-�  - Esquema versionado con Alembic     �     �  - Rate limiting & invalidaci�n       �
-�  - Red interna aislada (no expuesta)  �     �  - Tareas as�ncronas en background    �
-+---------------------------------------+     +---------------------------------------+
+Navegador
+   │
+   ▼
+Caddy :3080 ─────► Next.js
+       └─────────► FastAPI /api/v1
+                         ├── PostgreSQL
+                         └── Redis ──► Dramatiq worker
 ```
 
-### Estructura del Monorepo
+Solo Caddy publica puertos. PostgreSQL es la fuente persistente; Redis contiene
+estado efímero. El backend y el worker comparten el mismo paquete de dominio.
 
-```text
-/
-+-- apps/
-�   +-- api/             # Backend FastAPI, Alembic, dominios funcionales y worker Dramatiq
-�   +-- web/             # Frontend Next.js 16 App Router con dise�o accesible
-+-- packages/
-�   +-- shared/          # Contratos y tipos TypeScript compartidos
-+-- infrastructure/
-�   +-- docker/          # Dockerfiles multi-stage y optimizados (no-root)
-�   +-- caddy/           # Caddyfile con enrutamiento y proxy inverso
-�   +-- scripts/         # Herramientas de exportaci�n OpenAPI y shims multiplataforma
-+-- docs/                # Arquitectura, ADRs, Modelo de Datos, ASVS, Testing y Operaciones
-+-- docker-compose.yml   # Definici�n integral del stack de contenedores
-+-- task.md              # Fuente operativa de verdad por tareas
-+-- implementation_plan.md # Plan de ejecuci�n t�cnico y matriz de riesgos
-```
-
----
-
-## ?? Stack Tecnol�gico y Versiones
-
-Versiones estables fijadas seg�n la pol�tica estricta de dependencias ([ADR-0011](docs/adr/0011-tooling-and-runtime-versions.md)):
-
-- **Runtime Backend:** Python `3.14.7` gestionado con [`uv`](https://github.com/astral-sh/uv) `0.10.2`.
-- **Framework API:** [FastAPI](https://fastapi.tiangolo.com/) `0.115.11` + [Uvicorn](https://www.uvicorn.org/) `0.34.0`.
-- **ORM & Migraciones:** [SQLAlchemy](https://www.sqlalchemy.org/) `2.0.38` (async/sync estricto) + [Alembic](https://alembic.sqlalchemy.org/) `1.15.1`.
-- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) `18.6` (Alpine multi-stage).
-- **Cach� & Workers:** [Redis](https://redis.io/) `8.8.2` (Alpine) + [Dramatiq](https://dramatiq.io/) `1.17.1`.
-- **Runtime Frontend:** Node.js `24.20.0 LTS` gestionado con [`pnpm`](https://pnpm.io/) `11.1.3`.
-- **Framework Web:** [Next.js](https://nextjs.org/) `16.3.4` (App Router) + [React](https://react.dev/) `19.2.8`.
-- **Tipado & Estilos:** TypeScript `5.9.3` (`strict: true`) + [Tailwind CSS](https://tailwindcss.com/) `4.3.3`.
-- **Testing:** [Pytest](https://pytest.org/) `9.1.1` + [Vitest](https://vitest.dev/) `5.0.0` con `@vitest/coverage-v8` y `vitest-axe`.
-
----
-
-## ?? Puesta en Marcha
-
-### 1. Despliegue con Docker Compose (Recomendado)
-
-El entorno incluye soporte directo para servidores Linux, VPS y despliegues en **Synology NAS (Container Manager)**:
+## Puesta en marcha con Docker
 
 ```bash
-# 1. Clonar el repositorio
 git clone https://github.com/Zambudio/Compra-Venta-Autos.git
 cd Compra-Venta-Autos
-
-# 2. Configurar variables de entorno seguras
 cp .env.example .env
-# Generar claves aleatorias seguras en .env antes de iniciar
-
-# 3. Construir y levantar servicios
+# Reemplaza las credenciales de ejemplo por secretos aleatorios.
 docker compose up -d --build
-
-# 4. Aplicar migraciones iniciales en PostgreSQL
 docker compose exec api alembic upgrade head
-
-# 5. Inicializar la cuenta OWNER administrativa
 docker compose exec api python -m app.auth.cli create-owner
+docker compose ps
 ```
 
-> **Nota para Synology NAS:** Caddy publica de manera predeterminada en el puerto host **`3080`** (HTTP) para evitar colisiones con el Nginx interno de Synology DSM. Ver [`Guia_Conexion_ssh_NAS.md`](Guia_Conexion_ssh_NAS.md) para m�s detalles.
+Accesos predeterminados:
 
-### 2. Acceso a la Plataforma
+- Web: `http://localhost:3080`
+- Liveness: `http://localhost:3080/api/v1/health/live`
+- Readiness: `http://localhost:3080/api/v1/health/ready`
+- OpenAPI/Swagger: `http://localhost:3080/docs`
 
-Una vez levantado el stack, accede desde tu navegador:
+En Synology se usa el binario indicado en
+[`Guia_Conexion_ssh_NAS.md`](Guia_Conexion_ssh_NAS.md) y el mismo puerto `3080` para
+evitar colisiones con DSM.
 
-- **Portal Web:** `http://localhost:3080` (o `http://<IP-HOST>:3080`)
-- **API Health Liveness:** `http://localhost:3080/api/v1/health/live`
-- **API Health Readiness:** `http://localhost:3080/api/v1/health/ready`
-- **Documentaci�n Swagger OpenAPI:** `http://localhost:3080/docs`
+## Desarrollo local
 
----
+Versiones principales fijadas en los lockfiles:
 
-## ?? Calidad y Testing
+- Python 3.14, FastAPI 0.141.1, SQLAlchemy 2.0.52 y Alembic 1.19.2;
+- Node.js 24.20.0, pnpm 11.1.3, Next.js 16.3.4 y React 19.2.8;
+- PostgreSQL 18.6, Redis 8.8.2 y Caddy 2.10.
 
-El repositorio cuenta con una cobertura global superior al **80%** y verificaciones autom�ticas de tipado estricto y linting:
-
-### Backend (`apps/api`)
+Backend, desde `apps/api`:
 
 ```powershell
-# Formato y Linting
+uv sync --all-groups
 uv run ruff format --check .
 uv run ruff check .
-
-# Verificaci�n de Tipos Estricta
-uv run mypy --strict .
-
-# Suite de Pruebas con Cobertura (32 unit tests)
-uv run pytest -m "not integration" --cov=src --cov-fail-under=80
+uv run mypy app tests
+uv run pytest -m "not integration" -p no:cacheprovider
 ```
 
-### Frontend (`apps/web`)
+Frontend, desde `apps/web` y preferiblemente mediante la unidad mapeada `N:` o `Z:`
+en Windows:
 
 ```powershell
-# Formato y Linting
+pnpm install --frozen-lockfile
 pnpm format:check
-pnpm --filter @motorscope/web lint
-
-# Verificaci�n de Tipos
-pnpm --filter @motorscope/web typecheck
-
-# Suite de Pruebas Unitarias y Accesibilidad (15 tests con axe)
-pnpm --filter @motorscope/web test
-
-# Compilaci�n de Producci�n
-pnpm --filter @motorscope/web build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
----
+Vitest puede resolver mal el proyecto cuando el directorio de trabajo es una ruta UNC;
+usar `N:\IA\02_Proyectos\Compra-Venta Autos\apps\web` evita esa duplicación.
 
-## ?? Seguridad
+## Documentación
 
-MotorScope adopta un modelo de seguridad por dise�o alineado con **OWASP ASVS Nivel 2**:
+- Fuente principal: [`PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md`](PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md)
+- Estado operativo: [`task.md`](task.md)
+- Secuencia y gates: [`implementation_plan.md`](implementation_plan.md)
+- Roadmap MVP/V2/V3: [`roadmap.md`](roadmap.md)
+- Informe actual: [`INFORME_ESTADO_Y_RELEVO_2026-09-12.md`](INFORME_ESTADO_Y_RELEVO_2026-09-12.md)
+- Prompt de relevo: [`PROMPT_CONTINUACION_FASE_6.md`](PROMPT_CONTINUACION_FASE_6.md)
+- Arquitectura y dominio: [`docs/architecture/`](docs/architecture/) y [`docs/domain/`](docs/domain/)
+- ADRs: [`docs/adr/`](docs/adr/)
+- Seguridad, testing y operaciones: [`docs/security/`](docs/security/), [`docs/testing/`](docs/testing/) y [`docs/operations/`](docs/operations/)
 
-- **Acceso Privado Denegado por Defecto:** Toda la superficie operativa exige autenticaci�n y rol expl�cito (`OWNER`, `VIEWER`).
-- **Autenticaci�n Fuerte:** Contrase�as hasheadas con algoritmo **Argon2id** con par�metros recomendados por OWASP.
-- **Sesiones Opacas Servidor:** Tokens de alta entrop�a (256 bits) almacenados en PostgreSQL y revocables inmediatamente.
-- **Cookies Blindadas:** Atributos obligatorios `HttpOnly`, `SameSite=Lax` y `Secure` (en staging/producci�n).
-- **Protecci�n CSRF:** Emparejamiento obligatorio de token en cabecera `X-CSRF-Token` para operaciones de mutaci�n.
-- **Defensa Activa:** Rate limiting por IP/cuenta mediante sliding window en Redis (m�x. 5 intentos cada 15 min).
-- **Auditor�a Inmutable:** Registro estructurado de eventos de seguridad (`LOGIN_SUCCESS`, `LOGIN_FAILURE`, `LOGOUT`) en la tabla `audit_events`.
+## Restricciones del MVP
 
-Para reportar incidencias o consultar la pol�tica de seguridad, revisa [`SECURITY.md`](SECURITY.md) y [`docs/security/`](docs/security/).
+No se permite scraping no autorizado, ML/LLM como decisor, datos mecánicos sin
+evidencia, dinero en `float`, archivos en webroot ni infraestructura distribuida sin
+necesidad demostrada y ADR previo.
 
----
-
-## ?? Documentaci�n T�cnica
-
-La documentaci�n completa del proyecto est� versionada en el directorio [`docs/`](docs/):
-
-- **Arquitectura:** [`docs/architecture/architecture.md`](docs/architecture/architecture.md) y [`docs/architecture/data-flow.md`](docs/architecture/data-flow.md).
-- **Modelo de Dominio:** [`docs/domain/data-model.md`](docs/domain/data-model.md).
-- **Decisiones de Arquitectura (ADRs):** [`docs/adr/`](docs/adr/) (11 registros completos).
-- **Contrato OpenAPI:** [`docs/api/openapi.json`](docs/api/openapi.json).
-- **Estrategia de Pruebas:** [`docs/testing/testing-strategy.md`](docs/testing/testing-strategy.md).
-- **Compliance y Fuentes Externas:** [`docs/source-compliance.md`](docs/source-compliance.md).
-- **Operaciones y Despliegue:** [`docs/operations/deployment.md`](docs/operations/deployment.md) y [`docs/operations/backup-restore.md`](docs/operations/backup-restore.md).
-
----
-
-## ?? Licencia
-
-Este proyecto es software privado de uso exclusivo. Prohibida su distribuci�n o copia sin autorizaci�n expresa.
+Software privado. Prohibida su distribución sin autorización expresa.

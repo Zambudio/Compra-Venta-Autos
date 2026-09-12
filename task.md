@@ -1,8 +1,23 @@
 # Estado operativo del proyecto
 
-Fuente operativa de verdad. Última actualización: 2026-09-06 (cierre de Fase 2).
+Fuente operativa de verdad. Última actualización: 2026-09-12 (auditoría posterior al cierre de Fase 5).
 
 Estados: `[ ]` pendiente · `[~]` en progreso · `[x]` completado · `[!]` bloqueado.
+
+## Resumen ejecutivo
+
+- **Completado:** Fases 0–5. El producto cubre login, adquisición Mock/Manual,
+  normalización, vehículos, históricos, comparables, Knowledge Base, scoring
+  determinista y mesa de oportunidades. La última migración desplegada es
+  `20260909_0006_scoring_and_opportunities.py`.
+- **Despliegue verificado:** stack de 6 contenedores en Synology NAS y smoke de Fase 5
+  registrado como 9/9 en `INFORME_CIERRE_FASE_5.md`.
+- **Estado reproducible 2026-09-12:** backend 254/254 unit tests, cobertura 85,42%;
+  frontend 109/109 tests, cobertura de ramas 72,81% (el gate exige 75%). TypeScript
+  estricto pasa. CI de `main` está rojo por formato backend/frontend; además quedan
+  incidencias de Ruff, mypy, ESLint y Trivy sobre la imagen web.
+- **Siguiente unidad de trabajo:** F6.0, saneamiento del baseline. Después, Fase 6
+  Watchlist e Inspección. No se considera iniciada ninguna tarea funcional de Fase 6.
 
 ## Fase 0 — Inspección y planning
 
@@ -455,11 +470,122 @@ Reglas vigentes: ninguna afirmación mecánica sin fuentes trazables (Plan Maest
 - **Documentación afectada:** toda la documentación del proyecto.
 - **Resultado:** Despliegue y verificación en vivo 100% exitosos en `http://192.168.1.3:3080`.
 
-## Fases posteriores — no autorizadas en este cambio
+## Fase 6 — Watchlist e inspección
 
-- [ ] Fase 6 — Watchlist e inspección.
-- [ ] Fase 7 — Garage y finance.
-- [ ] Fase 8 — Hardening.
-- [ ] Fase 9 — Release MVP.
+### [ ] F6.0 — Recuperar un baseline de calidad verde
 
-No se iniciará Fase 6 sin aprobación explícita del usuario.
+- **Objetivo:** no ampliar el producto sobre un `main` con gates incumplidos.
+- **Alcance:** aplicar formato; resolver 17 incidencias Ruff, 13 errores mypy, el
+  error ESLint `react-hooks/set-state-in-effect`, 13 warnings de imports y los 25
+  archivos señalados por Prettier; elevar cobertura frontend de ramas de 72,81% a
+  al menos 75%; revisar Trivy de la imagen `web`.
+- **Dependencias:** cierre documentado de Fase 5.
+- **Criterios de aceptación:** CI y Security verdes o excepción HIGH/CRITICAL
+  explícita, acotada, con responsable y fecha de revisión.
+- **Pruebas necesarias:** Ruff, mypy, pytest, ESLint, Prettier, TypeScript, Vitest con
+  cobertura, build, OpenAPI sin diff y workflows de GitHub Actions.
+- **Documentación afectada:** este archivo, `implementation_plan.md` y, si procede,
+  `.trivyignore` con justificación.
+
+### [ ] F6.1 — Diseñar Watchlist, Inspección y adjuntos
+
+- **Objetivo:** fijar invariantes y límites antes de crear esquema o endpoints.
+- **Alcance:** ADR-0016; estados de watchlist e inspección; transición desde
+  `Opportunity`; generación de checks específicos desde Knowledge Base; puerto
+  `FileStorage` local migrable a S3; autorización, retención y auditoría.
+- **Dependencias:** F6.0.
+- **Criterios de aceptación:** diagrama de estados, modelo de permisos y política de
+  archivos revisables; ninguna foto en webroot ni dato binario en PostgreSQL.
+- **Pruebas necesarias:** revisión contra Plan Maestro §§22, 24, 34, 42 y 55.
+- **Documentación afectada:** ADR-0016, arquitectura, data flow, modelo de datos,
+  threat model y ASVS V5.
+
+### [ ] F6.2 — Persistir Watchlist y seguimiento de precio
+
+- **Objetivo:** guardar oportunidades candidatas y su evolución sin duplicar el
+  histórico ya presente en `ListingSnapshot`.
+- **Alcance:** `WatchlistEntry`, estados `WATCHING`, `CONTACTED`, `VISIT_PLANNED`,
+  `INSPECTED`, `REJECTED` y `PURCHASED`; precio al guardar, precio actual derivado, notas privadas,
+  migración Alembic `0007`, servicios y eventos de auditoría.
+- **Dependencias:** F6.1.
+- **Criterios de aceptación:** alta idempotente, transiciones válidas, RBAC/CSRF y
+  trazabilidad del precio desde snapshots.
+- **Pruebas necesarias:** unit tests de estados y servicio; integración PostgreSQL de
+  constraints, migración y concurrencia; endpoints 200/403/404/409.
+- **Documentación afectada:** OpenAPI y modelo de datos.
+
+### [ ] F6.3 — Implementar Inspección y checklist dinámico
+
+- **Objetivo:** convertir una visita física en evidencia estructurada previa a compra.
+- **Alcance:** `Inspection` y `InspectionItem`; checklist genérico del Plan Maestro;
+  checks específicos por modelo/generación/motor/cambio derivados de problemas
+  conocidos; resultados `PASS|WARNING|FAIL|NOT_CHECKED`; notas y resumen.
+- **Dependencias:** F6.2 y Knowledge Base de Fase 4.
+- **Criterios de aceptación:** generación determinista, snapshot del checklist para
+  que una inspección histórica no cambie al editar la Knowledge Base y transiciones
+  de estado coherentes con Watchlist.
+- **Pruebas necesarias:** reglas puras de generación, integración y contrato API.
+- **Documentación afectada:** OpenAPI, modelo de datos y testing strategy.
+
+### [ ] F6.4 — Adjuntos seguros de inspección
+
+- **Objetivo:** permitir fotografías sin abrir una superficie insegura de archivos.
+- **Alcance:** `FileAttachment`, puerto `FileStorage`, implementación local fuera de
+  webroot, nombre interno aleatorio, allowlist MIME validada por contenido, límite de
+  tamaño, hash, descarga autorizada y eliminación controlada.
+- **Dependencias:** F6.1 y F6.3.
+- **Criterios de aceptación:** no ejecución, no path traversal, propietario/entidad
+  autorizados, backup incluido y metadatos saneados.
+- **Pruebas necesarias:** unit, integración de subida/descarga, autorización, MIME
+  falso, tamaño excesivo, path traversal y archivos corruptos.
+- **Documentación afectada:** threat model, ASVS V5, backup/restore y OpenAPI.
+
+### [ ] F6.5 — Frontend de seguimiento e inspección
+
+- **Objetivo:** completar el flujo oportunidad → seguimiento → visita → decisión.
+- **Alcance:** acciones desde `OpportunityCard`, vista Watchlist, histórico de precio,
+  notas, planificación de visita, checklist responsive, captura/subida de fotos y
+  estados de carga/error/vacío.
+- **Dependencias:** F6.2–F6.4.
+- **Criterios de aceptación:** teclado completo, etiquetas y estados no dependientes
+  solo del color, mobile-first y cero violaciones axe.
+- **Pruebas necesarias:** Vitest/Testing Library/axe y E2E del vertical slice.
+- **Documentación afectada:** README y testing strategy.
+
+### [ ] F6.6 — Cerrar y desplegar Fase 6
+
+- **Objetivo:** demostrar la fase en el entorno real y dejar un punto de relevo limpio.
+- **Alcance:** migración `0007` en NAS, rebuild de api/worker/web, smoke completo,
+  OpenAPI, documentación y `INFORME_CIERRE_FASE_6.md`.
+- **Dependencias:** F6.0–F6.5.
+- **Criterios de aceptación:** todos los gates de §55, 6 contenedores saludables y
+  flujo guardar → bajar precio → inspeccionar → adjuntar evidencia → decidir.
+- **Pruebas necesarias:** matriz completa local/CI, integración, E2E y smoke NAS.
+- **Documentación afectada:** toda la documentación viva afectada.
+
+## Fase 7 — Garage y finance
+
+- [ ] F7.1 — ADR/modelo para `OwnedVehicle`, `Expense`, `Sale` y documentos.
+- [ ] F7.2 — Compra transaccional desde oportunidad validada; conservar histórico.
+- [ ] F7.3 — Ledger append-only de gastos con `Decimal/Numeric` y categorías cerradas.
+- [ ] F7.4 — Venta, beneficio y ROI calculados desde compra + ledger + venta.
+- [ ] F7.5 — Garage y dashboard financiero accesibles; documentos seguros.
+- [ ] F7.6 — Tests críticos, migración, E2E, despliegue NAS e informe de cierre.
+
+## Fase 8 — Hardening
+
+- [ ] F8.1 — Revisión completa OWASP ASVS 5.0 L2 y threat model final.
+- [ ] F8.2 — SAST, secretos, dependencias, CodeQL y Trivy sin HIGH/CRITICAL abiertos.
+- [ ] F8.3 — DAST sobre staging y revisión de permisos/privacidad/retención.
+- [ ] F8.4 — Accesibilidad, rendimiento, límites operativos y observabilidad.
+- [ ] F8.5 — Backup y restore real medido; migración y rollback ensayados.
+- [ ] F8.6 — Runbooks, evidencias e informe de cierre.
+
+## Fase 9 — Release MVP
+
+- [ ] F9.1 — Congelar alcance, versión y changelog; crear artefactos reproducibles.
+- [ ] F9.2 — Validar migración desde la versión desplegada y rollback documentado.
+- [ ] F9.3 — Ejecutar smoke/E2E del vertical slice completo en staging/producción.
+- [ ] F9.4 — Configurar métricas, alertas mínimas y checklist operativo.
+- [ ] F9.5 — Aceptación final: login → oportunidad → watchlist → compra → gastos →
+  venta → beneficio y ROI real.

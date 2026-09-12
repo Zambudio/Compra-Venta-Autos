@@ -1,6 +1,6 @@
 # Arquitectura
 
-Estado: inicial, aprobado para Foundation. Fecha: 2026-09-06.
+Estado: implementado hasta Fase 5; Fase 6 planificada. Fecha: 2026-09-12.
 
 ## Contexto y restricciones
 
@@ -38,9 +38,11 @@ infrastructure/docker/ infrastructure/caddy/ infrastructure/scripts/
 docs/ tests/
 ```
 
-Fase 1 implementó `core`, `auth`, `users` y `audit`. Fase 2 implementa
-`connectors`, `listings`, `sources` y `search`; el resto de directorios son
-límites declarados sin lógica de negocio hasta su fase.
+Fase 1 implementó `core`, `auth`, `users` y `audit`; Fase 2, `connectors`,
+`listings`, `sources` y `search`; Fase 3, `vehicles`; Fase 4, `knowledge`; y Fase 5,
+`scoring` con las oportunidades en el mismo límite modular. `watchlist`,
+`inspections`, `files`, `garage`, `finance` y `notifications` siguen siendo límites
+planificados sin implementación de negocio.
 
 ## Regla de dependencia
 
@@ -60,7 +62,7 @@ límites declarados sin lógica de negocio hasta su fase.
 | search/connectors/listings/sources | filtros, adquisición permitida, normalización, ingesta, snapshots, health | 2 |
 | vehicles                   | identidad normalizada, deduplicación asistida, histórico y estimación de mercado | 3 (completada) |
 | knowledge                  | jerarquía técnica canónica, fuentes trazables A-D, evidencias, problemas conocidos, clasificaciones y lookup de fiabilidad | 4 (completada) |
-| scoring/opportunities      | perfiles, score y valoración explicable                  | 5           |
+| scoring/opportunities      | perfiles, score, valoración y oportunidades explicables  | 5 (completada) |
 | watchlist/inspections      | seguimiento y checklists                                 | 6           |
 | garage/finance             | propiedad, ledger, venta y ROI                           | 7           |
 | notifications/files        | puertos reemplazables de entrega/almacenamiento          | transversal |

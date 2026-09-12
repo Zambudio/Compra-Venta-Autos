@@ -1,19 +1,22 @@
 # Roadmap
 
-Última actualización: 2026-09-06.
+Última actualización: 2026-09-12.
 
 ## MVP
 
 Objetivo: completar con calidad el flujo privado de una operación real, con adquisición legal y decisiones explicables.
 
-1. Foundation segura y operable: auth, observabilidad, PostgreSQL, Redis, jobs, CI y entorno reproducible.
-2. Búsqueda mediante proveedores `Mock` y `Manual`; conectores como contratos sustituibles, sin scraping no autorizado.
-3. Normalización, separación `Vehicle`/`Listing`, snapshots y deduplicación asistida.
-4. Wiki técnica con fuentes y evidencias; clasificación basada en datos.
-5. Score determinista/versionado, comparables, intervalos y confianza.
-6. Opportunities, watchlist e inspección.
-7. Compra, ledger de gastos, venta, beneficio y ROI real.
-8. Hardening ASVS 5.0 L2, accesibilidad, rendimiento, backup/restore y release reproducible.
+1. ✅ Foundation segura y operable: auth, observabilidad, PostgreSQL, Redis, jobs, CI y entorno reproducible.
+2. ✅ Búsqueda mediante proveedores `Mock` y `Manual`; conectores como contratos sustituibles, sin scraping no autorizado.
+3. ✅ Normalización, separación `Vehicle`/`Listing`, snapshots y deduplicación asistida.
+4. ✅ Wiki técnica con fuentes y evidencias; clasificación basada en datos.
+5. ✅ Score determinista/versionado, comparables, intervalos, confianza y mesa de oportunidades.
+6. ⏳ Watchlist e inspección; siguiente fase tras sanear el baseline de calidad.
+7. ⏳ Compra, ledger de gastos, venta, beneficio y ROI real.
+8. ⏳ Hardening ASVS 5.0 L2, accesibilidad, rendimiento, backup/restore y release reproducible.
+
+Estado global: Fases 0–5 completadas; Fases 6–9 pendientes. El plan ejecutable y los
+gates actuales están en `task.md` e `implementation_plan.md`.
 
 Restricciones: una sola aplicación backend, una base PostgreSQL, sin automatización de portales no autorizada, sin IA decisora y sin funcionalidades V2/V3.
 
