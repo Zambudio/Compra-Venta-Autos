@@ -4,6 +4,7 @@ import {
   Activity,
   BookOpenText,
   CarFront,
+  ClipboardCheck,
   LogOut,
   Radar,
   Rows3,
@@ -15,6 +16,7 @@ import type { User } from "@/features/auth/types";
 import { KnowledgeView } from "@/features/knowledge/knowledge-view";
 import { ListingsView } from "@/features/listings/listings-view";
 import { OpportunitiesView } from "@/features/opportunities/opportunities-view";
+import { WatchlistView } from "@/features/watchlist/watchlist-view";
 import { StatusView } from "@/features/system/status-view";
 import { VehiclesView } from "@/features/vehicles/vehicles-view";
 
@@ -24,7 +26,7 @@ type AppShellProps = {
   isLoggingOut: boolean;
 };
 
-type Tab = "opportunities" | "listings" | "vehicles" | "knowledge" | "status";
+type Tab = "opportunities" | "watchlist" | "listings" | "vehicles" | "knowledge" | "status";
 
 const TABS = [
   {
@@ -32,6 +34,12 @@ const TABS = [
     label: "Oportunidades",
     hint: "Scoring y Margen",
     icon: Sparkles,
+  },
+  {
+    id: "watchlist",
+    label: "Inspecciones",
+    hint: "Watchlist y Taller",
+    icon: ClipboardCheck,
   },
   { id: "listings", label: "Anuncios", hint: "Mercado", icon: Rows3 },
   { id: "vehicles", label: "Vehículos", hint: "Unidades", icon: CarFront },
@@ -138,6 +146,7 @@ export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
       <p className="sr-only">Sesión iniciada como {user.email}</p>
       <main className="min-w-0">
         {active === "opportunities" && <OpportunitiesView />}
+        {active === "watchlist" && <WatchlistView />}
         {active === "listings" && <ListingsView />}
         {active === "vehicles" && <VehiclesView />}
         {active === "knowledge" && <KnowledgeView />}

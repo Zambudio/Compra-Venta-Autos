@@ -6,7 +6,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import * as api from "@/features/opportunities/api";
 import { OpportunitiesView } from "@/features/opportunities/opportunities-view";
 import {
-  mockOpportunity,
+  
   mockOpportunityPage,
 } from "@/features/opportunities/test-fixtures";
 import { renderWithClient } from "@/test/render";

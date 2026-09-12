@@ -52,6 +52,7 @@ export function OpportunitiesView() {
     data,
     isLoading: loading,
     error: queryError,
+    refetch,
   } = useQuery({
     queryKey,
     queryFn: async () => {
@@ -127,7 +128,7 @@ export function OpportunitiesView() {
 
         <button
           type="button"
-          onClick={() => void fetchOpportunities()}
+          onClick={() => void refetch()}
           disabled={loading}
           className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus:outline-none"
           aria-label="Actualizar listado de oportunidades"

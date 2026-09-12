@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 
 type BadgeProps = {
   tone?: "neutral" | "success" | "warning" | "danger";
+  className?: string;
   children: ReactNode;
 };
 
@@ -18,12 +19,13 @@ const TONES: Record<NonNullable<BadgeProps["tone"]>, string> = {
     "border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-[var(--danger-soft)] text-[var(--danger)]",
 };
 
-export function Badge({ tone = "neutral", children }: BadgeProps) {
+export function Badge({ tone = "neutral", className, children }: BadgeProps) {
   return (
     <span
       className={cn(
         "inline-flex min-h-6 items-center rounded-full border px-2 py-0.5 text-[0.6875rem] leading-none font-semibold whitespace-nowrap",
         TONES[tone],
+        className
       )}
     >
       {children}
