@@ -731,7 +731,9 @@ class KnowledgeService:
                 .selectinload(KnownIssue.evidences)
                 .selectinload(Evidence.source),
                 selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.engines),
-                selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.engine_variants),
+                selectinload(VehicleMitigation.known_issue).selectinload(
+                    KnownIssue.engine_variants
+                ),
                 selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.generations),
                 selectinload(VehicleMitigation.known_issue).selectinload(KnownIssue.transmissions),
             )

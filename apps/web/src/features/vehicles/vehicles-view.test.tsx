@@ -4,7 +4,11 @@ import { axe } from "vitest-axe";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import * as api from "@/features/vehicles/api";
-import type { Vehicle, VehicleDetail as TVehicleDetail, VehiclePage } from "@/features/vehicles/types";
+import type {
+  Vehicle,
+  VehicleDetail as TVehicleDetail,
+  VehiclePage,
+} from "@/features/vehicles/types";
 import { VehiclesView } from "@/features/vehicles/vehicles-view";
 import { renderWithClient } from "@/test/render";
 
@@ -65,15 +69,21 @@ test("renders vehicles catalog with badge and allows selection", async () => {
   expect(screen.getByText("3")).toBeInTheDocument();
 
   // Seleccionar vehículo
-  const detailBtn = screen.getByRole("button", { name: /ver detalles de toyota auris/i });
+  const detailBtn = screen.getByRole("button", {
+    name: /ver detalles de toyota auris/i,
+  });
   await userEvent.click(detailBtn);
 
   await waitFor(() => {
-    expect(screen.getByRole("heading", { name: "Toyota Auris" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Toyota Auris" }),
+    ).toBeInTheDocument();
   });
 
   // Volver
-  const backBtn = screen.getByRole("button", { name: /volver al catálogo de vehículos/i });
+  const backBtn = screen.getByRole("button", {
+    name: /volver al catálogo de vehículos/i,
+  });
   await userEvent.click(backBtn);
 
   await waitFor(() => {
@@ -90,17 +100,25 @@ test("allows switching to deduplication tab", async () => {
   await userEvent.click(dedupTab);
 
   await waitFor(() => {
-    expect(screen.getByRole("heading", { name: /deduplicación asistida/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /deduplicación asistida/i }),
+    ).toBeInTheDocument();
   });
 });
 
 test("renders empty catalog state when no vehicles exist", async () => {
-  vi.spyOn(api, "getVehicles").mockResolvedValue({ ...mockPage, items: [], total: 0 });
+  vi.spyOn(api, "getVehicles").mockResolvedValue({
+    ...mockPage,
+    items: [],
+    total: 0,
+  });
 
   renderWithClient(<VehiclesView />);
 
   await waitFor(() => {
-    expect(screen.getByText(/no se encontraron vehículos unificados/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/no se encontraron vehículos unificados/i),
+    ).toBeInTheDocument();
   });
 });
 

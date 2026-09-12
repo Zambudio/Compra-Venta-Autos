@@ -13,7 +13,8 @@ const mockIssuesPage: KnownIssuePage = {
     {
       id: "iss-1",
       title: "Desgaste prematuro de cadena",
-      description: "Cadena de distribución se estira provocando salto de dientes.",
+      description:
+        "Cadena de distribución se estira provocando salto de dientes.",
       component: "TIMING_SYSTEM",
       severity: "HIGH",
       frequency: "FREQUENT",
@@ -70,27 +71,63 @@ test("renders knowledge view with issues list and subtabs", async () => {
   renderWithClient(<KnowledgeView />);
 
   await waitFor(() => {
-    expect(screen.getByText("Desgaste prematuro de cadena")).toBeInTheDocument();
+    expect(
+      screen.getByText("Desgaste prematuro de cadena"),
+    ).toBeInTheDocument();
   });
 
-  expect(screen.getByText("Base de Conocimiento Técnico y Fiabilidad")).toBeInTheDocument();
+  expect(
+    screen.getByText("Base de Conocimiento Técnico y Fiabilidad"),
+  ).toBeInTheDocument();
   expect(screen.queryByText(/Ruido de traqueteo/i)).not.toBeInTheDocument(); // Accordion collapsed by default
 });
 
 test("switches between subtabs to show classifications and catalog", async () => {
   vi.spyOn(api, "getKnownIssues").mockResolvedValue(mockIssuesPage);
-  vi.spyOn(api, "getClassifications").mockResolvedValue(mockClassificationsPage);
+  vi.spyOn(api, "getClassifications").mockResolvedValue(
+    mockClassificationsPage,
+  );
   vi.spyOn(api, "getManufacturers").mockResolvedValue([
-    { id: "m-1", name: "Volkswagen", country: "Alemania", created_at: "2026-01-01", updated_at: "2026-01-01" },
+    {
+      id: "m-1",
+      name: "Volkswagen",
+      country: "Alemania",
+      created_at: "2026-01-01",
+      updated_at: "2026-01-01",
+    },
   ]);
   vi.spyOn(api, "getModels").mockResolvedValue([
-    { id: "mod-1", manufacturer_id: "m-1", name: "Golf", created_at: "2026-01-01", updated_at: "2026-01-01" },
+    {
+      id: "mod-1",
+      manufacturer_id: "m-1",
+      name: "Golf",
+      created_at: "2026-01-01",
+      updated_at: "2026-01-01",
+    },
   ]);
   vi.spyOn(api, "getEngines").mockResolvedValue([
-    { id: "eng-1", manufacturer_id: "m-1", name: "1.4 TSI", family_code: "EA111", fuel_type: "PETROL", displacement_cc: 1390, aspiration: "TURBOCHARGED", created_at: "2026-01-01", updated_at: "2026-01-01" },
+    {
+      id: "eng-1",
+      manufacturer_id: "m-1",
+      name: "1.4 TSI",
+      family_code: "EA111",
+      fuel_type: "PETROL",
+      displacement_cc: 1390,
+      aspiration: "TURBOCHARGED",
+      created_at: "2026-01-01",
+      updated_at: "2026-01-01",
+    },
   ]);
   vi.spyOn(api, "getGenerations").mockResolvedValue([
-    { id: "gen-1", model_id: "mod-1", name: "Golf VI", year_start: 2008, year_end: 2012, created_at: "2026-01-01", updated_at: "2026-01-01" },
+    {
+      id: "gen-1",
+      model_id: "mod-1",
+      name: "Golf VI",
+      year_start: 2008,
+      year_end: 2012,
+      created_at: "2026-01-01",
+      updated_at: "2026-01-01",
+    },
   ]);
 
   renderWithClient(<KnowledgeView />);
@@ -100,11 +137,15 @@ test("switches between subtabs to show classifications and catalog", async () =>
   await userEvent.click(clsTab);
 
   await waitFor(() => {
-    expect(screen.getByText("Defecto de diseño en correa húmeda.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Defecto de diseño en correa húmeda."),
+    ).toBeInTheDocument();
   });
 
   // Cambiar a Catálogo
-  const catalogTab = screen.getByRole("button", { name: /Catálogo Mecánico Canónico/i });
+  const catalogTab = screen.getByRole("button", {
+    name: /Catálogo Mecánico Canónico/i,
+  });
   await userEvent.click(catalogTab);
 
   await waitFor(() => {
@@ -132,7 +173,9 @@ test("knowledge view has no accessibility violations", async () => {
   const { container } = renderWithClient(<KnowledgeView />);
 
   await waitFor(() => {
-    expect(screen.getByText("Desgaste prematuro de cadena")).toBeInTheDocument();
+    expect(
+      screen.getByText("Desgaste prematuro de cadena"),
+    ).toBeInTheDocument();
   });
 
   const results = await axe(container);

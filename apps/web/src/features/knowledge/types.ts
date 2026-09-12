@@ -27,10 +27,7 @@ export type VehicleComponent =
   | "CHASSIS_BODY";
 
 export type ClassificationStatus =
-  | "WHITELIST"
-  | "WATCHLIST"
-  | "BLACKLIST"
-  | "UNKNOWN";
+  "WHITELIST" | "WATCHLIST" | "BLACKLIST" | "UNKNOWN";
 
 export type ClassificationTargetType =
   | "MANUFACTURER"
@@ -49,10 +46,7 @@ export type TransmissionType =
   | "DIRECT_DRIVE_EV";
 
 export type EngineAspiration =
-  | "NATURALLY_ASPIRATED"
-  | "TURBOCHARGED"
-  | "TWIN_TURBO"
-  | "SUPERCHARGED";
+  "NATURALLY_ASPIRATED" | "TURBOCHARGED" | "TWIN_TURBO" | "SUPERCHARGED";
 
 export type Manufacturer = {
   id: string;

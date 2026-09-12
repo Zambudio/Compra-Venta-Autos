@@ -5,7 +5,6 @@ from decimal import Decimal
 from unittest.mock import MagicMock
 
 import pytest
-
 from app.scoring.valuation import compute_economic_valuation, compute_seller_pressure
 from app.scoring.vocab import ConfidenceLevel, SellerPressureLevel
 
@@ -15,7 +14,7 @@ def test_seller_pressure_levels_and_reasons() -> None:
     now = datetime.now(UTC)
 
     # 1. Anuncio recién publicado sin rebajas (LOW)
-    level_low, reasons_low, days_l, red_cnt_l, red_amt_l, red_pct_l = compute_seller_pressure(
+    level_low, reasons_low, days_l, red_cnt_l, red_amt_l, _red_pct_l = compute_seller_pressure(
         published_at=now - timedelta(days=2),
         last_seen_at=now,
         snapshots=[],

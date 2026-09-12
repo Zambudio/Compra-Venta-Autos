@@ -18,29 +18,40 @@ export function getOpportunities(
   if (params?.page) q.set("page", String(params.page));
   if (params?.pageSize) q.set("page_size", String(params.pageSize));
   if (params?.status) q.set("status", params.status);
-  if (params?.min_score !== undefined) q.set("min_score", String(params.min_score));
+  if (params?.min_score !== undefined)
+    q.set("min_score", String(params.min_score));
   if (params?.min_roi !== undefined) q.set("min_roi", String(params.min_roi));
   if (params?.brand) q.set("brand", params.brand);
   const query = q.toString();
-  return apiRequest<OpportunityPage>(`/opportunities${query ? `?${query}` : ""}`);
+  return apiRequest<OpportunityPage>(
+    `/opportunities${query ? `?${query}` : ""}`,
+  );
 }
 
-export function getOpportunity(opportunityId: string): Promise<OpportunityRead> {
+export function getOpportunity(
+  opportunityId: string,
+): Promise<OpportunityRead> {
   return apiRequest<OpportunityRead>(`/opportunities/${opportunityId}`);
 }
 
 export function evaluateListing(listingId: string): Promise<OpportunityRead> {
-  return apiRequest<OpportunityRead>(`/opportunities/evaluate/listing/${listingId}`, {
-    method: "POST",
-    headers: csrfHeaders(),
-  });
+  return apiRequest<OpportunityRead>(
+    `/opportunities/evaluate/listing/${listingId}`,
+    {
+      method: "POST",
+      headers: csrfHeaders(),
+    },
+  );
 }
 
 export function evaluateVehicle(vehicleId: string): Promise<OpportunityRead> {
-  return apiRequest<OpportunityRead>(`/opportunities/evaluate/vehicle/${vehicleId}`, {
-    method: "POST",
-    headers: csrfHeaders(),
-  });
+  return apiRequest<OpportunityRead>(
+    `/opportunities/evaluate/vehicle/${vehicleId}`,
+    {
+      method: "POST",
+      headers: csrfHeaders(),
+    },
+  );
 }
 
 export function updateOpportunityStatus(

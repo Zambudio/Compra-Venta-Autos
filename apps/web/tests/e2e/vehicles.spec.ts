@@ -31,7 +31,9 @@ test("owner navigates vehicles catalog, inspects market data and deduplication r
   ).toBeVisible();
 
   // Si existe algún candidato pendiente, podemos confirmar o rechazar
-  const confirmBtn = page.getByRole("button", { name: "Confirmar unión" }).first();
+  const confirmBtn = page
+    .getByRole("button", { name: "Confirmar unión" })
+    .first();
   if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await confirmBtn.click();
     await page.waitForTimeout(1000);

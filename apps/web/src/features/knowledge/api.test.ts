@@ -39,10 +39,20 @@ test("getModels passes manufacturerId query param", async () => {
 test("getKnownIssues passes filters and pagination", async () => {
   mockFetch.mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ items: [], page: 1, page_size: 20, total: 0, has_more: false }),
+    json: async () => ({
+      items: [],
+      page: 1,
+      page_size: 20,
+      total: 0,
+      has_more: false,
+    }),
   });
 
-  await api.getKnownIssues({ component: "TIMING_SYSTEM", severity: "CRITICAL", page: 2 });
+  await api.getKnownIssues({
+    component: "TIMING_SYSTEM",
+    severity: "CRITICAL",
+    page: 2,
+  });
   expect(mockFetch).toHaveBeenCalledWith(
     "/api/v1/knowledge/issues?component=TIMING_SYSTEM&severity=CRITICAL&page=2",
     expect.anything(),
@@ -77,7 +87,10 @@ test("lookupVehicleReliability encodes query parameters correctly", async () => 
 test("addVehicleMitigation sends POST with CSRF header", async () => {
   mockFetch.mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ id: "mit-1", mitigation_type: "INVOICE_PROVED_REPLACEMENT" }),
+    json: async () => ({
+      id: "mit-1",
+      mitigation_type: "INVOICE_PROVED_REPLACEMENT",
+    }),
   });
   const res = await api.addVehicleMitigation({
     vehicle_id: "veh-1",
@@ -138,14 +151,20 @@ test("getTransmissions and getKnownIssue", async () => {
     json: async () => [{ id: "tr-1", code: "MQ250" }],
   });
   await api.getTransmissions();
-  expect(mockFetch).toHaveBeenCalledWith("/api/v1/knowledge/transmissions", expect.anything());
+  expect(mockFetch).toHaveBeenCalledWith(
+    "/api/v1/knowledge/transmissions",
+    expect.anything(),
+  );
 
   mockFetch.mockResolvedValueOnce({
     ok: true,
     json: async () => ({ id: "iss-1", title: "Problema cadena" }),
   });
   await api.getKnownIssue("iss-1");
-  expect(mockFetch).toHaveBeenCalledWith("/api/v1/knowledge/issues/iss-1", expect.anything());
+  expect(mockFetch).toHaveBeenCalledWith(
+    "/api/v1/knowledge/issues/iss-1",
+    expect.anything(),
+  );
 });
 
 test("getClassifications and getVehicleMitigations", async () => {
@@ -153,7 +172,12 @@ test("getClassifications and getVehicleMitigations", async () => {
     ok: true,
     json: async () => ({ items: [], total: 0 }),
   });
-  await api.getClassifications({ status: "BLACKLIST", targetType: "ENGINE", page: 1, pageSize: 10 });
+  await api.getClassifications({
+    status: "BLACKLIST",
+    targetType: "ENGINE",
+    page: 1,
+    pageSize: 10,
+  });
   expect(mockFetch).toHaveBeenCalledWith(
     "/api/v1/knowledge/classifications?status=BLACKLIST&target_type=ENGINE&page=1&page_size=10",
     expect.anything(),

@@ -5,7 +5,10 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import * as api from "@/features/vehicles/api";
 import { MatchCandidatesView } from "@/features/vehicles/match-candidates-view";
-import type { MatchCandidate, MatchCandidatePage } from "@/features/vehicles/types";
+import type {
+  MatchCandidate,
+  MatchCandidatePage,
+} from "@/features/vehicles/types";
 import { renderWithClient } from "@/test/render";
 
 const mockCandidate: MatchCandidate = {
@@ -77,12 +80,16 @@ test("renders candidate card and allows confirming match", async () => {
   expect(screen.getByText(/ext-a.*Valencia/)).toBeInTheDocument();
   expect(screen.getByText(/ext-b.*Castellón/)).toBeInTheDocument();
 
-  const confirmBtn = screen.getByRole("button", { name: /confirmar coincidencia cand-1/i });
+  const confirmBtn = screen.getByRole("button", {
+    name: /confirmar coincidencia cand-1/i,
+  });
   await userEvent.click(confirmBtn);
 
   expect(confirmSpy).toHaveBeenCalledWith("cand-1");
   await waitFor(() => {
-    expect(screen.getByText(/Emparejamiento confirmado con éxito/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Emparejamiento confirmado con éxito/i),
+    ).toBeInTheDocument();
   });
 });
 
@@ -99,7 +106,9 @@ test("allows rejecting candidate match", async () => {
     expect(screen.getByText(/Similitud 85%/i)).toBeInTheDocument();
   });
 
-  const rejectBtn = screen.getByRole("button", { name: /descartar coincidencia cand-1/i });
+  const rejectBtn = screen.getByRole("button", {
+    name: /descartar coincidencia cand-1/i,
+  });
   await userEvent.click(rejectBtn);
 
   expect(rejectSpy).toHaveBeenCalledWith("cand-1");
@@ -109,7 +118,11 @@ test("allows rejecting candidate match", async () => {
 });
 
 test("allows scanning for duplicates", async () => {
-  vi.spyOn(api, "getMatchCandidates").mockResolvedValue({ ...mockPage, items: [], total: 0 });
+  vi.spyOn(api, "getMatchCandidates").mockResolvedValue({
+    ...mockPage,
+    items: [],
+    total: 0,
+  });
   const scanSpy = vi.spyOn(api, "generateMatchCandidates").mockResolvedValue({
     created_candidates: 2,
   });
@@ -125,7 +138,9 @@ test("allows scanning for duplicates", async () => {
 
   expect(scanSpy).toHaveBeenCalled();
   await waitFor(() => {
-    expect(screen.getByText(/Se han detectado 2 nuevos candidatos/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Se han detectado 2 nuevos candidatos/i),
+    ).toBeInTheDocument();
   });
 });
 

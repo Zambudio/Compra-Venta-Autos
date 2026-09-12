@@ -35,6 +35,7 @@ def compute_seller_pressure(
     Devuelve: (level, reasons, days_on_market, reductions_count, reduction_amt, reduction_pct)
     """
     now = datetime.now(UTC)
+
     def _snap_time(s: Any) -> datetime:
         return getattr(s, "observed_at", getattr(s, "snapshot_at", now))
 

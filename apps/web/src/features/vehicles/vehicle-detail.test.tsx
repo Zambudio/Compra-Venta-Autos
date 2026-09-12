@@ -86,7 +86,9 @@ test("renders vehicle detail with specs, market estimate, history and listings",
   renderWithClient(<VehicleDetail vehicleId="veh-123" onBack={onBack} />);
 
   await waitFor(() => {
-    expect(screen.getByRole("heading", { name: "SEAT Ibiza" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "SEAT Ibiza" }),
+    ).toBeInTheDocument();
   });
 
   // Specs
@@ -107,25 +109,33 @@ test("renders vehicle detail with specs, market estimate, history and listings",
   expect(screen.getByText(/ext-2/)).toBeInTheDocument();
 
   // Back button
-  const backBtn = screen.getByRole("button", { name: /volver al catálogo de vehículos/i });
+  const backBtn = screen.getByRole("button", {
+    name: /volver al catálogo de vehículos/i,
+  });
   await userEvent.click(backBtn);
   expect(onBack).toHaveBeenCalled();
 });
 
 test("recalculates market estimate when button is clicked", async () => {
   vi.spyOn(api, "getVehicle").mockResolvedValue(mockDetail);
-  const computeSpy = vi.spyOn(api, "computeVehicleMarketEstimate").mockResolvedValue({
-    ...mockDetail.market_estimate!,
-    estimated_amount: "5100.00",
-  });
+  const computeSpy = vi
+    .spyOn(api, "computeVehicleMarketEstimate")
+    .mockResolvedValue({
+      ...mockDetail.market_estimate!,
+      estimated_amount: "5100.00",
+    });
 
   renderWithClient(<VehicleDetail vehicleId="veh-123" onBack={vi.fn()} />);
 
   await waitFor(() => {
-    expect(screen.getByRole("heading", { name: "SEAT Ibiza" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "SEAT Ibiza" }),
+    ).toBeInTheDocument();
   });
 
-  const recalcBtn = screen.getByRole("button", { name: /recalcular estimación de mercado/i });
+  const recalcBtn = screen.getByRole("button", {
+    name: /recalcular estimación de mercado/i,
+  });
   await userEvent.click(recalcBtn);
 
   expect(computeSpy).toHaveBeenCalledWith("veh-123");
@@ -133,10 +143,14 @@ test("recalculates market estimate when button is clicked", async () => {
 
 test("vehicle detail has no accessibility violations", async () => {
   vi.spyOn(api, "getVehicle").mockResolvedValue(mockDetail);
-  const { container } = renderWithClient(<VehicleDetail vehicleId="veh-123" onBack={vi.fn()} />);
+  const { container } = renderWithClient(
+    <VehicleDetail vehicleId="veh-123" onBack={vi.fn()} />,
+  );
 
   await waitFor(() => {
-    expect(screen.getByRole("heading", { name: "SEAT Ibiza" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "SEAT Ibiza" }),
+    ).toBeInTheDocument();
   });
 
   const results = await axe(container);

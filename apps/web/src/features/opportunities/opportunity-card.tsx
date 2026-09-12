@@ -6,7 +6,6 @@ import {
   Flame,
   Gauge,
   MapPin,
-  TrendingUp,
 } from "lucide-react";
 import type {
   OpportunityRead,
@@ -49,9 +48,13 @@ export function OpportunityCard({
   isUpdatingStatus = false,
 }: OpportunityCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const scoreTotal = Number(opportunity.score?.total_score ?? opportunity.score?.score_total ?? 0);
+  const scoreTotal = Number(
+    opportunity.score?.total_score ?? opportunity.score?.score_total ?? 0,
+  );
   const scoreVariant = scoreColorVariant(scoreTotal);
-  const pressureVariant = sellerPressureVariant(opportunity.seller_pressure_level);
+  const pressureVariant = sellerPressureVariant(
+    opportunity.seller_pressure_level,
+  );
 
   const title =
     opportunity.title ||
@@ -68,7 +71,7 @@ export function OpportunityCard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="font-display text-base font-bold text-[var(--foreground)] truncate">
+              <h2 className="font-display truncate text-base font-bold text-[var(--foreground)]">
                 {title}
               </h2>
               {opportunity.external_url && (
@@ -87,12 +90,13 @@ export function OpportunityCard({
 
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--muted)]">
               {opportunity.year && <span>Año {opportunity.year}</span>}
-              {opportunity.mileage_km !== null && opportunity.mileage_km !== undefined && (
-                <span className="flex items-center gap-1">
-                  <Gauge size={12} aria-hidden />
-                  {formatKm(opportunity.mileage_km)}
-                </span>
-              )}
+              {opportunity.mileage_km !== null &&
+                opportunity.mileage_km !== undefined && (
+                  <span className="flex items-center gap-1">
+                    <Gauge size={12} aria-hidden />
+                    {formatKm(opportunity.mileage_km)}
+                  </span>
+                )}
               {opportunity.city && (
                 <span className="flex items-center gap-1">
                   <MapPin size={12} aria-hidden />
@@ -114,7 +118,9 @@ export function OpportunityCard({
               }`}
             >
               <Flame size={12} aria-hidden />
-              <span>{SELLER_PRESSURE_LABELS[opportunity.seller_pressure_level]}</span>
+              <span>
+                {SELLER_PRESSURE_LABELS[opportunity.seller_pressure_level]}
+              </span>
             </span>
 
             <div
@@ -126,36 +132,46 @@ export function OpportunityCard({
                     : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
               }`}
             >
-              <span className="text-xs mr-1 opacity-70">Score:</span>
+              <span className="mr-1 text-xs opacity-70">Score:</span>
               <span>{formatScore(scoreTotal)}</span>
             </div>
           </div>
         </div>
 
         {/* Métricas clave en tarjeta */}
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 sm:grid-cols-4 sm:gap-3">
           <div>
-            <span className="text-[0.6875rem] text-[var(--muted)]">Precio Pedido</span>
+            <span className="text-[0.6875rem] text-[var(--muted)]">
+              Precio Pedido
+            </span>
             <p className="font-mono text-sm font-bold text-[var(--foreground)]">
               {formatEuros(opportunity.asking_price)}
             </p>
           </div>
           <div>
-            <span className="text-[0.6875rem] text-[var(--muted)]">Venta Rápida</span>
+            <span className="text-[0.6875rem] text-[var(--muted)]">
+              Venta Rápida
+            </span>
             <p className="font-mono text-sm font-bold text-amber-600 dark:text-amber-400">
               {formatEuros(opportunity.estimated_fast_sale_price)}
             </p>
           </div>
           <div>
-            <span className="text-[0.6875rem] text-[var(--muted)]">Margen Neto Proy.</span>
+            <span className="text-[0.6875rem] text-[var(--muted)]">
+              Margen Neto Proy.
+            </span>
             <p className="font-mono text-sm font-bold text-[var(--foreground)]">
-              {formatEuros(opportunity.estimated_margin_min)} – {formatEuros(opportunity.estimated_margin_max)}
+              {formatEuros(opportunity.estimated_margin_min)} –{" "}
+              {formatEuros(opportunity.estimated_margin_max)}
             </p>
           </div>
           <div>
-            <span className="text-[0.6875rem] text-[var(--muted)]">ROI Estimado</span>
+            <span className="text-[0.6875rem] text-[var(--muted)]">
+              ROI Estimado
+            </span>
             <p className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
-              {formatPercent(opportunity.estimated_roi_min)} – {formatPercent(opportunity.estimated_roi_max)}
+              {formatPercent(opportunity.estimated_roi_min)} –{" "}
+              {formatPercent(opportunity.estimated_roi_max)}
             </p>
           </div>
         </div>
@@ -175,7 +191,10 @@ export function OpportunityCard({
               disabled={isUpdatingStatus}
               onChange={(e) => {
                 if (onStatusChange) {
-                  onStatusChange(opportunity.id, e.target.value as OpportunityStatus);
+                  onStatusChange(
+                    opportunity.id,
+                    e.target.value as OpportunityStatus,
+                  );
                 }
               }}
               className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-semibold text-[var(--foreground)] focus:border-[var(--accent)] focus:outline-none"
@@ -194,7 +213,9 @@ export function OpportunityCard({
             aria-expanded={expanded}
             className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-hover)]"
           >
-            <span>{expanded ? "Ocultar análisis" : "Ver desglose detallado"}</span>
+            <span>
+              {expanded ? "Ocultar análisis" : "Ver desglose detallado"}
+            </span>
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>
@@ -202,7 +223,7 @@ export function OpportunityCard({
 
       {/* Sección Expandida: Paneles de Scoring y Valoración */}
       {expanded && (
-        <div className="border-t border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 space-y-5">
+        <div className="space-y-5 border-t border-[var(--border)] bg-[var(--background)] p-4 sm:p-5">
           <OpportunityScoreBreakdown score={opportunity.score} />
           <OpportunityValuationPanel opportunity={opportunity} />
         </div>

@@ -31,14 +31,18 @@ test("renders vehicle summary and triggers onSelect", async () => {
   expect(screen.getByText("1.6 TDI")).toBeInTheDocument();
   expect(screen.getByText(/2 anuncios/i)).toBeInTheDocument();
 
-  const button = screen.getByRole("button", { name: /ver detalles de volkswagen golf/i });
+  const button = screen.getByRole("button", {
+    name: /ver detalles de volkswagen golf/i,
+  });
   await userEvent.click(button);
 
   expect(onSelect).toHaveBeenCalledWith(mockVehicle);
 });
 
 test("vehicle card has no accessibility violations", async () => {
-  const { container } = render(<VehicleCard vehicle={mockVehicle} onSelect={vi.fn()} />);
+  const { container } = render(
+    <VehicleCard vehicle={mockVehicle} onSelect={vi.fn()} />,
+  );
   const results = await axe(container);
   expect(results).toHaveNoViolations();
 });

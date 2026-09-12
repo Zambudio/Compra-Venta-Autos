@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
+import typing
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -65,7 +66,7 @@ async def _dummy_db() -> AsyncIterator[AsyncSession]:
 
 
 @pytest.fixture
-def app():
+def app() -> typing.Any:
     with patch("app.main.Database"), patch("app.main.RedisClient"):
         application = create_app(_settings())
         application.dependency_overrides[get_db] = _dummy_db
@@ -75,7 +76,7 @@ def app():
 
 
 @pytest.mark.asyncio
-async def test_manufacturers_and_models_endpoints(app) -> None:
+async def test_manufacturers_and_models_endpoints(app: typing.Any) -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         # 1. Crear fabricante
@@ -103,7 +104,7 @@ async def test_manufacturers_and_models_endpoints(app) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sources_and_evidences_endpoints(app) -> None:
+async def test_sources_and_evidences_endpoints(app: typing.Any) -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         src_id = uuid4()
@@ -140,7 +141,7 @@ async def test_sources_and_evidences_endpoints(app) -> None:
 
 
 @pytest.mark.asyncio
-async def test_known_issues_endpoints(app) -> None:
+async def test_known_issues_endpoints(app: typing.Any) -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         i_id = uuid4()
@@ -192,7 +193,7 @@ async def test_known_issues_endpoints(app) -> None:
 
 
 @pytest.mark.asyncio
-async def test_reliability_lookup_endpoint(app) -> None:
+async def test_reliability_lookup_endpoint(app: typing.Any) -> None:
     from app.knowledge.schemas import ReliabilityLookupResponse
 
     transport = ASGITransport(app=app)

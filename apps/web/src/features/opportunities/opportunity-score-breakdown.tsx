@@ -94,10 +94,21 @@ export function OpportunityScoreBreakdown({
         {ORDERED_COMPONENTS.map((key) => {
           const breakdown = score.score_breakdown[key];
           const label = COMPONENT_LABELS[key] ?? key;
-          const weightPercent = breakdown ? Math.round(Number(breakdown.weight) * 100) : 0;
-          const subScore = breakdown ? Math.round(Number(breakdown.score ?? breakdown.sub_score ?? 0)) : 0;
-          const weightedPts = breakdown ? Number(breakdown.weighted_score ?? breakdown.weighted_points ?? 0).toFixed(1) : "0.0";
-          const reason = breakdown?.explanation || breakdown?.reason || "Sin justificación disponible";
+          const weightPercent = breakdown
+            ? Math.round(Number(breakdown.weight) * 100)
+            : 0;
+          const subScore = breakdown
+            ? Math.round(Number(breakdown.score ?? breakdown.sub_score ?? 0))
+            : 0;
+          const weightedPts = breakdown
+            ? Number(
+                breakdown.weighted_score ?? breakdown.weighted_points ?? 0,
+              ).toFixed(1)
+            : "0.0";
+          const reason =
+            breakdown?.explanation ||
+            breakdown?.reason ||
+            "Sin justificación disponible";
 
           return (
             <article
@@ -109,7 +120,7 @@ export function OpportunityScoreBreakdown({
                   <span className="font-semibold text-[var(--foreground)]">
                     {label}
                   </span>
-                  <span className="text-[var(--muted)] font-mono text-[0.6875rem]">
+                  <span className="font-mono text-[0.6875rem] text-[var(--muted)]">
                     {weightPercent}% peso
                   </span>
                 </div>
@@ -122,7 +133,9 @@ export function OpportunityScoreBreakdown({
                     aria-valuenow={subScore}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    style={{ width: `${Math.min(100, Math.max(0, subScore))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, subScore))}%`,
+                    }}
                     className={`h-full transition-all duration-300 ${
                       subScore >= 70
                         ? "bg-emerald-500"
@@ -141,7 +154,7 @@ export function OpportunityScoreBreakdown({
                 </div>
               </div>
 
-              <p className="mt-2.5 rounded bg-[var(--surface)] p-2 text-[0.75rem] text-[var(--muted-soft)] leading-snug">
+              <p className="mt-2.5 rounded bg-[var(--surface)] p-2 text-[0.75rem] leading-snug text-[var(--muted-soft)]">
                 {reason}
               </p>
             </article>

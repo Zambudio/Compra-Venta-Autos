@@ -5,9 +5,8 @@ Revises: 20260907_0005
 Create Date: 2026-09-09
 """
 
-from collections.abc import Sequence
-import json
 import uuid
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
@@ -82,7 +81,9 @@ def upgrade() -> None:
         sa.Column("profile_id", sa.UUID(), nullable=False),
         sa.Column("version_number", sa.Integer(), nullable=False),
         sa.Column("weights", JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("config", JSONB(astext_type=sa.Text()), server_default=sa.text("'{}'"), nullable=False),
+        sa.Column(
+            "config", JSONB(astext_type=sa.Text()), server_default=sa.text("'{}'"), nullable=False
+        ),
         sa.Column("is_immutable", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         sa.Column(
             "created_at",
@@ -134,9 +135,7 @@ def upgrade() -> None:
             "(vehicle_id IS NOT NULL) OR (listing_id IS NOT NULL)",
             name="score_target_present",
         ),
-        sa.ForeignKeyConstraint(
-            ["listing_id"], ["vehicle_listings.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["listing_id"], ["vehicle_listings.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["profile_version_id"], ["scoring_profile_versions.id"], ondelete="RESTRICT"
         ),
@@ -145,7 +144,9 @@ def upgrade() -> None:
     )
     op.create_index("ix_opportunity_scores_calc_at", "opportunity_scores", ["calculated_at"])
     op.create_index("ix_opportunity_scores_listing_id", "opportunity_scores", ["listing_id"])
-    op.create_index("ix_opportunity_scores_profile_version_id", "opportunity_scores", ["profile_version_id"])
+    op.create_index(
+        "ix_opportunity_scores_profile_version_id", "opportunity_scores", ["profile_version_id"]
+    )
     op.create_index("ix_opportunity_scores_total", "opportunity_scores", ["total_score"])
     op.create_index("ix_opportunity_scores_vehicle_id", "opportunity_scores", ["vehicle_id"])
 
@@ -223,12 +224,8 @@ def upgrade() -> None:
             "(vehicle_id IS NOT NULL) OR (listing_id IS NOT NULL)",
             name="opportunity_target_present",
         ),
-        sa.ForeignKeyConstraint(
-            ["listing_id"], ["vehicle_listings.id"], ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["score_id"], ["opportunity_scores.id"], ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["listing_id"], ["vehicle_listings.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["score_id"], ["opportunity_scores.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["vehicle_id"], ["vehicles.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )

@@ -9,7 +9,8 @@ import type { KnownIssue } from "./types";
 const mockIssue: KnownIssue = {
   id: "iss-1",
   title: "Degradación de correa en baño de aceite",
-  description: "La correa húmeda se desintegra desprendiendo residuos que taponan la chupona de aceite.",
+  description:
+    "La correa húmeda se desintegra desprendiendo residuos que taponan la chupona de aceite.",
   component: "TIMING_SYSTEM",
   severity: "CRITICAL",
   frequency: "SYSTEMIC",
@@ -60,7 +61,9 @@ const mockIssue: KnownIssue = {
 test("renders known issue card summary and badges", () => {
   render(<KnownIssueCard issue={mockIssue} />);
 
-  expect(screen.getByText("Degradación de correa en baño de aceite")).toBeInTheDocument();
+  expect(
+    screen.getByText("Degradación de correa en baño de aceite"),
+  ).toBeInTheDocument();
   expect(screen.getByText(/Crítica/i)).toBeInTheDocument();
   expect(screen.getByText(/Campaña Oficial/i)).toBeInTheDocument();
   expect(screen.getByText(/Distribución/i)).toBeInTheDocument();
@@ -71,12 +74,16 @@ test("renders known issue card summary and badges", () => {
 test("expands details to show symptoms, prevention, and evidences", async () => {
   render(<KnownIssueCard issue={mockIssue} />);
 
-  const expandBtn = screen.getByRole("button", { name: /síntomas, prevención y evidencias/i });
+  const expandBtn = screen.getByRole("button", {
+    name: /síntomas, prevención y evidencias/i,
+  });
   await userEvent.click(expandBtn);
 
   expect(screen.getByText(/presión de aceite/i)).toBeInTheDocument();
   expect(screen.getByText(/calibre por el tapón/i)).toBeInTheDocument();
-  expect(screen.getByText(/Safety Gate Alerta A12\/01504\/20/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Safety Gate Alerta A12\/01504\/20/i),
+  ).toBeInTheDocument();
   expect(screen.getByText(/Nivel A/i)).toBeInTheDocument();
 });
 

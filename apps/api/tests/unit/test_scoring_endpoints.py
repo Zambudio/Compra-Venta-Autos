@@ -5,19 +5,16 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
+import typing
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-from pydantic import SecretStr
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.auth.dependencies import AuthContext, get_db, require_auth, require_csrf
 from app.auth.models import AuthSession
 from app.core.config import Environment, Settings
 from app.main import create_app
-from app.scoring.models import Opportunity, OpportunityScore, ScoringProfile, ScoringProfileVersion
+from app.scoring.models import Opportunity, ScoringProfile, ScoringProfileVersion
 from app.scoring.vocab import (
     DEFAULT_SCORING_WEIGHTS,
     ConfidenceLevel,
@@ -25,6 +22,9 @@ from app.scoring.vocab import (
     SellerPressureLevel,
 )
 from app.users.models import User, UserRole
+from httpx import ASGITransport, AsyncClient
+from pydantic import SecretStr
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.unit
 
@@ -66,7 +66,7 @@ def _client(ctx: AuthContext) -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver")
 
 
-def _fake_opportunity(op_id=None) -> Opportunity:
+def _fake_opportunity(op_id: typing.Any = None) -> Opportunity:
     now = datetime.now(UTC)
     op = Opportunity(
         id=op_id or uuid4(),

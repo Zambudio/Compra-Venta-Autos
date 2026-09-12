@@ -1,14 +1,4 @@
-import {
-  AlertTriangle,
-  ArrowDownRight,
-  Calculator,
-  Coins,
-  DollarSign,
-  Flame,
-  Info,
-  Scale,
-  TrendingUp,
-} from "lucide-react";
+import { Calculator, Flame, Info } from "lucide-react";
 import type { OpportunityRead } from "@/features/opportunities/types";
 import {
   SELLER_PRESSURE_LABELS,
@@ -24,7 +14,9 @@ type OpportunityValuationPanelProps = {
 export function OpportunityValuationPanel({
   opportunity,
 }: OpportunityValuationPanelProps) {
-  const pressureVariant = sellerPressureVariant(opportunity.seller_pressure_level);
+  const pressureVariant = sellerPressureVariant(
+    opportunity.seller_pressure_level,
+  );
 
   return (
     <section
@@ -38,7 +30,8 @@ export function OpportunityValuationPanel({
             Valoración Económica y Proyección de Margen
           </h3>
           <p className="text-xs text-[var(--muted)]">
-            Intervalos de confianza y estructura de costes según marco ITP España y DGT (Plan Maestro §19).
+            Intervalos de confianza y estructura de costes según marco ITP
+            España y DGT (Plan Maestro §19).
           </p>
         </div>
 
@@ -101,7 +94,7 @@ export function OpportunityValuationPanel({
 
       {/* Desglose de Costes */}
       <div className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-4">
-        <h4 className="flex items-center gap-1.5 text-xs font-bold text-[var(--foreground)] uppercase tracking-wider">
+        <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-[var(--foreground)] uppercase">
           <Calculator size={14} aria-hidden />
           Estructura de Adquisición y Preparación
         </h4>
@@ -128,7 +121,8 @@ export function OpportunityValuationPanel({
           <div>
             <span className="text-[var(--muted)]">Reparaciones Previstas:</span>
             <p className="font-mono font-medium text-[var(--foreground)]">
-              {formatEuros(opportunity.estimated_repair_min)} – {formatEuros(opportunity.estimated_repair_max)}
+              {formatEuros(opportunity.estimated_repair_min)} –{" "}
+              {formatEuros(opportunity.estimated_repair_max)}
             </p>
           </div>
         </div>
@@ -138,7 +132,8 @@ export function OpportunityValuationPanel({
             Coste Total Invertido Proyectado [Mín – Máx]:
           </span>
           <span className="font-mono font-bold text-[var(--foreground)]">
-            {formatEuros(opportunity.estimated_total_cost_min)} – {formatEuros(opportunity.estimated_total_cost_max)}
+            {formatEuros(opportunity.estimated_total_cost_min)} –{" "}
+            {formatEuros(opportunity.estimated_total_cost_max)}
           </span>
         </div>
       </div>
@@ -150,7 +145,8 @@ export function OpportunityValuationPanel({
             Margen Neto Proyectado [Intervalo]
           </span>
           <p className="mt-1 font-mono text-lg font-bold text-[var(--foreground)]">
-            {formatEuros(opportunity.estimated_margin_min)} a {formatEuros(opportunity.estimated_margin_max)}
+            {formatEuros(opportunity.estimated_margin_min)} a{" "}
+            {formatEuros(opportunity.estimated_margin_max)}
           </p>
           <p className="mt-1 text-[0.6875rem] text-[var(--muted)]">
             Calculado contra el precio de salida rápida (sin especulación).
@@ -162,28 +158,31 @@ export function OpportunityValuationPanel({
             ROI Neto Estimado [Intervalo]
           </span>
           <p className="mt-1 font-mono text-lg font-bold text-emerald-600 dark:text-emerald-400">
-            {formatPercent(opportunity.estimated_roi_min)} a {formatPercent(opportunity.estimated_roi_max)}
+            {formatPercent(opportunity.estimated_roi_min)} a{" "}
+            {formatPercent(opportunity.estimated_roi_max)}
           </p>
           <p className="mt-1 text-[0.6875rem] text-[var(--muted)]">
-            Retorno sobre el capital total arriesgado (compra + trámites + preparación).
+            Retorno sobre el capital total arriesgado (compra + trámites +
+            preparación).
           </p>
         </div>
       </div>
 
       {/* Motivos de presión del vendedor si existen */}
-      {opportunity.seller_pressure_reasons && opportunity.seller_pressure_reasons.length > 0 && (
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] p-3 text-xs">
-          <div className="flex items-center gap-1.5 font-semibold text-[var(--foreground)]">
-            <Info size={14} aria-hidden />
-            <span>Factores de negociación observados:</span>
+      {opportunity.seller_pressure_reasons &&
+        opportunity.seller_pressure_reasons.length > 0 && (
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] p-3 text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-[var(--foreground)]">
+              <Info size={14} aria-hidden />
+              <span>Factores de negociación observados:</span>
+            </div>
+            <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-[var(--muted)]">
+              {opportunity.seller_pressure_reasons.map((reason, idx) => (
+                <li key={idx}>{reason}</li>
+              ))}
+            </ul>
           </div>
-          <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-[var(--muted)]">
-            {opportunity.seller_pressure_reasons.map((reason, idx) => (
-              <li key={idx}>{reason}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+        )}
     </section>
   );
 }

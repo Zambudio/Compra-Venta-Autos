@@ -3,7 +3,6 @@
 from decimal import Decimal
 
 import pytest
-
 from app.scoring.engine import (
     compute_age_score,
     compute_condition_score,
@@ -35,7 +34,7 @@ def test_price_score_no_market_data() -> None:
 @pytest.mark.unit
 def test_price_score_bargain_and_overpriced() -> None:
     # 35% por debajo de la mediana
-    score_bargain, exp_b, flags_b = compute_price_score(
+    score_bargain, _exp_b, flags_b = compute_price_score(
         asking_price=Decimal("1300.00"),
         market_median=Decimal("2000.00"),
         market_low=Decimal("1700.00"),
@@ -45,7 +44,7 @@ def test_price_score_bargain_and_overpriced() -> None:
     assert "BARGAIN_PRICE" in flags_b
 
     # 40% por encima de la mediana
-    score_over, exp_o, flags_o = compute_price_score(
+    score_over, _exp_o, flags_o = compute_price_score(
         asking_price=Decimal("2800.00"),
         market_median=Decimal("2000.00"),
         market_low=Decimal("1700.00"),
@@ -82,7 +81,7 @@ def test_liquidity_score_models() -> None:
     assert score_ibiza == Decimal("100.00")
     assert "HIGH_LIQUIDITY" in flags_i
 
-    score_clio, _, flags_c = compute_liquidity_score("Renault", "Clio 1.2", "gasolina")
+    score_clio, _, _flags_c = compute_liquidity_score("Renault", "Clio 1.2", "gasolina")
     assert score_clio == Decimal("100.00")
 
     score_750, _, flags_7 = compute_liquidity_score("BMW", "750i V8", "gasolina")

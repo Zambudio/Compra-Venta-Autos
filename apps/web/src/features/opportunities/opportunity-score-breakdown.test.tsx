@@ -9,7 +9,9 @@ test("renders score breakdown with all 9 components and total score", () => {
   render(<OpportunityScoreBreakdown score={mockOpportunityScore} />);
 
   // Título de la sección
-  expect(screen.getByText("Scoring Multicriterio Determinista")).toBeInTheDocument();
+  expect(
+    screen.getByText("Scoring Multicriterio Determinista"),
+  ).toBeInTheDocument();
   // Score total formateado
   expect(screen.getByText(/83 \/ 100/)).toBeInTheDocument();
   // Nivel de confianza
@@ -35,7 +37,9 @@ test("renders score breakdown with all 9 components and total score", () => {
 test("renders empty state when score is null", () => {
   render(<OpportunityScoreBreakdown score={null} />);
   expect(
-    screen.getByText("No hay puntuación calculada para esta oportunidad todavía."),
+    screen.getByText(
+      "No hay puntuación calculada para esta oportunidad todavía.",
+    ),
   ).toBeInTheDocument();
 });
 

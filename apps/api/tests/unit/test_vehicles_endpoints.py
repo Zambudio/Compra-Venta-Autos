@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -65,7 +66,7 @@ def _client(ctx: AuthContext) -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver")
 
 
-def _fake_vehicle(vid=None) -> Vehicle:
+def _fake_vehicle(vid: Any = None) -> Vehicle:
     v = Vehicle()
     v.id = vid or uuid4()
     v.brand = "Volkswagen"
@@ -86,7 +87,7 @@ def _fake_vehicle(vid=None) -> Vehicle:
     return v
 
 
-def _fake_candidate(cid=None, status=MatchCandidateStatus.PENDING) -> VehicleMatchCandidate:
+def _fake_candidate(cid: Any = None, status: MatchCandidateStatus = MatchCandidateStatus.PENDING) -> VehicleMatchCandidate:
     c = VehicleMatchCandidate()
     c.id = cid or uuid4()
     c.listing_a_id = uuid4()

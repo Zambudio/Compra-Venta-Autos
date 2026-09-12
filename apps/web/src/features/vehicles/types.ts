@@ -1,4 +1,8 @@
-import type { FuelType, ListingStatus, Transmission } from "@/features/listings/types";
+import type {
+  FuelType,
+  ListingStatus,
+  Transmission,
+} from "@/features/listings/types";
 
 export type MatchCandidateStatus = "PENDING" | "CONFIRMED" | "REJECTED";
 

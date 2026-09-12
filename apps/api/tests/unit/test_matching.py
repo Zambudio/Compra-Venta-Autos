@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -20,7 +21,7 @@ def _dummy_listing(
     province: str | None = "Madrid",
     trim: str | None = "1.6 TDI Style",
     description: str | None = "Coche en perfecto estado, único dueño, mantenimientos al día.",
-) -> dict:
+) -> dict[str, Any]:
     return {
         "id": uuid4(),
         "brand": brand,

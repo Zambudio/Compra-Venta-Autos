@@ -6,13 +6,8 @@ from uuid import uuid4
 
 import app.models  # noqa: F401
 import pytest
-from pydantic import ValidationError
-
 from app.scoring.models import (
     Opportunity,
-    OpportunityScore,
-    ScoringProfile,
-    ScoringProfileVersion,
 )
 from app.scoring.schemas import (
     OpportunityRead,
@@ -26,6 +21,7 @@ from app.scoring.vocab import (
     ScoringComponent,
     SellerPressureLevel,
 )
+from pydantic import ValidationError
 
 
 @pytest.mark.unit

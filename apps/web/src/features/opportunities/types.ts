@@ -1,10 +1,5 @@
 export type OpportunityStatus =
-  | "IDENTIFIED"
-  | "ANALYZING"
-  | "VALIDATED"
-  | "DISCARDED"
-  | "PURCHASED"
-  | "SOLD";
+  "IDENTIFIED" | "ANALYZING" | "VALIDATED" | "DISCARDED" | "PURCHASED" | "SOLD";
 
 export type SellerPressureLevel = "LOW" | "MEDIUM" | "HIGH";
 

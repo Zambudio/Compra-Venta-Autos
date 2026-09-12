@@ -30,12 +30,18 @@ test("renders opportunity card summary, expands detail and triggers status chang
   expect(onStatusChange).toHaveBeenCalledWith(mockOpportunity.id, "VALIDATED");
 
   // Expandir análisis detallado
-  const expandBtn = screen.getByRole("button", { name: /ver desglose detallado/i });
-  expect(screen.queryByText("Scoring Multicriterio Determinista")).not.toBeInTheDocument();
+  const expandBtn = screen.getByRole("button", {
+    name: /ver desglose detallado/i,
+  });
+  expect(
+    screen.queryByText("Scoring Multicriterio Determinista"),
+  ).not.toBeInTheDocument();
   await userEvent.click(expandBtn);
 
   // Desglose visible tras click
-  expect(screen.getByText("Scoring Multicriterio Determinista")).toBeInTheDocument();
+  expect(
+    screen.getByText("Scoring Multicriterio Determinista"),
+  ).toBeInTheDocument();
   expect(
     screen.getByText("Valoración Económica y Proyección de Margen"),
   ).toBeInTheDocument();
@@ -43,7 +49,9 @@ test("renders opportunity card summary, expands detail and triggers status chang
   // Colapsar
   const collapseBtn = screen.getByRole("button", { name: /ocultar análisis/i });
   await userEvent.click(collapseBtn);
-  expect(screen.queryByText("Scoring Multicriterio Determinista")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Scoring Multicriterio Determinista"),
+  ).not.toBeInTheDocument();
 });
 
 test("opportunity card has no accessibility violations in collapsed and expanded state", async () => {
@@ -54,7 +62,9 @@ test("opportunity card has no accessibility violations in collapsed and expanded
   expect(results).toHaveNoViolations();
 
   // Expandir y verificar de nuevo accesibilidad
-  const expandBtn = screen.getByRole("button", { name: /ver desglose detallado/i });
+  const expandBtn = screen.getByRole("button", {
+    name: /ver desglose detallado/i,
+  });
   await userEvent.click(expandBtn);
   results = await axe(container);
   expect(results).toHaveNoViolations();

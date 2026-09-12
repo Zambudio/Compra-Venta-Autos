@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -21,12 +22,12 @@ from app.vehicles.vocab import MatchCandidateStatus
 
 def _make_listing(
     *,
-    vehicle_id=None,
-    brand="SEAT",
-    model="Ibiza",
-    year=2015,
-    mileage_km=120000,
-    price_amount=Decimal("4500.00"),
+    vehicle_id: Any = None,
+    brand: str = "SEAT",
+    model: str = "Ibiza",
+    year: int = 2015,
+    mileage_km: int = 120000,
+    price_amount: Decimal = Decimal("4500.00"),
 ) -> VehicleListing:
     listing = VehicleListing()
     listing.id = uuid4()
@@ -165,7 +166,7 @@ async def test_confirm_match_both_have_existing_different_vehicles_merges() -> N
 
     session.execute.side_effect = [cand_mock, sec_listings_mock]
 
-    async def _mock_get(entity_cls, entity_id):
+    async def _mock_get(entity_cls: Any, entity_id: Any) -> Any:
         if entity_id == v1_id:
             return v1
         if entity_id == v2_id:

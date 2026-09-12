@@ -46,7 +46,9 @@ export const COMPONENT_LABELS: Record<ScoringComponentKey, string> = {
   listing_age: "Días en Venta",
 };
 
-export function formatEuros(amount: string | number | null | undefined): string {
+export function formatEuros(
+  amount: string | number | null | undefined,
+): string {
   if (amount === null || amount === undefined || amount === "") return "— €";
   const val = typeof amount === "string" ? Number(amount) : amount;
   if (Number.isNaN(val)) return "— €";
@@ -57,7 +59,9 @@ export function formatEuros(amount: string | number | null | undefined): string 
   }).format(val);
 }
 
-export function formatPercent(value: string | number | null | undefined): string {
+export function formatPercent(
+  value: string | number | null | undefined,
+): string {
   if (value === null || value === undefined || value === "") return "— %";
   const val = typeof value === "string" ? Number(value) : value;
   if (Number.isNaN(val)) return "— %";
@@ -69,7 +73,9 @@ export function formatScore(score: number | null | undefined): string {
   return `${Math.round(score)} / 100`;
 }
 
-export function scoreColorVariant(score: number): "success" | "warning" | "danger" {
+export function scoreColorVariant(
+  score: number,
+): "success" | "warning" | "danger" {
   if (score >= 70) return "success";
   if (score >= 50) return "warning";
   return "danger";

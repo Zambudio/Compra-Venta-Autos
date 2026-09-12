@@ -1,6 +1,7 @@
 "use client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   AlertCircle,
   Filter,
@@ -8,25 +9,22 @@ import {
   RefreshCw,
   Search,
   Sparkles,
-  TrendingUp,
 } from "lucide-react";
 import type {
   OpportunityFilterParams,
   OpportunityPage,
-  OpportunityRead,
   OpportunityStatus,
 } from "@/features/opportunities/types";
 import {
   getOpportunities,
   updateOpportunityStatus,
 } from "@/features/opportunities/api";
-import {
-  OPPORTUNITY_STATUS_LABELS,
-  formatEuros,
-} from "@/features/opportunities/format";
 import { OpportunityCard } from "@/features/opportunities/opportunity-card";
 
-const STATUS_FILTER_OPTIONS: Array<{ value: OpportunityStatus | "ALL"; label: string }> = [
+const STATUS_FILTER_OPTIONS: Array<{
+  value: OpportunityStatus | "ALL";
+  label: string;
+}> = [
   { value: "ALL", label: "Todos los estados" },
   { value: "IDENTIFIED", label: "Identificadas" },
   { value: "ANALYZING", label: "En análisis" },
@@ -37,21 +35,26 @@ const STATUS_FILTER_OPTIONS: Array<{ value: OpportunityStatus | "ALL"; label: st
 ];
 
 export function OpportunitiesView() {
-  const [data, setData] = useState<OpportunityPage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Filtros
-  const [statusFilter, setStatusFilter] = useState<OpportunityStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<OpportunityStatus | "ALL">(
+    "ALL",
+  );
   const [minScore, setMinScore] = useState<number | "">("");
   const [brandSearch, setBrandSearch] = useState("");
   const [page, setPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const fetchOpportunities = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const queryKey = ["opportunities", page, statusFilter, minScore, brandSearch];
+
+  const {
+    data,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey,
+    queryFn: async () => {
       const params: OpportunityFilterParams = {
         page,
         pageSize: 15,
@@ -59,22 +62,16 @@ export function OpportunitiesView() {
         min_score: minScore === "" ? undefined : Number(minScore),
         brand: brandSearch.trim() || undefined,
       };
-      const res = await getOpportunities(params);
-      setData(res);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Error al cargar las oportunidades de compra-venta.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [page, statusFilter, minScore, brandSearch]);
+      return getOpportunities(params);
+    },
+  });
 
-  useEffect(() => {
-    void fetchOpportunities();
-  }, [fetchOpportunities]);
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? String(queryError)
+        : null;
 
   const handleStatusChange = async (
     opportunityId: string,
@@ -83,27 +80,33 @@ export function OpportunitiesView() {
     setUpdatingId(opportunityId);
     try {
       const updated = await updateOpportunityStatus(opportunityId, newStatus);
-      setData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          items: prev.items.map((item) =>
-            item.id === opportunityId ? { ...item, status: updated.status } : item,
-          ),
-        };
-      });
+      queryClient.setQueryData(
+        queryKey,
+        (prev: OpportunityPage | undefined) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            items: prev.items.map((item) =>
+              item.id === opportunityId
+                ? { ...item, status: updated.status }
+                : item,
+            ),
+          };
+        },
+      );
     } catch (err) {
       alert(
         err instanceof Error
           ? err.message
-          : "No se pudo actualizar el estado de la oportunidad.",
+          : "Error al actualizar el estado de la oportunidad.",
       );
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const totalValidated = data?.items.filter((o) => o.status === "VALIDATED").length ?? 0;
+  const totalValidated =
+    data?.items.filter((o) => o.status === "VALIDATED").length ?? 0;
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
@@ -117,7 +120,8 @@ export function OpportunitiesView() {
             </h1>
           </div>
           <p className="mt-1 text-xs text-[var(--muted)] sm:text-sm">
-            Detección sistemática de vehículos infravalorados con motor multicriterio explicable de 9 componentes.
+            Detección sistemática de vehículos infravalorados con motor
+            multicriterio explicable de 9 componentes.
           </p>
         </div>
 
@@ -128,7 +132,11 @@ export function OpportunitiesView() {
           className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus:outline-none"
           aria-label="Actualizar listado de oportunidades"
         >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} aria-hidden />
+          <RefreshCw
+            size={14}
+            className={loading ? "animate-spin" : ""}
+            aria-hidden
+          />
           <span>Actualizar</span>
         </button>
       </header>
@@ -139,20 +147,26 @@ export function OpportunitiesView() {
         className="grid grid-cols-1 gap-3 sm:grid-cols-3"
       >
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-4">
-          <span className="text-xs text-[var(--muted)]">Oportunidades en Vista</span>
+          <span className="text-xs text-[var(--muted)]">
+            Oportunidades en Vista
+          </span>
           <p className="mt-1 font-mono text-xl font-bold text-[var(--foreground)]">
             {data?.total ?? 0}
           </p>
         </div>
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-4">
-          <span className="text-xs text-[var(--muted)]">Validadas en esta página</span>
+          <span className="text-xs text-[var(--muted)]">
+            Validadas en esta página
+          </span>
           <p className="mt-1 font-mono text-xl font-bold text-emerald-600 dark:text-emerald-400">
             {totalValidated}
           </p>
         </div>
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-4">
-          <span className="text-xs text-[var(--muted)]">Estrategia de Scoring Activa</span>
-          <p className="mt-1 text-sm font-bold text-[var(--foreground)] truncate">
+          <span className="text-xs text-[var(--muted)]">
+            Estrategia de Scoring Activa
+          </span>
+          <p className="mt-1 truncate text-sm font-bold text-[var(--foreground)]">
             Oportunidad Reventa Rápida (v1)
           </p>
         </div>
@@ -165,7 +179,9 @@ export function OpportunitiesView() {
       >
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-[var(--muted)]" aria-hidden />
-          <span className="font-semibold text-[var(--foreground)]">Filtrar:</span>
+          <span className="font-semibold text-[var(--foreground)]">
+            Filtrar:
+          </span>
         </div>
 
         {/* Estado */}
@@ -220,11 +236,11 @@ export function OpportunitiesView() {
                 setBrandSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-36 rounded-md border border-[var(--border)] bg-[var(--background)] py-1.5 pl-2.5 pr-7 text-[var(--foreground)] placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)] focus:outline-none"
+              className="w-36 rounded-md border border-[var(--border)] bg-[var(--background)] py-1.5 pr-7 pl-2.5 text-[var(--foreground)] placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)] focus:outline-none"
             />
             <Search
               size={12}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none"
+              className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-[var(--muted)]"
               aria-hidden
             />
           </div>
@@ -259,8 +275,9 @@ export function OpportunitiesView() {
           <p className="font-semibold text-[var(--foreground)]">
             No se han encontrado oportunidades
           </p>
-          <p className="text-xs text-[var(--muted-soft)] max-w-sm">
-            Prueba a reducir los filtros de score o cambiar el estado para ver más unidades evaluadas.
+          <p className="max-w-sm text-xs text-[var(--muted-soft)]">
+            Prueba a reducir los filtros de score o cambiar el estado para ver
+            más unidades evaluadas.
           </p>
         </div>
       )}
@@ -280,14 +297,16 @@ export function OpportunitiesView() {
           {/* Paginación */}
           <div className="flex items-center justify-between border-t border-[var(--border)] pt-4 text-xs">
             <span className="text-[var(--muted)]">
-              Página {data.page} de {Math.max(1, Math.ceil(data.total / data.page_size))} ({data.total} oportunidades)
+              Página {data.page} de{" "}
+              {Math.max(1, Math.ceil(data.total / data.page_size))} (
+              {data.total} oportunidades)
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-semibold text-[var(--foreground)] disabled:opacity-50 hover:bg-[var(--surface-hover)]"
+                className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-semibold text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
               >
                 Anterior
               </button>
@@ -295,7 +314,7 @@ export function OpportunitiesView() {
                 type="button"
                 disabled={!data.has_more || loading}
                 onClick={() => setPage((p) => p + 1)}
-                className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-semibold text-[var(--foreground)] disabled:opacity-50 hover:bg-[var(--surface-hover)]"
+                className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-semibold text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
               >
                 Siguiente
               </button>

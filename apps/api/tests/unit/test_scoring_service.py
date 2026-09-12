@@ -7,11 +7,10 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
-import pytest
-
 import app.models  # noqa: F401
+import pytest
 from app.knowledge.schemas import ReliabilityLookupResponse
-from app.knowledge.vocab import ClassificationStatus, IssueSeverity
+from app.knowledge.vocab import ClassificationStatus
 from app.listings.models import ListingSnapshot, VehicleListing
 from app.listings.vocab import FuelType, Transmission
 from app.scoring.errors import (
@@ -21,7 +20,7 @@ from app.scoring.errors import (
     ScoringProfileVersionNotFoundError,
     TargetNotFoundError,
 )
-from app.scoring.models import Opportunity, OpportunityScore, ScoringProfile, ScoringProfileVersion
+from app.scoring.models import Opportunity, ScoringProfile, ScoringProfileVersion
 from app.scoring.schemas import (
     ScoringProfileCreate,
     ScoringProfileVersionCreate,

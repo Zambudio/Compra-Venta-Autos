@@ -576,13 +576,15 @@ class ScoringService:
             notes=op.notes,
             created_at=op.created_at,
             updated_at=op.updated_at,
-            score=op.score,  # type: ignore[arg-type]
+            score=op.score,
             title=f"{brand} {model}" if brand and model else None,
             brand=brand,
             model=model,
             generation=vehicle.generation if vehicle else (listing.generation if listing else None),
             trim=vehicle.trim if vehicle else (listing.trim if listing else None),
-            engine_code=vehicle.engine_code if vehicle else (listing.engine_code if listing else None),
+            engine_code=vehicle.engine_code
+            if vehicle
+            else (listing.engine_code if listing else None),
             fuel_type=fuel,
             transmission=trans,
             year=year,

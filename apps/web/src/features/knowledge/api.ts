@@ -24,14 +24,20 @@ export function getManufacturers(): Promise<Manufacturer[]> {
   return apiRequest<Manufacturer[]>("/knowledge/manufacturers");
 }
 
-export function getModels(manufacturerId?: string | undefined): Promise<VehicleModel[]> {
+export function getModels(
+  manufacturerId?: string | undefined,
+): Promise<VehicleModel[]> {
   const q = new URLSearchParams();
   if (manufacturerId) q.set("manufacturer_id", manufacturerId);
   const query = q.toString();
-  return apiRequest<VehicleModel[]>(`/knowledge/models${query ? `?${query}` : ""}`);
+  return apiRequest<VehicleModel[]>(
+    `/knowledge/models${query ? `?${query}` : ""}`,
+  );
 }
 
-export function getGenerations(modelId?: string | undefined): Promise<VehicleGeneration[]> {
+export function getGenerations(
+  modelId?: string | undefined,
+): Promise<VehicleGeneration[]> {
   const q = new URLSearchParams();
   if (modelId) q.set("model_id", modelId);
   const query = q.toString();
@@ -40,10 +46,14 @@ export function getGenerations(modelId?: string | undefined): Promise<VehicleGen
   );
 }
 
-export function getEngines(params?: {
-  manufacturerId?: string | undefined;
-  fuelType?: string | undefined;
-} | undefined): Promise<Engine[]> {
+export function getEngines(
+  params?:
+    | {
+        manufacturerId?: string | undefined;
+        fuelType?: string | undefined;
+      }
+    | undefined,
+): Promise<Engine[]> {
   const q = new URLSearchParams();
   if (params?.manufacturerId) q.set("manufacturer_id", params.manufacturerId);
   if (params?.fuelType) q.set("fuel_type", params.fuelType);
@@ -51,7 +61,9 @@ export function getEngines(params?: {
   return apiRequest<Engine[]>(`/knowledge/engines${query ? `?${query}` : ""}`);
 }
 
-export function getEngineVariants(engineId?: string | undefined): Promise<EngineVariant[]> {
+export function getEngineVariants(
+  engineId?: string | undefined,
+): Promise<EngineVariant[]> {
   const q = new URLSearchParams();
   if (engineId) q.set("engine_id", engineId);
   const query = q.toString();
@@ -66,13 +78,17 @@ export function getTransmissions(): Promise<TransmissionSpec[]> {
 
 // --- Problemas Conocidos ---
 
-export function getKnownIssues(params?: {
-  component?: string | undefined;
-  severity?: string | undefined;
-  status?: string | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-} | undefined): Promise<KnownIssuePage> {
+export function getKnownIssues(
+  params?:
+    | {
+        component?: string | undefined;
+        severity?: string | undefined;
+        status?: string | undefined;
+        page?: number | undefined;
+        pageSize?: number | undefined;
+      }
+    | undefined,
+): Promise<KnownIssuePage> {
   const q = new URLSearchParams();
   if (params?.component) q.set("component", params.component);
   if (params?.severity) q.set("severity", params.severity);
@@ -80,7 +96,9 @@ export function getKnownIssues(params?: {
   if (params?.page != null) q.set("page", String(params.page));
   if (params?.pageSize != null) q.set("page_size", String(params.pageSize));
   const query = q.toString();
-  return apiRequest<KnownIssuePage>(`/knowledge/issues${query ? `?${query}` : ""}`);
+  return apiRequest<KnownIssuePage>(
+    `/knowledge/issues${query ? `?${query}` : ""}`,
+  );
 }
 
 export function getKnownIssue(id: string): Promise<KnownIssue> {
@@ -89,12 +107,16 @@ export function getKnownIssue(id: string): Promise<KnownIssue> {
 
 // --- Clasificaciones ---
 
-export function getClassifications(params?: {
-  status?: string | undefined;
-  targetType?: string | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-} | undefined): Promise<VehicleClassificationPage> {
+export function getClassifications(
+  params?:
+    | {
+        status?: string | undefined;
+        targetType?: string | undefined;
+        page?: number | undefined;
+        pageSize?: number | undefined;
+      }
+    | undefined,
+): Promise<VehicleClassificationPage> {
   const q = new URLSearchParams();
   if (params?.status) q.set("status", params.status);
   if (params?.targetType) q.set("target_type", params.targetType);
@@ -126,7 +148,9 @@ export function lookupVehicleReliability(params: {
   );
 }
 
-export function getVehicleMitigations(vehicleId: string): Promise<VehicleMitigation[]> {
+export function getVehicleMitigations(
+  vehicleId: string,
+): Promise<VehicleMitigation[]> {
   return apiRequest<VehicleMitigation[]>(
     `/knowledge/vehicles/${vehicleId}/mitigations`,
   );

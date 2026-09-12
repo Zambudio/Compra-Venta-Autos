@@ -12,8 +12,7 @@ class ScoringProfileNotFoundError(APIError):
             code="scoring/profile-not-found",
             title="Perfil de scoring no encontrado",
             detail=(
-                f"No se encontró ningún perfil de scoring con identificador "
-                f"'{profile_id_or_slug}'."
+                f"No se encontró ningún perfil de scoring con identificador '{profile_id_or_slug}'."
             ),
         )
 

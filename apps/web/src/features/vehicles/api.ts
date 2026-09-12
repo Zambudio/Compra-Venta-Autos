@@ -34,7 +34,9 @@ export function getVehicle(vehicleId: string): Promise<VehicleDetail> {
   return apiRequest<VehicleDetail>(`/vehicles/${vehicleId}`);
 }
 
-export function getVehicleHistory(vehicleId: string): Promise<VehicleHistoryMetrics> {
+export function getVehicleHistory(
+  vehicleId: string,
+): Promise<VehicleHistoryMetrics> {
   return apiRequest<VehicleHistoryMetrics>(`/vehicles/${vehicleId}/history`);
 }
 
@@ -64,23 +66,38 @@ export function getMatchCandidates(
   return apiRequest<MatchCandidatePage>(`/match-candidates?${q.toString()}`);
 }
 
-export function confirmMatchCandidate(candidateId: string): Promise<ConfirmMatchResponse> {
-  return apiRequest<ConfirmMatchResponse>(`/match-candidates/${candidateId}/confirm`, {
-    method: "POST",
-    headers: csrfHeaders(),
-  });
+export function confirmMatchCandidate(
+  candidateId: string,
+): Promise<ConfirmMatchResponse> {
+  return apiRequest<ConfirmMatchResponse>(
+    `/match-candidates/${candidateId}/confirm`,
+    {
+      method: "POST",
+      headers: csrfHeaders(),
+    },
+  );
 }
 
-export function rejectMatchCandidate(candidateId: string): Promise<RejectMatchResponse> {
-  return apiRequest<RejectMatchResponse>(`/match-candidates/${candidateId}/reject`, {
-    method: "POST",
-    headers: csrfHeaders(),
-  });
+export function rejectMatchCandidate(
+  candidateId: string,
+): Promise<RejectMatchResponse> {
+  return apiRequest<RejectMatchResponse>(
+    `/match-candidates/${candidateId}/reject`,
+    {
+      method: "POST",
+      headers: csrfHeaders(),
+    },
+  );
 }
 
-export function generateMatchCandidates(): Promise<{ created_candidates: number }> {
-  return apiRequest<{ created_candidates: number }>("/match-candidates/generate", {
-    method: "POST",
-    headers: csrfHeaders(),
-  });
+export function generateMatchCandidates(): Promise<{
+  created_candidates: number;
+}> {
+  return apiRequest<{ created_candidates: number }>(
+    "/match-candidates/generate",
+    {
+      method: "POST",
+      headers: csrfHeaders(),
+    },
+  );
 }

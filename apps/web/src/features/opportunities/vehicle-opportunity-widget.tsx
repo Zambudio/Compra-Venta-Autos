@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { VehicleDetail } from "@/features/vehicles/types";
 import type { OpportunityRead } from "@/features/opportunities/types";
-import { evaluateVehicle, getOpportunities } from "@/features/opportunities/api";
+import {
+  evaluateVehicle,
+  getOpportunities,
+} from "@/features/opportunities/api";
 import { OpportunityCard } from "@/features/opportunities/opportunity-card";
 
 type VehicleOpportunityWidgetProps = {
@@ -15,13 +18,11 @@ export function VehicleOpportunityWidget({
   vehicle,
 }: VehicleOpportunityWidgetProps) {
   const queryClient = useQueryClient();
-  const [createdOpportunity, setCreatedOpportunity] = useState<OpportunityRead | null>(null);
+  const [createdOpportunity, setCreatedOpportunity] =
+    useState<OpportunityRead | null>(null);
 
   // Buscar si ya existe una oportunidad para este vehículo
-  const {
-    data: existingData,
-    isLoading: isLoadingExisting,
-  } = useQuery({
+  const { data: existingData, isLoading: isLoadingExisting } = useQuery({
     queryKey: ["opportunities-by-vehicle", vehicle.id],
     queryFn: async () => {
       const res = await getOpportunities({ pageSize: 50 });
@@ -35,7 +36,9 @@ export function VehicleOpportunityWidget({
     mutationFn: () => evaluateVehicle(vehicle.id),
     onSuccess: (data) => {
       setCreatedOpportunity(data);
-      void queryClient.invalidateQueries({ queryKey: ["opportunities-by-vehicle", vehicle.id] });
+      void queryClient.invalidateQueries({
+        queryKey: ["opportunities-by-vehicle", vehicle.id],
+      });
       void queryClient.invalidateQueries({ queryKey: ["opportunities"] });
     },
   });
@@ -66,7 +69,10 @@ export function VehicleOpportunityWidget({
         >
           {mutation.isPending ? (
             <>
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
+              <Loader2
+                className="mr-1.5 h-3.5 w-3.5 animate-spin"
+                aria-hidden
+              />
               Evaluando oportunidad…
             </>
           ) : (
@@ -90,18 +96,20 @@ export function VehicleOpportunityWidget({
       )}
 
       {isLoadingExisting && !opportunity ? (
-        <p className="text-xs text-[var(--muted)]">Comprobando evaluaciones previas…</p>
+        <p className="text-xs text-[var(--muted)]">
+          Comprobando evaluaciones previas…
+        </p>
       ) : opportunity ? (
         <div className="mt-2">
           <OpportunityCard opportunity={opportunity} />
         </div>
       ) : (
         <div className="rounded-[var(--radius)] border border-dashed border-[var(--border)] p-6 text-center text-xs text-[var(--muted)]">
-          <p>
-            Este vehículo no ha sido evaluado como oportunidad aún.
-          </p>
+          <p>Este vehículo no ha sido evaluado como oportunidad aún.</p>
           <p className="mt-1 text-[0.6875rem] text-[var(--muted-soft)]">
-            Haz clic en &ldquo;Evaluar oportunidad ahora&rdquo; para calcular el scoring determinista de 9 componentes y los márgenes proyectados con marco fiscal español.
+            Haz clic en &ldquo;Evaluar oportunidad ahora&rdquo; para calcular el
+            scoring determinista de 9 componentes y los márgenes proyectados con
+            marco fiscal español.
           </p>
         </div>
       )}
