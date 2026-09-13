@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from app.auth.dependencies import AuthContext, get_db, require_auth, require_csrf
+from app.auth.dependencies import AuthContext, get_db, get_redis, require_auth, require_csrf
 from app.auth.models import AuthSession
 from app.connectors.errors import UnknownConnectorError
 from app.core.config import Settings
 from app.listings.vocab import ProviderKind, SyncRunStatus
 from app.main import create_app
-from app.sources.schemas import SourceHealthRead, SourceRead, SyncRunRead
-from app.sources.service import SourceNotFoundError, SourceService
+from app.sources.schemas import SourceConfigRead, SourceHealthRead, SourceRead, SyncRunRead
+from app.sources.service import LastActiveSourceError, SourceNotFoundError, SourceService
 from app.users.models import User, UserRole
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,6 +54,7 @@ def _client(app_ctx: AuthContext) -> AsyncClient:
     app.dependency_overrides[require_auth] = lambda: app_ctx
     app.dependency_overrides[require_csrf] = lambda: app_ctx
     app.dependency_overrides[get_db] = _dummy_db
+    app.dependency_overrides[get_redis] = lambda: AsyncMock()
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver")
 
 
@@ -95,7 +96,7 @@ async def test_owner_can_deactivate_a_source() -> None:
 
     assert response.status_code == 200
     assert response.json()["is_active"] is False
-    update.assert_awaited_once_with("manual", is_active=False)
+    update.assert_awaited_once_with("manual", is_active=False, changed_by=ANY)
 
 
 async def test_viewer_cannot_change_a_source() -> None:
@@ -103,6 +104,60 @@ async def test_viewer_cannot_change_a_source() -> None:
         response = await client.patch(
             "/api/v1/sources/manual",
             json={"is_active": False},
+            headers={"X-CSRF-Token": "x"},
+        )
+
+    assert response.status_code == 403
+
+
+async def test_owner_can_update_source_configuration() -> None:
+    now = datetime.now(UTC)
+    updated = SourceConfigRead(
+        key="wallapop",
+        enabled=False,
+        config={"timeout": 15},
+        last_sync=None,
+        sync_error=None,
+        updated_at=now,
+    )
+    update = AsyncMock(return_value=updated)
+    with patch.object(SourceService, "update_source_config", update):
+        async with _client(_ctx()) as client:
+            response = await client.patch(
+                "/api/v1/sources/wallapop/config",
+                json={"enabled": False, "config": {"timeout": 15}},
+                headers={"X-CSRF-Token": "x"},
+            )
+
+    assert response.status_code == 200
+    assert response.json()["enabled"] is False
+    update.assert_awaited_once_with(
+        "wallapop", enabled=False, config={"timeout": 15}, changed_by=ANY
+    )
+
+
+async def test_source_configuration_maps_last_active_error_to_400() -> None:
+    with patch.object(
+        SourceService,
+        "update_source_config",
+        AsyncMock(side_effect=LastActiveSourceError("manual")),
+    ):
+        async with _client(_ctx()) as client:
+            response = await client.patch(
+                "/api/v1/sources/manual/config",
+                json={"enabled": False},
+                headers={"X-CSRF-Token": "x"},
+            )
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "active_source_required"
+
+
+async def test_viewer_cannot_update_source_configuration() -> None:
+    async with _client(_ctx(UserRole.VIEWER)) as client:
+        response = await client.patch(
+            "/api/v1/sources/wallapop/config",
+            json={"enabled": False},
             headers={"X-CSRF-Token": "x"},
         )
 
@@ -154,7 +209,9 @@ async def test_sync_sync_mode_runs_and_returns_result() -> None:
         patch("app.sources.router.run_read", return_value=executed),
     ):
         async with _client(_ctx()) as client:
-            response = await client.post("/api/v1/sources/wallapop/sync", headers={"X-CSRF-Token": "x"})
+            response = await client.post(
+                "/api/v1/sources/wallapop/sync", headers={"X-CSRF-Token": "x"}
+            )
     assert response.status_code == 202
     body = response.json()
     assert body["status"] == "SUCCESS"

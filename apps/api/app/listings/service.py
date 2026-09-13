@@ -11,18 +11,29 @@ Reglas (ADR-0012):
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
+from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.connectors.base import BaseConnector
+from app.connectors.errors import (
+    ConnectorAccessDeniedError,
+    ConnectorRateLimitError,
+    TransientConnectorError,
+)
+from app.connectors.filters import ConnectorSearchFilter
 from app.connectors.manual import ManualEntryConnector
-from app.connectors.schemas import RawListing
+from app.connectors.registry import get_connector
+from app.connectors.schemas import ConnectorSearchPage, RawListing
 from app.listings.models import ListingSnapshot, RawListingPayload, VehicleListing
 from app.listings.normalizer import NormalizedListing, normalize, payload_hash
 from app.listings.repository import ListingRepository
@@ -30,12 +41,28 @@ from app.listings.schemas import (
     ListingDetailRead,
     ListingPage,
     ListingRead,
+    LiveSearchFilters,
+    LiveSearchResult,
     ManualListingCreate,
     SnapshotRead,
+    WallapopListing,
 )
 from app.listings.vocab import EntryChannel, ListingStatus, ProviderKind
 from app.search.schemas import SearchFilter
-from app.sources.models import Source
+from app.sources.models import Source, SourceConfig
+
+_LIVE_SEARCH_CACHE_TTL_SECONDS = 300
+_LIVE_SEARCH_RATE_WINDOW_SECONDS = 3600
+_LIVE_SEARCH_DEFAULT_RATE_LIMIT = 100
+_LIVE_SEARCH_MAX_ATTEMPTS = 3
+
+_RATE_LIMIT_SCRIPT = """
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return current
+"""
 
 
 class ListingNotFoundError(Exception):
@@ -48,6 +75,24 @@ class DuplicateManualListingError(Exception):
     def __init__(self, listing_id: UUID) -> None:
         super().__init__("this vehicle was already registered manually")
         self.listing_id = listing_id
+
+
+class LiveSourceDisabledError(Exception):
+    def __init__(self, source_key: str) -> None:
+        super().__init__(f"source is disabled: {source_key}")
+        self.source_key = source_key
+
+
+class LiveSearchRateLimitError(Exception):
+    def __init__(self, retry_after_seconds: int) -> None:
+        super().__init__("live search rate limit exceeded")
+        self.retry_after_seconds = retry_after_seconds
+
+
+class LiveSearchProviderError(Exception):
+    def __init__(self, reason: Literal["access_denied", "unavailable"]) -> None:
+        super().__init__(f"live search provider error: {reason}")
+        self.reason = reason
 
 
 _ENTRY_CHANNEL_BY_PROVIDER = {
@@ -114,6 +159,75 @@ class ListingService:
             total=total,
             has_more=criteria.page * criteria.page_size < total,
         )
+
+    async def search_live(
+        self,
+        filters: LiveSearchFilters,
+        *,
+        cache: Redis,
+        connector: BaseConnector | None = None,
+    ) -> LiveSearchResult:
+        configuration = (
+            await self.db.execute(
+                select(SourceConfig).where(SourceConfig.source_key == filters.source)
+            )
+        ).scalar_one_or_none()
+        if configuration is None or not configuration.enabled:
+            raise LiveSourceDisabledError(filters.source)
+
+        configured_rate_limit = _configured_rate_limit(configuration.config)
+        await self.db.commit()
+
+        cache_key = _live_search_cache_key(filters)
+        cached = await cache.get(cache_key)
+        if cached is not None:
+            return LiveSearchResult.model_validate_json(cached)
+
+        count = await cache.eval(
+            _RATE_LIMIT_SCRIPT,
+            1,
+            f"rate:search:{filters.source}",
+            _LIVE_SEARCH_RATE_WINDOW_SECONDS,
+        )
+        if int(count) > configured_rate_limit:
+            raise LiveSearchRateLimitError(_LIVE_SEARCH_RATE_WINDOW_SECONDS)
+
+        active_connector = connector or get_connector(filters.source)
+        try:
+            page = await _search_live_with_retry(active_connector, filters.to_connector_filter())
+        except ConnectorRateLimitError as exc:
+            await self._record_live_search_error(configuration, str(exc))
+            raise LiveSearchRateLimitError(exc.retry_after_seconds) from exc
+        except ConnectorAccessDeniedError as exc:
+            await self._record_live_search_error(configuration, str(exc))
+            raise LiveSearchProviderError("access_denied") from exc
+        except TransientConnectorError as exc:
+            await self._record_live_search_error(configuration, str(exc))
+            raise LiveSearchProviderError("unavailable") from exc
+
+        listings: list[WallapopListing] = []
+        for item in page.items:
+            try:
+                listings.append(_wallapop_listing(item))
+            except TypeError, ValueError:
+                continue
+
+        configuration.last_sync = datetime.now(UTC)
+        configuration.sync_error = None
+        await self.db.flush()
+        result = LiveSearchResult(
+            total=max(page.total, len(listings)),
+            listings=listings,
+            query=filters.query,
+            filters=filters.model_dump(mode="json", exclude_none=True),
+        )
+        await cache.setex(cache_key, _LIVE_SEARCH_CACHE_TTL_SECONDS, result.model_dump_json())
+        return result
+
+    async def _record_live_search_error(self, configuration: SourceConfig, detail: str) -> None:
+        configuration.last_sync = datetime.now(UTC)
+        configuration.sync_error = detail[:500]
+        await self.db.flush()
 
     async def get_detail(self, listing_id: UUID) -> ListingDetailRead:
         row = await self.repository.get_with_snapshots(listing_id)
@@ -301,6 +415,132 @@ def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def _configured_rate_limit(config: dict[str, Any]) -> int:
+    try:
+        configured = int(config.get("rate_limit_per_hour", _LIVE_SEARCH_DEFAULT_RATE_LIMIT))
+    except TypeError, ValueError:
+        return _LIVE_SEARCH_DEFAULT_RATE_LIMIT
+    return max(1, min(configured, 10_000))
+
+
+def _live_search_cache_key(filters: LiveSearchFilters) -> str:
+    digest = hashlib.sha256(filters.model_dump_json(exclude_none=True).encode("utf-8")).hexdigest()
+    return f"search:{filters.source}:{digest}"
+
+
+async def _search_live_with_retry(
+    connector: BaseConnector, filters: ConnectorSearchFilter
+) -> ConnectorSearchPage:
+    last_error: TransientConnectorError | None = None
+    for attempt in range(_LIVE_SEARCH_MAX_ATTEMPTS):
+        try:
+            return await connector.search(filters)
+        except ConnectorAccessDeniedError, ConnectorRateLimitError:
+            raise
+        except TransientConnectorError as exc:
+            last_error = exc
+            if attempt < _LIVE_SEARCH_MAX_ATTEMPTS - 1:
+                jitter = secrets.randbelow(25) / 1000
+                await asyncio.sleep(0.05 * (2**attempt) + jitter)
+    assert last_error is not None
+    raise last_error
+
+
+def _wallapop_listing(raw: RawListing) -> WallapopListing:
+    payload = raw.payload
+    title = _text(payload.get("title"))
+    if title is None:
+        raise ValueError("Wallapop listing has no title")
+    price = _decimal_value(payload.get("price", payload.get("sale_price")))
+    if price is None:
+        raise ValueError("Wallapop listing has no price")
+
+    seller_value = payload.get("user", payload.get("seller", {}))
+    seller = seller_value if isinstance(seller_value, dict) else {}
+    location_value = payload.get("location")
+    if isinstance(location_value, dict):
+        location = _text(
+            location_value.get("city")
+            or location_value.get("municipality")
+            or location_value.get("region")
+        )
+    else:
+        location = _text(location_value)
+
+    return WallapopListing(
+        id=raw.external_id,
+        title=title,
+        description=_text(payload.get("description")) or "",
+        price=price,
+        location=location,
+        images=_image_urls(payload.get("images", payload.get("fotos", []))),
+        seller={
+            "name": _text(seller.get("micro_name") or seller.get("name")) or "",
+            "rating": seller.get("scoring_stars", seller.get("rating")),
+            "url": seller.get("web_slug", seller.get("url")),
+        },
+        url=_wallapop_url(raw.url),
+        posted_at=_datetime_value(
+            payload.get("publish_date") or payload.get("published_at") or payload.get("created_at")
+        ),
+    )
+
+
+def _text(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _decimal_value(value: object) -> Decimal | None:
+    if isinstance(value, dict):
+        value = value.get("amount", value.get("value"))
+    if value is None:
+        return None
+    try:
+        return Decimal(str(value))
+    except ValueError, ArithmeticError:
+        return None
+
+
+def _image_urls(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    urls: list[str] = []
+    for item in value:
+        candidate: str | None
+        if isinstance(item, str):
+            candidate = item
+        elif isinstance(item, dict):
+            candidate = _text(item.get("original") or item.get("big") or item.get("url"))
+        else:
+            candidate = None
+        if candidate:
+            urls.append(candidate)
+    return urls
+
+
+def _datetime_value(value: object) -> datetime | None:
+    text = _text(value)
+    if text is None:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return _as_utc(parsed)
+
+
+def _wallapop_url(value: str | None) -> str:
+    url = _text(value)
+    if url is None:
+        return ""
+    if url.startswith(("http://", "https://")):
+        return url
+    return f"https://es.wallapop.com/item/{url.lstrip('/')}"
 
 
 def _listing_read(listing: VehicleListing, source_key: str) -> ListingRead:

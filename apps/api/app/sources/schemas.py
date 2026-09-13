@@ -5,9 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.connectors.filters import ConnectorSearchFilter
 from app.listings.vocab import FuelType, ProviderKind, SellerType, SyncRunStatus
@@ -28,6 +29,28 @@ class ComplianceReviewRead(BaseModel):
 class SourceUpdate(BaseModel):
     is_active: bool | None = None
 
+
+class SourceConfigUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool | None = None
+    config: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def require_a_change(self) -> SourceConfigUpdate:
+        if self.enabled is None and self.config is None:
+            raise ValueError("enabled or config is required")
+        return self
+
+
+class SourceConfigRead(BaseModel):
+    key: str
+    enabled: bool
+    config: dict[str, Any]
+    last_sync: datetime | None
+    sync_error: str | None
+    updated_at: datetime
+
 class SourceRead(BaseModel):
     key: str
     name: str
@@ -35,6 +58,11 @@ class SourceRead(BaseModel):
     is_active: bool
     is_automatable: bool
     latest_review: ComplianceReviewRead | None
+    enabled: bool | None = None
+    config: dict[str, Any] = Field(default_factory=dict)
+    last_sync: datetime | None = None
+    sync_error: str | None = None
+    health: str | None = None
 
 
 class SourceHealthRead(BaseModel):

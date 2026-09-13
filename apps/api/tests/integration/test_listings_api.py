@@ -9,10 +9,20 @@ pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
 
 async def _seed(owner_client: AsyncClient) -> None:
-    response = await owner_client.post(
-        "/api/v1/sources/mock/sync", headers=csrf_headers(owner_client)
-    )
-    assert response.status_code == 202
+    for index in range(12):
+        response = await owner_client.post(
+            "/api/v1/listings/manual",
+            headers=csrf_headers(owner_client),
+            json={
+                "brand": "SEAT" if index % 2 == 0 else "Dacia",
+                "model": f"Integration {index}",
+                "year": 2012 + index % 5,
+                "mileage_km": 90_000 + index,
+                "price_amount": str(2_500 + index * 100),
+                "fuel_type": "DIESEL",
+            },
+        )
+        assert response.status_code == 201
 
 
 async def test_search_filters_and_paginates(owner_client: AsyncClient) -> None:
@@ -21,7 +31,7 @@ async def test_search_filters_and_paginates(owner_client: AsyncClient) -> None:
     all_listings = await owner_client.get("/api/v1/listings?page_size=100")
     assert all_listings.status_code == 200
     total = all_listings.json()["total"]
-    assert total >= 30
+    assert total >= 12
 
     seat = await owner_client.get("/api/v1/listings?brand=SEAT")
     assert seat.json()["total"] >= 1

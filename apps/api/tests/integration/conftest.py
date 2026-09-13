@@ -12,11 +12,11 @@ from app.auth.security import hash_password
 from app.core.config import Settings
 from app.listings.models import VehicleListing
 from app.main import create_app
-from app.sources.models import SourceSyncRun
+from app.sources.models import Source, SourceConfig, SourceConfigChange, SourceSyncRun
 from app.users.models import User, UserRole
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import delete
+from sqlalchemy import delete, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 OWNER_PASSWORD = "a secure integration password"
@@ -59,8 +59,15 @@ def migrated_database() -> Iterator[None]:
 async def _reset_database(app: FastAPI) -> None:
     async with app.state.database.session_factory() as db:
         await db.execute(delete(SourceSyncRun))
+        await db.execute(delete(SourceConfigChange))
         await db.execute(delete(VehicleListing))
         await db.execute(delete(User))
+        await db.execute(
+            update(Source)
+            .where(Source.key.in_(("manual", "wallapop")))
+            .values(is_active=True)
+        )
+        await db.execute(update(SourceConfig).values(enabled=True, sync_error=None))
         db.add_all(
             [
                 User(

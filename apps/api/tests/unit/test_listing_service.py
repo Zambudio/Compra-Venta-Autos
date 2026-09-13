@@ -81,7 +81,7 @@ async def test_search_builds_page_from_repository_rows() -> None:
 
     listing = _existing_listing(id=uuid4())
     with patch.object(
-        ListingRepository, "search", AsyncMock(return_value=([(listing, "mock")], 1))
+        ListingRepository, "search", AsyncMock(return_value=([(listing, "wallapop")], 1))
     ):
         page = await ListingService(AsyncMock(spec=AsyncSession)).search(
             SearchFilter(page=1, page_size=20)
@@ -89,7 +89,7 @@ async def test_search_builds_page_from_repository_rows() -> None:
 
     assert page.total == 1
     assert page.has_more is False
-    assert page.items[0].source_key == "mock"
+    assert page.items[0].source_key == "wallapop"
 
 
 @pytest.mark.asyncio
@@ -109,15 +109,15 @@ async def test_ingest_raw_creates_listing_payload_and_snapshot() -> None:
     result.scalar_one_or_none.return_value = None
     db.execute.return_value = result
 
-    source = Source(id=uuid4(), key="mock", name="Mock", provider_kind=ProviderKind.MOCK)
+    source = Source(id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR)
     raw = RawListing(
-        source_key="mock",
-        external_id="mock-0001",
-        url="https://mock.local/1",
+        source_key="wallapop",
+        external_id="wallapop-0001",
+        url="https://wallapop.example/1",
         retrieved_at=datetime(2026, 9, 1, tzinfo=UTC),
-        connector_version="mock-catalog-v1",
+        connector_version="wallapop-catalog-v1",
         payload={
-            "external_id": "mock-0001",
+            "external_id": "wallapop-0001",
             "marca": "Seat",
             "modelo": "Ibiza",
             "anio": 2013,
@@ -142,7 +142,7 @@ def _existing_listing(**overrides: object) -> VehicleListing:
     defaults: dict[str, object] = {
         "id": uuid4(),
         "source_id": uuid4(),
-        "external_id": "mock-0001",
+        "external_id": "wallapop-0001",
         "brand": "SEAT",
         "model": "Ibiza",
         "fuel_type": FuelType.DIESEL,
@@ -181,15 +181,15 @@ async def test_ingest_raw_marks_seen_when_payload_hash_already_stored() -> None:
     payload_result.first.return_value = ("payload-id",)
     db.execute.side_effect = [get_result, payload_result]
 
-    source = Source(id=uuid4(), key="mock", name="Mock", provider_kind=ProviderKind.MOCK)
+    source = Source(id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR)
     raw = RawListing(
-        source_key="mock",
-        external_id="mock-0001",
+        source_key="wallapop",
+        external_id="wallapop-0001",
         url=None,
         retrieved_at=datetime(2026, 9, 5, tzinfo=UTC),
-        connector_version="mock-catalog-v1",
+        connector_version="wallapop-catalog-v1",
         payload={
-            "external_id": "mock-0001",
+            "external_id": "wallapop-0001",
             "marca": "Seat",
             "modelo": "Ibiza",
             "anio": 2013,
@@ -219,15 +219,15 @@ async def test_ingest_raw_updates_and_snapshots_on_price_change() -> None:
     payload_result.first.return_value = None
     db.execute.side_effect = [get_result, payload_result]
 
-    source = Source(id=uuid4(), key="mock", name="Mock", provider_kind=ProviderKind.MOCK)
+    source = Source(id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR)
     raw = RawListing(
-        source_key="mock",
-        external_id="mock-0001",
+        source_key="wallapop",
+        external_id="wallapop-0001",
         url=None,
         retrieved_at=datetime(2026, 9, 5, tzinfo=UTC),
-        connector_version="mock-catalog-v1",
+        connector_version="wallapop-catalog-v1",
         payload={
-            "external_id": "mock-0001",
+            "external_id": "wallapop-0001",
             "marca": "Seat",
             "modelo": "Ibiza",
             "anio": 2013,

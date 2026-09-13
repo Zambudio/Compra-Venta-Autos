@@ -11,8 +11,8 @@ from app.listings.vocab import FuelType, SellerType, Transmission
 
 def _payload(**overrides: Any) -> dict[str, Any]:
     base: dict[str, Any] = {
-        "external_id": "mock-0001",
-        "url": "https://mock.motorscope.local/anuncio/mock-0001",
+        "external_id": "wallapop-0001",
+        "url": "https://wallapop.example/anuncio/wallapop-0001",
         "titulo": "SEAT Ibiza 1.4 TDI Reference",
         "marca": "Seat",
         "modelo": "Ibiza",
@@ -30,7 +30,7 @@ def _payload(**overrides: Any) -> dict[str, Any]:
         "poblacion": "Cartagena",
         "vendedor": "particular",
         "descripcion": "Coche en buen estado, distribución hecha.",
-        "fotos": ["https://mock.motorscope.local/img/0001-1.jpg"],
+        "fotos": ["https://wallapop.example/img/0001-1.jpg"],
         "publicado": "2026-08-20",
     }
     base.update(overrides)
@@ -39,10 +39,10 @@ def _payload(**overrides: Any) -> dict[str, Any]:
 
 @pytest.mark.unit
 def test_normalize_maps_core_fields() -> None:
-    result = normalize(_payload(), source_key="mock")
+    result = normalize(_payload(), source_key="wallapop")
 
-    assert result.source_key == "mock"
-    assert result.external_id == "mock-0001"
+    assert result.source_key == "wallapop"
+    assert result.external_id == "wallapop-0001"
     assert result.brand == "SEAT"
     assert result.model == "Ibiza"
     assert result.trim == "1.4 TDI Reference"
@@ -55,12 +55,12 @@ def test_normalize_maps_core_fields() -> None:
     assert result.seller_type is SellerType.PRIVATE
     assert result.province == "Murcia"
     assert result.location == "Cartagena"
-    assert result.image_urls == ["https://mock.motorscope.local/img/0001-1.jpg"]
+    assert result.image_urls == ["https://wallapop.example/img/0001-1.jpg"]
 
 
 @pytest.mark.unit
 def test_normalize_price_is_decimal_with_currency() -> None:
-    result = normalize(_payload(precio=2800), source_key="mock")
+    result = normalize(_payload(precio=2800), source_key="wallapop")
 
     assert result.price_amount == Decimal("2800")
     assert isinstance(result.price_amount, Decimal)
@@ -72,7 +72,7 @@ def test_normalize_defaults_currency_to_eur() -> None:
     payload = _payload()
     del payload["moneda"]
 
-    assert normalize(payload, source_key="mock").price_currency == "EUR"
+    assert normalize(payload, source_key="wallapop").price_currency == "EUR"
 
 
 @pytest.mark.unit
@@ -88,7 +88,7 @@ def test_normalize_defaults_currency_to_eur() -> None:
     ],
 )
 def test_normalize_canonicalizes_brand(raw: str, expected: str) -> None:
-    assert normalize(_payload(marca=raw), source_key="mock").brand == expected
+    assert normalize(_payload(marca=raw), source_key="wallapop").brand == expected
 
 
 @pytest.mark.unit
@@ -106,7 +106,7 @@ def test_normalize_canonicalizes_brand(raw: str, expected: str) -> None:
     ],
 )
 def test_normalize_maps_fuel_aliases(raw: str, expected: FuelType) -> None:
-    assert normalize(_payload(combustible=raw), source_key="mock").fuel_type is expected
+    assert normalize(_payload(combustible=raw), source_key="wallapop").fuel_type is expected
 
 
 @pytest.mark.unit
@@ -120,7 +120,7 @@ def test_normalize_maps_fuel_aliases(raw: str, expected: FuelType) -> None:
     ],
 )
 def test_normalize_maps_transmission_aliases(raw: str, expected: Transmission) -> None:
-    assert normalize(_payload(cambio=raw), source_key="mock").transmission is expected
+    assert normalize(_payload(cambio=raw), source_key="wallapop").transmission is expected
 
 
 @pytest.mark.unit
@@ -128,7 +128,7 @@ def test_normalize_transmission_missing_is_unknown() -> None:
     payload = _payload()
     del payload["cambio"]
 
-    assert normalize(payload, source_key="mock").transmission is Transmission.UNKNOWN
+    assert normalize(payload, source_key="wallapop").transmission is Transmission.UNKNOWN
 
 
 @pytest.mark.unit
@@ -142,18 +142,18 @@ def test_normalize_transmission_missing_is_unknown() -> None:
     ],
 )
 def test_normalize_maps_seller_type(raw: str, expected: SellerType) -> None:
-    assert normalize(_payload(vendedor=raw), source_key="mock").seller_type is expected
+    assert normalize(_payload(vendedor=raw), source_key="wallapop").seller_type is expected
 
 
 @pytest.mark.unit
 def test_normalize_converts_cv_to_kw() -> None:
-    assert normalize(_payload(potencia_cv=90), source_key="mock").power_kw == 66
+    assert normalize(_payload(potencia_cv=90), source_key="wallapop").power_kw == 66
 
 
 @pytest.mark.unit
 def test_normalize_optional_fields_absent_become_none() -> None:
     payload = {
-        "external_id": "mock-0002",
+        "external_id": "wallapop-0002",
         "marca": "Dacia",
         "modelo": "Sandero",
         "anio": 2016,
@@ -163,7 +163,7 @@ def test_normalize_optional_fields_absent_become_none() -> None:
         "vendedor": "particular",
     }
 
-    result = normalize(payload, source_key="mock")
+    result = normalize(payload, source_key="wallapop")
 
     assert result.url is None
     assert result.generation is None
@@ -178,14 +178,14 @@ def test_normalize_optional_fields_absent_become_none() -> None:
 
 @pytest.mark.unit
 def test_normalize_parses_published_date_as_utc() -> None:
-    result = normalize(_payload(publicado="2026-08-20"), source_key="mock")
+    result = normalize(_payload(publicado="2026-08-20"), source_key="wallapop")
 
     assert result.published_at == datetime(2026, 8, 20, tzinfo=UTC)
 
 
 @pytest.mark.unit
 def test_normalize_trims_whitespace() -> None:
-    result = normalize(_payload(modelo="  Ibiza  ", marca=" Seat "), source_key="mock")
+    result = normalize(_payload(modelo="  Ibiza  ", marca=" Seat "), source_key="wallapop")
 
     assert result.model == "Ibiza"
     assert result.brand == "SEAT"
@@ -198,27 +198,27 @@ def test_normalize_rejects_missing_required_field(missing: str) -> None:
     del payload[missing]
 
     with pytest.raises(NormalizationError):
-        normalize(payload, source_key="mock")
+        normalize(payload, source_key="wallapop")
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("year", [1800, 1949, datetime.now(UTC).year + 2])
 def test_normalize_rejects_out_of_range_year(year: int) -> None:
     with pytest.raises(NormalizationError):
-        normalize(_payload(anio=year), source_key="mock")
+        normalize(_payload(anio=year), source_key="wallapop")
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(("field", "value"), [("km", -1), ("precio", 0), ("precio", -100)])
 def test_normalize_rejects_non_positive_numbers(field: str, value: int) -> None:
     with pytest.raises(NormalizationError):
-        normalize(_payload(**{field: value}), source_key="mock")
+        normalize(_payload(**{field: value}), source_key="wallapop")
 
 
 @pytest.mark.unit
 def test_normalize_rejects_unparseable_number() -> None:
     with pytest.raises(NormalizationError):
-        normalize(_payload(precio="dos mil"), source_key="mock")
+        normalize(_payload(precio="dos mil"), source_key="wallapop")
 
 
 @pytest.mark.unit
@@ -249,21 +249,21 @@ def test_payload_hash_handles_nested_and_lists() -> None:
 @pytest.mark.unit
 def test_normalize_unknown_brand_is_title_cased() -> None:
     assert (
-        normalize(_payload(marca="fabricante raro"), source_key="mock").brand == "Fabricante Raro"
+        normalize(_payload(marca="fabricante raro"), source_key="wallapop").brand == "Fabricante Raro"
     )
 
 
 @pytest.mark.unit
 def test_normalize_unparseable_date_becomes_none() -> None:
-    assert normalize(_payload(publicado="ayer"), source_key="mock").published_at is None
+    assert normalize(_payload(publicado="ayer"), source_key="wallapop").published_at is None
 
 
 @pytest.mark.unit
 def test_normalize_photos_not_a_list_is_empty() -> None:
-    assert normalize(_payload(fotos="una-sola-foto.jpg"), source_key="mock").image_urls == []
+    assert normalize(_payload(fotos="una-sola-foto.jpg"), source_key="wallapop").image_urls == []
 
 
 @pytest.mark.unit
 def test_normalize_rejects_unparseable_year() -> None:
     with pytest.raises(NormalizationError):
-        normalize(_payload(anio="dos mil trece"), source_key="mock")
+        normalize(_payload(anio="dos mil trece"), source_key="wallapop")

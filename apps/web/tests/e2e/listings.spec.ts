@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("owner registers a vehicle manually and views it", async ({
-  page,
-}) => {
+test("owner registers a vehicle manually and views it", async ({ page }) => {
   const email = process.env.E2E_OWNER_EMAIL;
   const password = process.env.E2E_OWNER_PASSWORD;
   test.skip(
@@ -43,4 +41,33 @@ test("owner registers a vehicle manually and views it", async ({
   await expect(
     page.getByRole("heading", { name: /SEAT/ }).first(),
   ).toBeVisible();
+});
+
+test("owner searches live Wallapop listings", async ({ page }) => {
+  const email = process.env.E2E_OWNER_EMAIL;
+  const password = process.env.E2E_OWNER_PASSWORD;
+  test.skip(
+    !email || !password,
+    "E2E_OWNER_EMAIL and E2E_OWNER_PASSWORD are required",
+  );
+
+  await page.goto("/");
+  await page.getByLabel("Correo electrónico", { exact: true }).fill(email!);
+  await page.getByLabel("Contraseña", { exact: true }).fill(password!);
+  await page.getByRole("button", { name: "Entrar" }).click();
+
+  await page.getByLabel("Buscar en Wallapop").fill("BMW 320");
+  await page.getByRole("button", { name: "Buscar ahora" }).click();
+
+  await expect(page.getByText(/resultados en Wallapop/)).toBeVisible();
+  const firstResult = page
+    .locator("article")
+    .filter({
+      has: page.getByRole("link", { name: "Abrir en Wallapop" }),
+    })
+    .first();
+  await expect(firstResult).toBeVisible();
+  await expect(
+    firstResult.getByRole("link", { name: "Abrir en Wallapop" }),
+  ).toHaveAttribute("href", /^https:\/\/(es\.)?wallapop\.com\//);
 });

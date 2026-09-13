@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.connectors.filters import ConnectorSearchFilter
 from app.listings.vocab import FuelType, ListingStatus, SellerType, Transmission
 
 
@@ -61,6 +63,66 @@ class ListingPage(BaseModel):
     page_size: int
     total: int
     has_more: bool
+
+
+class LiveSearchFilters(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=2, max_length=120)
+    min_price: Decimal | None = Field(default=None, ge=0)
+    max_price: Decimal | None = Field(default=None, ge=0)
+    location: str | None = Field(default=None, max_length=120)
+    category: str | None = Field(default=None, max_length=80)
+    source: Literal["wallapop"] = "wallapop"
+    limit: int = Field(default=20, ge=1, le=50)
+    offset: int = Field(default=0, ge=0, le=10_000)
+
+    @field_validator("query", "location", "category", mode="before")
+    @classmethod
+    def strip_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @model_validator(mode="after")
+    def validate_price_range(self) -> LiveSearchFilters:
+        if (
+            self.min_price is not None
+            and self.max_price is not None
+            and self.min_price > self.max_price
+        ):
+            raise ValueError("min_price must not exceed max_price")
+        return self
+
+    def to_connector_filter(self) -> ConnectorSearchFilter:
+        return ConnectorSearchFilter(
+            query=self.query,
+            price_min=self.min_price,
+            price_max=self.max_price,
+            location=self.location,
+            category=self.category,
+            page=self.offset // self.limit + 1,
+            page_size=self.limit,
+            offset=self.offset,
+        )
+
+
+class WallapopListing(BaseModel):
+    id: str
+    title: str
+    description: str
+    price: Decimal = Field(ge=0)
+    location: str | None
+    images: list[str]
+    seller: dict[str, Any]
+    url: str
+    posted_at: datetime | None
+    source_key: Literal["wallapop"] = "wallapop"
+
+
+class LiveSearchResult(BaseModel):
+    total: int = Field(ge=0)
+    listings: list[WallapopListing]
+    query: str
+    filters: dict[str, Any]
 
 
 class ManualListingCreate(BaseModel):

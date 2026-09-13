@@ -5,6 +5,7 @@ import {
   getListing,
   getListings,
   getSources,
+  searchListings,
   syncSource,
 } from "@/features/listings/api";
 
@@ -108,4 +109,27 @@ test("createManualListing posts the vehicle payload", async () => {
     "/api/v1/listings/manual",
     expect.objectContaining({ method: "POST" }),
   );
+});
+
+test("searchListings posts a sanitized real-time query to Wallapop", async () => {
+  const fetchMock = mockFetch({
+    total: 0,
+    listings: [],
+    query: "BMW 320",
+    filters: {},
+  });
+
+  await searchListings("  BMW 320  ", {
+    min_price: 5000,
+    max_price: 15000,
+    location: "Madrid",
+  });
+
+  const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(url).toContain("/api/v1/listings/search?");
+  expect(url).toContain("query=BMW+320");
+  expect(url).toContain("min_price=5000");
+  expect(url).toContain("max_price=15000");
+  expect(url).toContain("location=Madrid");
+  expect(init.method).toBe("POST");
 });

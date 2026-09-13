@@ -7,11 +7,22 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from app.auth.dependencies import AuthContext, get_db, require_auth, require_csrf
+from app.auth.dependencies import AuthContext, get_db, get_redis, require_auth, require_csrf
 from app.auth.models import AuthSession
 from app.core.config import Settings
-from app.listings.schemas import ListingPage, ListingRead
-from app.listings.service import DuplicateManualListingError, ListingNotFoundError, ListingService
+from app.listings.schemas import (
+    ListingPage,
+    ListingRead,
+    LiveSearchResult,
+    WallapopListing,
+)
+from app.listings.service import (
+    DuplicateManualListingError,
+    ListingNotFoundError,
+    ListingService,
+    LiveSearchRateLimitError,
+    LiveSourceDisabledError,
+)
 from app.listings.vocab import FuelType, ListingStatus, SellerType, Transmission
 from app.main import create_app
 from app.users.models import User, UserRole
@@ -54,14 +65,15 @@ def _client(ctx: AuthContext) -> AsyncClient:
     app.dependency_overrides[require_auth] = lambda: ctx
     app.dependency_overrides[require_csrf] = lambda: ctx
     app.dependency_overrides[get_db] = _dummy_db
+    app.dependency_overrides[get_redis] = lambda: AsyncMock()
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver")
 
 
 def _listing() -> ListingRead:
     return ListingRead(
         id=uuid4(),
-        source_key="mock",
-        external_id="mock-0001",
+        source_key="wallapop",
+        external_id="wallapop-0001",
         url=None,
         brand="SEAT",
         model="Ibiza",
@@ -103,6 +115,60 @@ async def test_search_rejects_bad_filter() -> None:
     async with _client(_ctx()) as client:
         response = await client.get("/api/v1/listings?year_min=2020&year_max=2010")
     assert response.status_code == 422
+
+
+async def test_live_search_returns_wallapop_results() -> None:
+    result = LiveSearchResult(
+        total=1,
+        listings=[
+            WallapopListing(
+                id="w-1",
+                title="BMW 320d",
+                description="Buen estado",
+                price=Decimal("12500"),
+                location="Madrid",
+                images=[],
+                seller={"name": "Ana", "rating": 4.9, "url": None},
+                url="https://es.wallapop.com/item/bmw-320d-w-1",
+                posted_at=datetime.now(UTC),
+            )
+        ],
+        query="BMW 320",
+        filters={"query": "BMW 320", "source": "wallapop", "limit": 20, "offset": 0},
+    )
+    with patch.object(ListingService, "search_live", AsyncMock(return_value=result)):
+        async with _client(_ctx()) as client:
+            response = await client.post("/api/v1/listings/search?query=BMW%20320")
+
+    assert response.status_code == 200
+    assert response.json()["listings"][0]["source_key"] == "wallapop"
+
+
+async def test_live_search_maps_disabled_source_to_503() -> None:
+    with patch.object(
+        ListingService,
+        "search_live",
+        AsyncMock(side_effect=LiveSourceDisabledError("wallapop")),
+    ):
+        async with _client(_ctx()) as client:
+            response = await client.post("/api/v1/listings/search?query=BMW%20320")
+
+    assert response.status_code == 503
+    assert response.json()["code"] == "source_disabled"
+
+
+async def test_live_search_maps_rate_limit_to_429_with_retry_after() -> None:
+    with patch.object(
+        ListingService,
+        "search_live",
+        AsyncMock(side_effect=LiveSearchRateLimitError(75)),
+    ):
+        async with _client(_ctx()) as client:
+            response = await client.post("/api/v1/listings/search?query=BMW%20320")
+
+    assert response.status_code == 429
+    assert response.headers["retry-after"] == "75"
+    assert response.json()["code"] == "search_rate_limited"
 
 
 async def test_get_listing_not_found_is_404() -> None:

@@ -17,6 +17,7 @@ import { getListings, syncSource } from "@/features/listings/api";
 import { FilterForm } from "@/features/listings/filter-form";
 import { ListingCard } from "@/features/listings/listing-card";
 import { ListingDetailPanel } from "@/features/listings/listing-detail";
+import { LiveListingSearch } from "@/features/listings/live-search";
 import { ManualListingForm } from "@/features/listings/manual-listing-form";
 import type { ListingFilters } from "@/features/listings/types";
 import { ApiError } from "@/lib/api";
@@ -129,6 +130,8 @@ export function ListingsView() {
           {syncMessage}
         </div>
       ) : null}
+
+      <LiveListingSearch />
 
       <section
         className="workbench-panel mt-7 overflow-hidden"

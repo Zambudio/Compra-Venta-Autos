@@ -14,6 +14,13 @@ async def test_foundation_migration_created_expected_tables() -> None:
             tables = await connection.run_sync(
                 lambda sync_connection: inspect(sync_connection).get_table_names()
             )
-        assert {"alembic_version", "users", "sessions", "audit_events"} <= set(tables)
+        assert {
+            "alembic_version",
+            "users",
+            "sessions",
+            "audit_events",
+            "source_configurations",
+            "source_config_changes",
+        } <= set(tables)
     finally:
         await engine.dispose()

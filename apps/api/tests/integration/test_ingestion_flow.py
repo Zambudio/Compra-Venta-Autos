@@ -1,8 +1,4 @@
-"""Test ingestion flow: normalization and persistence of listings.
-
-Mock/stub test data replaces the removed MockConnector from production.
-This tests ListingService, not any connector specifically.
-"""
+"""Test ingestion flow with controlled manual-source records in PostgreSQL."""
 
 from __future__ import annotations
 
@@ -22,10 +18,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
 
 def _stub_listings() -> list[RawListing]:
-    """Return stub test listings for ingestion tests.
-
-    Replaces MockConnector data. These are minimal but valid listings.
-    """
+    """Return minimal, valid manual-source records for ingestion tests."""
     return [
         RawListing(
             source_key="manual",
@@ -34,15 +27,15 @@ def _stub_listings() -> list[RawListing]:
             retrieved_at=datetime.now(UTC),
             connector_version="test-v1",
             payload={
-                "id": "test-seat-1",
-                "brand": "SEAT",
-                "model": "Ibiza",
-                "year": 2014,
+                "external_id": "test-seat-1",
+                "marca": "SEAT",
+                "modelo": "Ibiza",
+                "anio": 2014,
                 "precio": 2800,
-                "kms": 168000,
-                "fuel": "DIESEL",
-                "transmission": "manual",
-                "province": "Murcia",
+                "km": 168000,
+                "combustible": "DIESEL",
+                "cambio": "manual",
+                "provincia": "Murcia",
             },
         ),
         RawListing(
@@ -52,15 +45,15 @@ def _stub_listings() -> list[RawListing]:
             retrieved_at=datetime.now(UTC),
             connector_version="test-v1",
             payload={
-                "id": "test-dacia-1",
-                "brand": "Dacia",
-                "model": "Sandero",
-                "year": 2018,
+                "external_id": "test-dacia-1",
+                "marca": "Dacia",
+                "modelo": "Sandero",
+                "anio": 2018,
                 "precio": 6500,
-                "kms": 85000,
-                "fuel": "GASOLINE",
-                "transmission": "manual",
-                "province": "Madrid",
+                "km": 85000,
+                "combustible": "GASOLINE",
+                "cambio": "manual",
+                "provincia": "Madrid",
             },
         ),
         RawListing(
@@ -70,15 +63,15 @@ def _stub_listings() -> list[RawListing]:
             retrieved_at=datetime.now(UTC),
             connector_version="test-v1",
             payload={
-                "id": "test-seat-2",
-                "brand": "SEAT",
-                "model": "Cordoba",
-                "year": 2010,
+                "external_id": "test-seat-2",
+                "marca": "SEAT",
+                "modelo": "Cordoba",
+                "anio": 2010,
                 "precio": 1800,
-                "kms": 210000,
-                "fuel": "DIESEL",
-                "transmission": "manual",
-                "province": "Barcelona",
+                "km": 210000,
+                "combustible": "DIESEL",
+                "cambio": "manual",
+                "provincia": "Barcelona",
             },
         ),
     ]

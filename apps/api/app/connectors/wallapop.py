@@ -8,7 +8,11 @@ from typing import Any
 import httpx
 
 from app.connectors.base import BaseConnector
-from app.connectors.errors import TransientConnectorError
+from app.connectors.errors import (
+    ConnectorAccessDeniedError,
+    ConnectorRateLimitError,
+    TransientConnectorError,
+)
 from app.connectors.filters import ConnectorSearchFilter
 from app.connectors.schemas import ConnectorHealth, ConnectorSearchPage, RawListing
 from app.listings.vocab import ProviderKind
@@ -18,7 +22,7 @@ class WallapopConnector(BaseConnector):
     source_key = "wallapop"
     provider_kind = ProviderKind.CONNECTOR
     version = "wallapop-api-v3"
-    
+
     _BASE_URL = "https://api.wallapop.com/api/v3/cars/search"
 
     def __init__(self, proxy_url: str | None = None) -> None:
@@ -26,21 +30,33 @@ class WallapopConnector(BaseConnector):
 
     async def search(self, filters: ConnectorSearchFilter) -> ConnectorSearchPage:
         params = self._build_params(filters)
-        
+
         async with httpx.AsyncClient(proxy=self.proxy_url) as client:
             try:
                 response = await client.get(
                     self._BASE_URL,
                     params=params,
-                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "X-DeviceOS": "0"},
-                    timeout=15.0
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                        "X-DeviceOS": "0",
+                    },
+                    timeout=15.0,
                 )
                 if response.status_code == 403:
-                    raise TransientConnectorError("Acceso bloqueado por Wallapop (403): puede ser rate limit o bloqueo anti-bot")
+                    raise ConnectorAccessDeniedError(
+                        "Acceso bloqueado por Wallapop (403): "
+                        "puede ser rate limit o bloqueo anti-bot"
+                    )
                 if response.status_code == 429:
-                    raise TransientConnectorError("Demasiadas solicitudes a Wallapop (429): intenta más tarde")
+                    retry_after = _retry_after_seconds(response.headers.get("Retry-After"))
+                    raise ConnectorRateLimitError(
+                        "Demasiadas solicitudes a Wallapop (429): intenta más tarde",
+                        retry_after_seconds=retry_after,
+                    )
                 if response.status_code >= 500:
-                    raise TransientConnectorError(f"Error en servidor Wallapop ({response.status_code})")
+                    raise TransientConnectorError(
+                        f"Error en servidor Wallapop ({response.status_code})"
+                    )
                 response.raise_for_status()
             except httpx.TimeoutException as e:
                 raise TransientConnectorError(f"Timeout contactando Wallapop: {e}") from e
@@ -49,14 +65,14 @@ class WallapopConnector(BaseConnector):
 
         data = response.json()
         objects = data.get("search_objects", [])
-        
+
         # Wallapop no devuelve el "total" fácilmente a veces, estimamos
         return ConnectorSearchPage(
             items=[self._to_raw(obj) for obj in objects],
             page=filters.page,
             page_size=filters.page_size,
-            total=len(objects), # Esto se debería inferir de metadatos si los devuelve
-            has_more=len(objects) == filters.page_size
+            total=len(objects),  # Esto se debería inferir de metadatos si los devuelve
+            has_more=len(objects) == filters.page_size,
         )
 
     async def fetch(self, external_id: str) -> RawListing | None:
@@ -66,22 +82,28 @@ class WallapopConnector(BaseConnector):
                 response = await client.get(
                     f"https://api.wallapop.com/api/v3/items/{external_id}",
                     headers={"User-Agent": "Mozilla/5.0", "X-DeviceOS": "0"},
-                    timeout=10.0
+                    timeout=10.0,
                 )
                 if response.status_code == 404:
                     return None
                 if response.status_code == 403:
-                    raise TransientConnectorError("Acceso bloqueado por Wallapop (403)")
+                    raise ConnectorAccessDeniedError("Acceso bloqueado por Wallapop (403)")
                 if response.status_code == 429:
-                    raise TransientConnectorError("Demasiadas solicitudes a Wallapop (429)")
+                    retry_after = _retry_after_seconds(response.headers.get("Retry-After"))
+                    raise ConnectorRateLimitError(
+                        "Demasiadas solicitudes a Wallapop (429)",
+                        retry_after_seconds=retry_after,
+                    )
                 if response.status_code >= 500:
-                    raise TransientConnectorError(f"Error en servidor Wallapop ({response.status_code})")
+                    raise TransientConnectorError(
+                        f"Error en servidor Wallapop ({response.status_code})"
+                    )
                 response.raise_for_status()
             except httpx.TimeoutException as e:
                 raise TransientConnectorError(f"Timeout fetching from Wallapop: {e}") from e
             except httpx.HTTPError as e:
                 raise TransientConnectorError(f"Error fetching from Wallapop: {e}") from e
-                
+
         return self._to_raw(response.json())
 
     async def health_check(self) -> ConnectorHealth:
@@ -92,7 +114,7 @@ class WallapopConnector(BaseConnector):
                     self._BASE_URL,
                     params={"keywords": "test"},
                     headers={"User-Agent": "Mozilla/5.0", "X-DeviceOS": "0"},
-                    timeout=5.0
+                    timeout=5.0,
                 )
                 if res.status_code == 200:
                     healthy = True
@@ -114,22 +136,30 @@ class WallapopConnector(BaseConnector):
             detail = "Timeout conectando con API"
         except Exception as e:
             healthy = False
-            detail = f"Error: {str(e)}"
-            
+            detail = f"Error: {e!s}"
+
         return ConnectorHealth(
-            source_key=self.source_key,
-            healthy=healthy,
-            detail=detail,
-            checked_at=datetime.now(UTC)
+            source_key=self.source_key, healthy=healthy, detail=detail, checked_at=datetime.now(UTC)
         )
 
     def _build_params(self, filters: ConnectorSearchFilter) -> dict[str, Any]:
         # Wallapop params pagination
         params: dict[str, Any] = {
-            "start": (filters.page - 1) * filters.page_size,
+            "start": (
+                filters.offset
+                if filters.offset is not None
+                else (filters.page - 1) * filters.page_size
+            ),
             "step": filters.page_size,
         }
-        
+
+        if filters.query:
+            params["keywords"] = filters.query
+        if filters.location:
+            params["location"] = filters.location
+        if filters.category:
+            params["category"] = filters.category
+
         if filters.brand:
             params["brand"] = filters.brand
         if filters.model:
@@ -142,7 +172,7 @@ class WallapopConnector(BaseConnector):
             params["min_sale_price"] = filters.price_min
         if filters.price_max:
             params["max_sale_price"] = filters.price_max
-            
+
         return params
 
     def _to_raw(self, item: dict[str, Any]) -> RawListing:
@@ -152,5 +182,14 @@ class WallapopConnector(BaseConnector):
             url=item.get("web_slug", ""),
             retrieved_at=datetime.now(UTC),
             connector_version=self.version,
-            payload=item
+            payload=item,
         )
+
+
+def _retry_after_seconds(value: str | None) -> int:
+    if value is None:
+        return 60
+    try:
+        return max(1, min(int(value), 3600))
+    except ValueError:
+        return 60

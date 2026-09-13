@@ -28,7 +28,13 @@ from app.scoring.models import (
     ScoringProfile,
     ScoringProfileVersion,
 )
-from app.sources.models import Source, SourceComplianceReview, SourceSyncRun
+from app.sources.models import (
+    Source,
+    SourceComplianceReview,
+    SourceConfig,
+    SourceConfigChange,
+    SourceSyncRun,
+)
 from app.users.models import User
 from app.vehicles.models import MarketEstimate, Vehicle, VehicleMatchCandidate
 from app.watchlist.models import WatchlistEntry
@@ -57,6 +63,8 @@ __all__ = [
     "ScoringProfileVersion",
     "Source",
     "SourceComplianceReview",
+    "SourceConfig",
+    "SourceConfigChange",
     "SourceSyncRun",
     "TransmissionSpec",
     "User",

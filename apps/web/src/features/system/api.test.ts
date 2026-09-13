@@ -3,6 +3,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import {
   checkSourceHealth,
   getSources,
+  syncSource,
   updateSource,
 } from "@/features/system/api";
 
@@ -20,6 +21,7 @@ test("uses authenticated source endpoints and CSRF for updates", async () => {
   await getSources();
   await checkSourceHealth("wallapop");
   await updateSource("manual", false);
+  await syncSource("wallapop");
 
   expect(global.fetch).toHaveBeenNthCalledWith(
     1,
@@ -33,11 +35,19 @@ test("uses authenticated source endpoints and CSRF for updates", async () => {
   );
   expect(global.fetch).toHaveBeenNthCalledWith(
     3,
-    "/api/v1/sources/manual",
+    "/api/v1/sources/manual/config",
     expect.objectContaining({
       method: "PATCH",
       headers: expect.objectContaining({ "X-CSRF-Token": "csrf-source" }),
-      body: JSON.stringify({ is_active: false }),
+      body: JSON.stringify({ enabled: false }),
+    }),
+  );
+  expect(global.fetch).toHaveBeenNthCalledWith(
+    4,
+    "/api/v1/sources/wallapop/sync",
+    expect.objectContaining({
+      method: "POST",
+      headers: expect.objectContaining({ "X-CSRF-Token": "csrf-source" }),
     }),
   );
 });

@@ -10,22 +10,31 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
+from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connectors.base import BaseConnector
 from app.connectors.errors import TransientConnectorError
 from app.connectors.filters import ConnectorSearchFilter
-from app.connectors.registry import get_connector
+from app.connectors.registry import available_source_keys, get_connector
 from app.connectors.schemas import ConnectorSearchPage
 from app.listings.normalizer import NormalizationError
 from app.listings.service import ListingService
 from app.listings.vocab import SyncRunStatus
-from app.sources.models import Source, SourceComplianceReview, SourceSyncRun
+from app.sources.models import (
+    Source,
+    SourceComplianceReview,
+    SourceConfig,
+    SourceConfigChange,
+    SourceSyncRun,
+)
 from app.sources.schemas import (
     ComplianceReviewRead,
+    SourceConfigRead,
     SourceHealthRead,
     SourceRead,
     SyncRunRead,
@@ -49,6 +58,12 @@ class SourceInactiveError(Exception):
         self.source_key = source_key
 
 
+class LastActiveSourceError(Exception):
+    def __init__(self, source_key: str) -> None:
+        super().__init__(f"cannot disable the last active source: {source_key}")
+        self.source_key = source_key
+
+
 class SyncRunNotFoundError(Exception):
     def __init__(self, run_id: UUID) -> None:
         super().__init__(f"unknown sync run: {run_id}")
@@ -60,33 +75,110 @@ class SourceService:
         self.db = db
 
     async def list_sources(self) -> list[SourceRead]:
-        sources = (await self.db.execute(select(Source).order_by(Source.key))).scalars().all()
-        return [
-            SourceRead(
-                key=source.key,
-                name=source.name,
-                provider_kind=source.provider_kind,
-                is_active=source.is_active,
-                is_automatable=source.is_automatable,
-                latest_review=await self._latest_review(source.id),
+        registered_keys = available_source_keys()
+        sources = (
+            await self.db.execute(
+                select(Source)
+                .where(Source.key.in_(registered_keys))
+                .order_by(Source.key)
             )
+        ).scalars().all()
+        configurations = (
+            await self.db.execute(
+                select(SourceConfig).where(SourceConfig.source_key.in_(registered_keys))
+            )
+        ).scalars().all()
+        config_by_key = {
+            configuration.source_key: configuration for configuration in configurations
+        }
+        return [
+            await self._source_read(source, config_by_key.get(source.key))
             for source in sources
         ]
 
-    async def update_source(self, source_key: str, *, is_active: bool | None = None) -> SourceRead:
-        source = (await self.db.execute(select(Source).where(Source.key == source_key))).scalars().first()
+    async def update_source(
+        self,
+        source_key: str,
+        *,
+        is_active: bool | None = None,
+        changed_by: UUID | None = None,
+    ) -> SourceRead:
+        await self.update_source_config(
+            source_key, enabled=is_active, config=None, changed_by=changed_by
+        )
+        source = await self._require_source(source_key)
+        configuration = await self._get_configuration(source_key)
+        return await self._source_read(source, configuration)
+
+    async def update_source_config(
+        self,
+        source_key: str,
+        *,
+        enabled: bool | None,
+        config: dict[str, Any] | None,
+        changed_by: UUID | None,
+    ) -> SourceConfigRead:
+        if source_key not in available_source_keys():
+            raise SourceNotFoundError(source_key)
+
+        sources = (
+            await self.db.execute(
+                select(Source)
+                .where(Source.key.in_(available_source_keys()))
+                .order_by(Source.key)
+                .with_for_update()
+            )
+        ).scalars().all()
+        source_by_key = {source.key: source for source in sources}
+        source = source_by_key.get(source_key)
         if source is None:
             raise SourceNotFoundError(source_key)
-        if is_active is not None:
-            source.is_active = is_active
-            await self.db.flush()
-        return SourceRead(
-            key=source.key,
-            name=source.name,
-            provider_kind=source.provider_kind,
-            is_active=source.is_active,
-            is_automatable=source.is_automatable,
-            latest_review=await self._latest_review(source.id),
+
+        if enabled is False and source.is_active and not any(
+            item.is_active for key, item in source_by_key.items() if key != source_key
+        ):
+            raise LastActiveSourceError(source_key)
+
+        configuration = await self._get_configuration(source_key)
+        if configuration is None:
+            configuration = SourceConfig(
+                source_key=source_key,
+                enabled=source.is_active,
+                config={},
+            )
+            self.db.add(configuration)
+
+        before = {
+            "enabled": configuration.enabled,
+            "config": dict(configuration.config),
+        }
+        next_enabled = configuration.enabled if enabled is None else enabled
+        next_config = dict(configuration.config) if config is None else dict(config)
+        after = {"enabled": next_enabled, "config": next_config}
+
+        if before != after:
+            configuration.enabled = next_enabled
+            configuration.config = next_config
+            configuration.updated_at = datetime.now(UTC)
+            source.is_active = next_enabled
+            self.db.add(
+                SourceConfigChange(
+                    source_key=source_key,
+                    before=before,
+                    after=after,
+                    changed_by=changed_by,
+                )
+            )
+
+        await self.db.flush()
+        return _config_read(configuration)
+
+    @staticmethod
+    async def cache_source_config(cache: Redis, configuration: SourceConfigRead) -> None:
+        await cache.set(
+            f"source:config:{configuration.key}",
+            configuration.model_dump_json(),
+            ex=300,
         )
 
     async def health(self, source_key: str) -> SourceHealthRead:
@@ -184,6 +276,9 @@ class SourceService:
         run.finished_at = datetime.now(UTC)
         run.error_summary = _sanitize(errors)
         run.status = _final_status(errors=errors, seen=seen, changed=created + updated)
+        configuration = await self._get_configuration(source.key)
+        if configuration is not None:
+            _apply_sync_status(configuration, run)
         if created > 0:
             from app.vehicles.service import VehicleService
 
@@ -198,6 +293,32 @@ class SourceService:
         if source is None:
             raise SourceNotFoundError(source_key)
         return source
+
+    async def _get_configuration(self, source_key: str) -> SourceConfig | None:
+        return (
+            await self.db.execute(
+                select(SourceConfig).where(SourceConfig.source_key == source_key)
+            )
+        ).scalar_one_or_none()
+
+    async def _source_read(
+        self, source: Source, configuration: SourceConfig | None
+    ) -> SourceRead:
+        enabled = configuration.enabled if configuration is not None else source.is_active
+        sync_error = configuration.sync_error if configuration is not None else None
+        return SourceRead(
+            key=source.key,
+            name=source.name,
+            provider_kind=source.provider_kind,
+            is_active=enabled,
+            is_automatable=source.is_automatable,
+            latest_review=await self._latest_review(source.id),
+            enabled=enabled,
+            config=dict(configuration.config) if configuration is not None else {},
+            last_sync=configuration.last_sync if configuration is not None else None,
+            sync_error=sync_error,
+            health="disabled" if not enabled else "error" if sync_error else "ok",
+        )
 
     async def _latest_review(self, source_id: UUID) -> ComplianceReviewRead | None:
         review = (
@@ -262,3 +383,19 @@ def run_read(run: SourceSyncRun, source_key: str) -> SyncRunRead:
         finished_at=run.finished_at,
         created_at=run.created_at,
     )
+
+
+def _config_read(configuration: SourceConfig) -> SourceConfigRead:
+    return SourceConfigRead(
+        key=configuration.source_key,
+        enabled=configuration.enabled,
+        config=dict(configuration.config),
+        last_sync=configuration.last_sync,
+        sync_error=configuration.sync_error,
+        updated_at=configuration.updated_at,
+    )
+
+
+def _apply_sync_status(configuration: SourceConfig, run: SourceSyncRun) -> None:
+    configuration.last_sync = run.finished_at
+    configuration.sync_error = run.error_summary

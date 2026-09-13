@@ -22,4 +22,4 @@ def test_get_connector_returns_a_base_connector(key: str) -> None:
 
 def test_get_connector_rejects_unknown_source() -> None:
     with pytest.raises(UnknownConnectorError):
-        get_connector("mock")
+        get_connector("unsupported")

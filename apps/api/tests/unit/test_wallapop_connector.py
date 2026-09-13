@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
-
 from app.connectors.errors import TransientConnectorError
 from app.connectors.filters import ConnectorSearchFilter
 from app.connectors.wallapop import WallapopConnector
@@ -23,6 +22,8 @@ def test_search_builds_correct_params(connector: WallapopConnector) -> None:
     filters = ConnectorSearchFilter(
         page=2,
         page_size=20,
+        query="SEAT Ibiza",
+        location="Madrid",
         brand="SEAT",
         year_min=2010,
         year_max=2020,
@@ -33,6 +34,8 @@ def test_search_builds_correct_params(connector: WallapopConnector) -> None:
 
     assert params["start"] == 20  # (page-1)*page_size
     assert params["step"] == 20
+    assert params["keywords"] == "SEAT Ibiza"
+    assert params["location"] == "Madrid"
     assert params["brand"] == "SEAT"
     assert params["min_year"] == 2010
     assert params["max_year"] == 2020
@@ -78,6 +81,7 @@ async def test_search_handles_429_rate_limit(connector: WallapopConnector) -> No
         mock_client = AsyncMock()
         mock_client_class.return_value.__aenter__.return_value = mock_client
         mock_client.get.return_value.status_code = 429
+        mock_client.get.return_value.headers = {}
 
         filters = ConnectorSearchFilter()
         with pytest.raises(TransientConnectorError, match="429"):

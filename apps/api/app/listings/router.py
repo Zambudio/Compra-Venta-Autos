@@ -7,13 +7,29 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.auth.dependencies import AuthDependency, CsrfDependency, DbDependency, require_roles
+from app.auth.dependencies import (
+    AuthDependency,
+    CsrfDependency,
+    DbDependency,
+    RedisDependency,
+    require_roles,
+)
 from app.core.errors import APIError, ErrorBody
-from app.listings.schemas import ListingDetailRead, ListingPage, ListingRead, ManualListingCreate
+from app.listings.schemas import (
+    ListingDetailRead,
+    ListingPage,
+    ListingRead,
+    LiveSearchFilters,
+    LiveSearchResult,
+    ManualListingCreate,
+)
 from app.listings.service import (
     DuplicateManualListingError,
     ListingNotFoundError,
     ListingService,
+    LiveSearchProviderError,
+    LiveSearchRateLimitError,
+    LiveSourceDisabledError,
 )
 from app.search.schemas import SearchFilter
 from app.users.models import UserRole
@@ -31,6 +47,57 @@ async def search_listings(
 ) -> ListingPage:
     del auth
     return await ListingService(db).search(criteria)
+
+
+@router.post(
+    "/search",
+    response_model=LiveSearchResult,
+    responses={
+        429: {"model": ErrorBody},
+        502: {"model": ErrorBody},
+        503: {"model": ErrorBody},
+    },
+)
+async def search_live_listings(
+    auth: AuthDependency,
+    db: DbDependency,
+    cache: RedisDependency,
+    criteria: Annotated[LiveSearchFilters, Query()],
+) -> LiveSearchResult:
+    del auth
+    try:
+        result = await ListingService(db).search_live(criteria, cache=cache)
+    except LiveSourceDisabledError as exc:
+        raise APIError(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            code="source_disabled",
+            title="Source unavailable",
+            detail=f"El conector '{exc.source_key}' está deshabilitado.",
+        ) from exc
+    except LiveSearchRateLimitError as exc:
+        await db.commit()
+        raise APIError(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            code="search_rate_limited",
+            title="Too many requests",
+            detail="Se ha alcanzado el límite de búsquedas. Inténtalo más tarde.",
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        ) from exc
+    except LiveSearchProviderError as exc:
+        await db.commit()
+        code = (
+            "source_access_denied"
+            if exc.reason == "access_denied"
+            else "source_temporarily_unavailable"
+        )
+        raise APIError(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code=code,
+            title="Upstream source error",
+            detail="Wallapop no está disponible temporalmente.",
+        ) from exc
+    await db.commit()
+    return result
 
 
 @router.get(

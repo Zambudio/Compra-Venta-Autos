@@ -1,102 +1,283 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Play, Square, Activity } from "lucide-react";
-import { StatusView } from "./status-view";
-import { getSources, updateSource, checkSourceHealth, type Source } from "./api";
-import { Button } from "@/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Activity,
+  CheckCircle2,
+  CircleAlert,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
+import { useState } from "react";
 
-export function SettingsView() {
+import { Button } from "@/components/ui/button";
+import type { User } from "@/features/auth/types";
+import {
+  checkSourceHealth,
+  getSources,
+  syncSource,
+  updateSource,
+  type Source,
+  type SourceHealth,
+} from "@/features/system/api";
+import { StatusView } from "@/features/system/status-view";
+import { ApiError } from "@/lib/api";
+
+type SettingsViewProps = {
+  userRole: User["role"];
+};
+
+type Notice = { kind: "success" | "error"; text: string };
+
+export function SettingsView({ userRole }: SettingsViewProps) {
   const queryClient = useQueryClient();
-  const { data: sources, isLoading } = useQuery({
+  const [notice, setNotice] = useState<Notice>();
+  const [healthBySource, setHealthBySource] = useState<
+    Record<string, SourceHealth>
+  >({});
+  const canManage = userRole === "OWNER" || userRole === "ADMIN";
+  const sourcesQuery = useQuery({
     queryKey: ["sources"],
     queryFn: getSources,
   });
 
   const toggleMutation = useMutation({
-    mutationFn: ({ key, is_active }: { key: string; is_active: boolean }) => updateSource(key, is_active),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources"] });
+    mutationFn: ({ key, enabled }: { key: string; enabled: boolean }) =>
+      updateSource(key, enabled),
+    onSuccess: (configuration, variables) => {
+      queryClient.setQueryData<Source[]>(["sources"], (current) =>
+        current?.map((source) =>
+          source.key === variables.key
+            ? {
+                ...source,
+                enabled: configuration.enabled,
+                is_active: configuration.enabled,
+                config: configuration.config,
+                last_sync: configuration.last_sync,
+                sync_error: configuration.sync_error,
+                health: configuration.enabled ? "ok" : "disabled",
+              }
+            : source,
+        ),
+      );
+      setNotice({
+        kind: "success",
+        text: `Conector ${variables.key} ${variables.enabled ? "activado" : "desactivado"}.`,
+      });
+    },
+    onError: (error) => {
+      const isLastSource =
+        error instanceof ApiError && error.code === "active_source_required";
+      setNotice({
+        kind: "error",
+        text: isLastSource
+          ? "Mantén al menos un conector activo."
+          : "No se pudo actualizar el conector.",
+      });
     },
   });
 
-  const checkHealthMutation = useMutation({
+  const healthMutation = useMutation({
     mutationFn: (key: string) => checkSourceHealth(key),
-    onSuccess: (data) => {
-      alert(`Estado de ${data.source_key}:\nSano: ${data.healthy}\nDetalle: ${data.detail}`);
+    onSuccess: (health) => {
+      setHealthBySource((current) => ({
+        ...current,
+        [health.source_key]: health,
+      }));
     },
-    onError: (err) => {
-      alert(`Error al comprobar estado: ${err instanceof Error ? err.message : 'desconocido'}`);
-    }
+    onError: () =>
+      setNotice({ kind: "error", text: "No se pudo comprobar el conector." }),
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: (key: string) => syncSource(key),
+    onSuccess: (run) => {
+      setNotice({
+        kind: "success",
+        text: `Sincronización de ${sourceName(sourcesQuery.data, run.source_key)} completada.`,
+      });
+      void queryClient.invalidateQueries({ queryKey: ["sources"] });
+    },
+    onError: () =>
+      setNotice({
+        kind: "error",
+        text: "No se pudo forzar la sincronización.",
+      }),
   });
 
   return (
-    <div className="space-y-8 animate-in fade-in-50">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900 mb-6 flex items-center">
-          <Settings className="h-6 w-6 mr-2 text-indigo-600" />
-          Configuración del Sistema
-        </h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Status Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-medium mb-4 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-blue-500" />
-              Estado de la Plataforma
-            </h3>
-            <StatusView />
+    <section className="page-frame max-w-6xl">
+      <p className="eyebrow">Operaciones / Sistema</p>
+      <h1 className="page-title mt-1 flex items-center gap-2">
+        <Settings aria-hidden size={24} />
+        Configuración
+      </h1>
+      <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
+        Supervisa la plataforma y controla las fuentes que alimentan el radar.
+      </p>
+
+      {notice ? (
+        <div
+          className={`mt-5 flex items-center gap-2 rounded-[var(--radius-control)] px-4 py-3 text-sm ${notice.kind === "error" ? "bg-[var(--danger-soft)] text-[var(--danger)]" : "bg-[var(--success-soft)] text-[var(--success)]"}`}
+          role={notice.kind === "error" ? "alert" : "status"}
+        >
+          {notice.kind === "error" ? (
+            <CircleAlert aria-hidden size={18} />
+          ) : (
+            <CheckCircle2 aria-hidden size={18} />
+          )}
+          {notice.text}
+        </div>
+      ) : null}
+
+      <div className="mt-8 grid items-start gap-7 xl:grid-cols-[1.05fr_0.95fr]">
+        <section aria-labelledby="platform-status-title">
+          <h2 id="platform-status-title" className="section-title mb-3">
+            Estado de la plataforma
+          </h2>
+          <StatusView />
+        </section>
+
+        <section aria-labelledby="connectors-title">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 id="connectors-title" className="section-title">
+              Gestión de conectores
+            </h2>
+            {!canManage ? (
+              <span className="rounded-full bg-[var(--surface-inset)] px-2.5 py-1 text-xs font-semibold text-[var(--muted)]">
+                Solo lectura
+              </span>
+            ) : null}
           </div>
 
-          {/* Connectors Section */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-medium mb-4 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-green-500" />
-              Gestión de Conectores
-            </h3>
-            {isLoading ? (
-              <p className="text-sm text-slate-500">Cargando fuentes...</p>
-            ) : (
-              <div className="space-y-4">
-                {sources?.map((source) => (
-                  <div key={source.key} className="flex items-center justify-between p-4 border border-slate-100 rounded-lg bg-slate-50">
-                    <div>
-                      <p className="font-medium text-slate-900">{source.name}</p>
-                      <p className="text-xs text-slate-500 capitalize">Tipo: {source.provider_kind.toLowerCase()}</p>
-                      <p className="text-xs mt-1">
-                        Estado: <span className={source.is_active ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                          {source.is_active ? "Activo" : "Inactivo"}
-                        </span>
+          {sourcesQuery.isPending ? (
+            <div
+              className="workbench-panel p-5 text-sm text-[var(--muted)]"
+              aria-busy="true"
+            >
+              Cargando conectores…
+            </div>
+          ) : sourcesQuery.isError ? (
+            <div
+              className="workbench-panel p-5 text-sm text-[var(--danger)]"
+              role="alert"
+            >
+              No se pudieron cargar los conectores.
+            </div>
+          ) : (
+            <div className="workbench-panel divide-y divide-[var(--border)] overflow-hidden">
+              {sourcesQuery.data.map((source) => {
+                const isSaving =
+                  toggleMutation.isPending &&
+                  toggleMutation.variables?.key === source.key;
+                const isChecking =
+                  healthMutation.isPending &&
+                  healthMutation.variables === source.key;
+                const isSyncing =
+                  syncMutation.isPending &&
+                  syncMutation.variables === source.key;
+                const observedHealth = healthBySource[source.key];
+                const healthy = observedHealth
+                  ? observedHealth.healthy
+                  : source.health === "ok";
+
+                return (
+                  <article key={source.key} className="p-5">
+                    <div className="flex items-start justify-between gap-5">
+                      <div>
+                        <h3 className="font-semibold">{source.name}</h3>
+                        <p className="mt-1 text-xs text-[var(--muted)]">
+                          {source.provider_kind === "MANUAL"
+                            ? "Entrada controlada por el equipo"
+                            : "Consulta de mercado en tiempo real"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-label={source.name}
+                        aria-checked={source.enabled}
+                        disabled={!canManage || isSaving}
+                        onClick={() =>
+                          toggleMutation.mutate({
+                            key: source.key,
+                            enabled: !source.enabled,
+                          })
+                        }
+                        className={`relative h-7 w-12 rounded-full transition-colors focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] focus-visible:outline-none disabled:opacity-45 ${source.enabled ? "bg-[var(--success)]" : "bg-[var(--border-strong)]"}`}
+                      >
+                        <span
+                          aria-hidden
+                          className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${source.enabled ? "translate-x-6" : "translate-x-1"}`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 text-xs text-[var(--muted)] sm:grid-cols-2">
+                      <p>
+                        Estado: {source.enabled ? "Activo" : "Inactivo"}
+                        {isSaving ? " · Guardando…" : ""}
+                      </p>
+                      <p>
+                        Salud:{" "}
+                        {observedHealth?.detail ??
+                          (healthy ? "Saludable" : "No disponible")}
+                      </p>
+                      <p className="sm:col-span-2">
+                        Última sincronización:{" "}
+                        {formatLastSync(source.last_sync)}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+
+                    <div className="mt-4 flex flex-wrap gap-2">
                       <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => checkHealthMutation.mutate(source.key)}
-                        disabled={checkHealthMutation.isPending}
+                        size="compact"
+                        variant="secondary"
+                        aria-label={`Comprobar ${source.name}`}
+                        disabled={isChecking}
+                        onClick={() => healthMutation.mutate(source.key)}
                       >
-                        Probar
+                        <Activity aria-hidden size={15} />
+                        {isChecking ? "Comprobando…" : "Comprobar"}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant={source.is_active ? "destructive" : "default"}
-                        onClick={() => toggleMutation.mutate({ key: source.key, is_active: !source.is_active })}
-                        disabled={toggleMutation.isPending}
-                      >
-                        {source.is_active ? <Square className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
-                        {source.is_active ? "Desactivar" : "Activar"}
-                      </Button>
+                      {source.is_automatable ? (
+                        <Button
+                          size="compact"
+                          variant="secondary"
+                          aria-label={`Forzar sincronización de ${source.name}`}
+                          disabled={!canManage || !source.enabled || isSyncing}
+                          onClick={() => syncMutation.mutate(source.key)}
+                        >
+                          <RefreshCw
+                            aria-hidden
+                            size={15}
+                            className={isSyncing ? "animate-spin" : undefined}
+                          />
+                          {isSyncing
+                            ? "Sincronizando…"
+                            : "Forzar sincronización"}
+                        </Button>
+                      ) : null}
                     </div>
-                  </div>
-                ))}
-                {sources?.length === 0 && (
-                  <p className="text-sm text-slate-500">No hay conectores registrados.</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
-    </div>
+    </section>
   );
+}
+
+function sourceName(sources: Source[] | undefined, key: string): string {
+  return sources?.find((source) => source.key === key)?.name ?? key;
+}
+
+function formatLastSync(value: string | null): string {
+  if (!value) return "Nunca";
+  return new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 }

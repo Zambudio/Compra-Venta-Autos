@@ -59,6 +59,36 @@ export type ListingPage = {
   has_more: boolean;
 };
 
+export type LiveSearchFilters = {
+  min_price?: number;
+  max_price?: number;
+  location?: string;
+  category?: string;
+  source?: "wallapop";
+  limit?: number;
+  offset?: number;
+};
+
+export type WallapopListing = {
+  id: string;
+  title: string;
+  description: string;
+  price: string;
+  location: string | null;
+  images: string[];
+  seller: { name: string; rating: number | null; url: string | null };
+  url: string;
+  posted_at: string | null;
+  source_key: "wallapop";
+};
+
+export type LiveSearchResult = {
+  total: number;
+  listings: WallapopListing[];
+  query: string;
+  filters: Record<string, unknown>;
+};
+
 export type ListingFilters = {
   brand?: string;
   model?: string;

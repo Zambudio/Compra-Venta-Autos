@@ -14,6 +14,7 @@ from app.listings.vocab import FuelType, SellerType
 
 @dataclass(frozen=True, slots=True)
 class ConnectorSearchFilter:
+    query: str | None = None
     brand: str | None = None
     model: str | None = None
     year_min: int | None = None
@@ -24,5 +25,8 @@ class ConnectorSearchFilter:
     mileage_max: int | None = None
     province: str | None = None
     seller_type: SellerType | None = None
+    location: str | None = None
+    category: str | None = None
     page: int = 1
     page_size: int = 20
+    offset: int | None = None

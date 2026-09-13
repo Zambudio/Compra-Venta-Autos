@@ -6,10 +6,18 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.auth.dependencies import AuthDependency, CsrfDependency, DbDependency, require_roles
+from app.auth.dependencies import (
+    AuthDependency,
+    CsrfDependency,
+    DbDependency,
+    RedisDependency,
+    require_roles,
+)
 from app.connectors.errors import UnknownConnectorError
 from app.core.errors import APIError, ErrorBody
 from app.sources.schemas import (
+    SourceConfigRead,
+    SourceConfigUpdate,
     SourceHealthRead,
     SourceRead,
     SourceUpdate,
@@ -18,6 +26,7 @@ from app.sources.schemas import (
     SyncRunRead,
 )
 from app.sources.service import (
+    LastActiveSourceError,
     SourceInactiveError,
     SourceNotFoundError,
     SourceService,
@@ -44,13 +53,50 @@ async def update_source(
     db: DbDependency,
     _roles: _MutatingAuth,
 ) -> SourceRead:
-    del auth
+    del _roles
     try:
-        source = await SourceService(db).update_source(source_key, is_active=payload.is_active)
+        source = await SourceService(db).update_source(
+            source_key,
+            is_active=payload.is_active,
+            changed_by=auth.user.id,
+        )
         await db.commit()
         return source
     except SourceNotFoundError as exc:
         raise _not_found(exc.source_key) from exc
+    except LastActiveSourceError as exc:
+        raise _active_source_required(exc.source_key) from exc
+
+
+@router.patch(
+    "/{source_key}/config",
+    response_model=SourceConfigRead,
+    responses={400: {"model": ErrorBody}, 403: {"model": ErrorBody}, 404: {"model": ErrorBody}},
+)
+async def update_source_config(
+    source_key: str,
+    payload: SourceConfigUpdate,
+    auth: CsrfDependency,
+    db: DbDependency,
+    cache: RedisDependency,
+    _roles: _MutatingAuth,
+) -> SourceConfigRead:
+    del _roles
+    service = SourceService(db)
+    try:
+        configuration = await service.update_source_config(
+            source_key,
+            enabled=payload.enabled,
+            config=payload.config,
+            changed_by=auth.user.id,
+        )
+        await db.commit()
+        await service.cache_source_config(cache, configuration)
+        return configuration
+    except SourceNotFoundError as exc:
+        raise _not_found(exc.source_key) from exc
+    except LastActiveSourceError as exc:
+        raise _active_source_required(exc.source_key) from exc
 
 
 @router.get(
@@ -150,4 +196,15 @@ def _not_found(source_key: str) -> APIError:
         code="source_not_found",
         title="Not Found",
         detail=f"No existe la fuente '{source_key}'.",
+    )
+
+
+def _active_source_required(source_key: str) -> APIError:
+    return APIError(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        code="active_source_required",
+        title="Invalid configuration",
+        detail=(
+            f"No se puede desactivar '{source_key}': debe quedar al menos un conector activo."
+        ),
     )

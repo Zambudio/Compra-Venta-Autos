@@ -1,14 +1,20 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
 
+import app.models  # noqa: F401
 import pytest
 from app.connectors.errors import TransientConnectorError, UnknownConnectorError
 from app.connectors.filters import ConnectorSearchFilter
 from app.connectors.schemas import ConnectorSearchPage
-from app.listings.vocab import SyncRunStatus
+from app.listings.vocab import ProviderKind, SyncRunStatus
+from app.sources.models import Source, SourceConfig, SourceConfigChange, SourceSyncRun
 from app.sources.service import (
+    LastActiveSourceError,
     SourceService,
+    _apply_sync_status,
     _connector_filter,
     _final_status,
     _sanitize,
@@ -63,7 +69,85 @@ async def test_health_rejects_unknown_source() -> None:
     service = SourceService(AsyncMock(spec=AsyncSession))
 
     with pytest.raises(UnknownConnectorError):
-        await service.health("mock")
+        await service.health("unsupported")
+
+
+@pytest.mark.asyncio
+async def test_update_source_config_persists_change_and_audit_actor() -> None:
+    db = AsyncMock(spec=AsyncSession)
+    manual = Source(
+        id=uuid4(), key="manual", name="Entrada manual", provider_kind=ProviderKind.MANUAL,
+        is_active=True,
+    )
+    wallapop = Source(
+        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR,
+        is_active=True,
+    )
+    configuration = SourceConfig(
+        id=uuid4(), source_key="wallapop", enabled=True, config={"timeout": 10},
+        created_at=datetime.now(UTC), updated_at=datetime.now(UTC),
+    )
+    sources_result = MagicMock()
+    sources_result.scalars.return_value.all.return_value = [manual, wallapop]
+    config_result = MagicMock()
+    config_result.scalar_one_or_none.return_value = configuration
+    db.execute.side_effect = [sources_result, config_result]
+    actor_id = uuid4()
+
+    updated = await SourceService(db).update_source_config(
+        "wallapop", enabled=False, config={"timeout": 15}, changed_by=actor_id
+    )
+
+    assert updated.enabled is False
+    assert updated.config == {"timeout": 15}
+    assert wallapop.is_active is False
+    audit = next(
+        call.args[0]
+        for call in db.add.call_args_list
+        if isinstance(call.args[0], SourceConfigChange)
+    )
+    assert audit.before == {"enabled": True, "config": {"timeout": 10}}
+    assert audit.after == {"enabled": False, "config": {"timeout": 15}}
+    assert audit.changed_by == actor_id
+
+
+@pytest.mark.asyncio
+async def test_update_source_config_refuses_to_disable_last_active_connector() -> None:
+    db = AsyncMock(spec=AsyncSession)
+    wallapop = Source(
+        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR,
+        is_active=True,
+    )
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = [wallapop]
+    db.execute.return_value = result
+
+    with pytest.raises(LastActiveSourceError):
+        await SourceService(db).update_source_config(
+            "wallapop", enabled=False, config=None, changed_by=uuid4()
+        )
+
+    db.add.assert_not_called()
+
+
+def test_sync_status_updates_configuration_observability() -> None:
+    finished_at = datetime.now(UTC)
+    configuration = SourceConfig(
+        source_key="wallapop", enabled=True, config={}
+    )
+    run = SourceSyncRun(
+        source_id=uuid4(),
+        status=SyncRunStatus.PARTIAL,
+        mode="sync",
+        filters={},
+        error_summary="upstream unavailable",
+        finished_at=finished_at,
+    )
+
+    _apply_sync_status(configuration, run)
+
+    assert configuration.last_sync == finished_at
+    assert configuration.sync_error == "upstream unavailable"
 
 
 class _FlakyConnector:

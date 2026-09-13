@@ -162,7 +162,7 @@ async def test_evaluate_listing_full_flow() -> None:
     listing = VehicleListing(
         id=listing_id,
         source_id=uuid4(),
-        external_id="mock-101",
+        external_id="wallapop-101",
         brand="SEAT",
         model="Ibiza",
         year=2010,

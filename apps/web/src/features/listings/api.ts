@@ -4,6 +4,8 @@ import type {
   ListingDetail,
   ListingFilters,
   ListingPage,
+  LiveSearchFilters,
+  LiveSearchResult,
   ManualListingInput,
   Source,
   SyncRun,
@@ -29,6 +31,20 @@ export function getListings(filters: ListingFilters): Promise<ListingPage> {
 
 export function getListing(id: string): Promise<ListingDetail> {
   return apiRequest<ListingDetail>(`/listings/${id}`);
+}
+
+export function searchListings(
+  query: string,
+  filters: LiveSearchFilters = {},
+): Promise<LiveSearchResult> {
+  const params = new URLSearchParams({ query: query.trim() });
+  for (const [key, value] of Object.entries(filters)) {
+    if (value === undefined || value === null || value === "") continue;
+    params.set(key, String(value));
+  }
+  return apiRequest<LiveSearchResult>(`/listings/search?${params.toString()}`, {
+    method: "POST",
+  });
 }
 
 export function getSources(): Promise<Source[]> {
