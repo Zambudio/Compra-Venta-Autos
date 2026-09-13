@@ -1,5 +1,7 @@
 FROM node:26.8.1-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS base
-RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
+# corepack ya no se distribuye con Node en esta imagen; instalamos pnpm
+# directamente con la versión fijada.
+RUN npm install --global pnpm@11.1.3
 WORKDIR /workspace
 
 FROM base AS dependencies
