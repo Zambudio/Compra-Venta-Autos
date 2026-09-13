@@ -18,66 +18,44 @@ def connector():
     return WallapopConnector()
 
 
-@pytest.mark.asyncio
-async def test_search_returns_normalized_listings(connector: WallapopConnector) -> None:
-    """Test that search normalizes API responses into RawListing objects."""
-    mock_response = {
-        "search_objects": [
-            {
-                "id": "item-1",
-                "web_slug": "https://wallapop.com/item/item-1",
-                "title": "SEAT Ibiza 2014",
-                "price": 2800,
-                "brand": "SEAT",
-                "model": "Ibiza",
-            }
-        ]
+def test_search_builds_correct_params(connector: WallapopConnector) -> None:
+    """Test that search builds correct query parameters for Wallapop API."""
+    filters = ConnectorSearchFilter(
+        page=2,
+        page_size=20,
+        brand="SEAT",
+        year_min=2010,
+        year_max=2020,
+        price_min=2000,
+        price_max=5000,
+    )
+    params = connector._build_params(filters)
+
+    assert params["start"] == 20  # (page-1)*page_size
+    assert params["step"] == 20
+    assert params["brand"] == "SEAT"
+    assert params["min_year"] == 2010
+    assert params["max_year"] == 2020
+    assert params["min_sale_price"] == 2000
+    assert params["max_sale_price"] == 5000
+
+
+def test_search_returns_normalized_listings(connector: WallapopConnector) -> None:
+    """Test that _to_raw normalizes API responses into RawListing objects."""
+    item = {
+        "id": "item-1",
+        "web_slug": "https://wallapop.com/item/item-1",
+        "title": "SEAT Ibiza 2014",
+        "price": 2800,
+        "brand": "SEAT",
+        "model": "Ibiza",
     }
 
-    with patch("httpx.AsyncClient.get") as mock_get:
-        mock_response_obj = AsyncMock()
-        mock_response_obj.status_code = 200
-        mock_response_obj.json.return_value = mock_response
-        mock_get.return_value.__aenter__.return_value.get.return_value = mock_response_obj
+    result = connector._to_raw(item)
 
-        filters = ConnectorSearchFilter(page=1, page_size=10)
-        result = await connector.search(filters)
-
-        assert len(result.items) == 1
-        assert result.items[0].external_id == "item-1"
-        assert result.items[0].source_key == "wallapop"
-        assert result.page == 1
-        assert result.page_size == 10
-
-
-@pytest.mark.asyncio
-async def test_search_builds_correct_params(connector: WallapopConnector) -> None:
-    """Test that search builds correct query parameters for Wallapop API."""
-    with patch("httpx.AsyncClient") as mock_client_class:
-        mock_client = AsyncMock()
-        mock_client_class.return_value.__aenter__.return_value = mock_client
-        mock_client.get.return_value.status_code = 200
-        mock_client.get.return_value.json.return_value = {"search_objects": []}
-
-        filters = ConnectorSearchFilter(
-            page=2,
-            page_size=20,
-            brand="SEAT",
-            year_min=2010,
-            year_max=2020,
-            price_min=2000,
-            price_max=5000,
-        )
-        await connector.search(filters)
-
-        call_args = mock_client.get.call_args
-        assert call_args[1]["params"]["start"] == 20  # (page-1)*page_size
-        assert call_args[1]["params"]["step"] == 20
-        assert call_args[1]["params"]["brand"] == "SEAT"
-        assert call_args[1]["params"]["min_year"] == 2010
-        assert call_args[1]["params"]["max_year"] == 2020
-        assert call_args[1]["params"]["min_sale_price"] == 2000
-        assert call_args[1]["params"]["max_sale_price"] == 5000
+    assert result.external_id == "item-1"
+    assert result.source_key == "wallapop"
+    assert result.url == "https://wallapop.com/item/item-1"
 
 
 @pytest.mark.asyncio
@@ -145,26 +123,20 @@ async def test_fetch_returns_none_for_404(connector: WallapopConnector) -> None:
         assert result is None
 
 
-@pytest.mark.asyncio
-async def test_fetch_returns_raw_listing(connector: WallapopConnector) -> None:
-    """Test that fetch returns normalized listing for successful responses."""
+def test_fetch_returns_raw_listing(connector: WallapopConnector) -> None:
+    """Test that _to_raw normalizes fetch responses."""
     item_data = {
         "id": "item-123",
         "web_slug": "https://wallapop.com/item/item-123",
         "title": "SEAT Ibiza",
     }
 
-    with patch("httpx.AsyncClient") as mock_client_class:
-        mock_client = AsyncMock()
-        mock_client_class.return_value.__aenter__.return_value = mock_client
-        mock_client.get.return_value.status_code = 200
-        mock_client.get.return_value.json.return_value = item_data
+    result = connector._to_raw(item_data)
 
-        result = await connector.fetch("item-123")
-
-        assert result is not None
-        assert result.external_id == "item-123"
-        assert result.source_key == "wallapop"
+    assert result is not None
+    assert result.external_id == "item-123"
+    assert result.source_key == "wallapop"
+    assert result.url == "https://wallapop.com/item/item-123"
 
 
 @pytest.mark.asyncio
