@@ -52,9 +52,9 @@ def test_connector_filter_rebuilds_from_stored_dict() -> None:
 async def test_health_uses_connector_registry() -> None:
     service = SourceService(AsyncMock(spec=AsyncSession))
 
-    health = await service.health("mock")
+    health = await service.health("manual")
 
-    assert health.source_key == "mock"
+    assert health.source_key == "manual"
     assert health.healthy is True
 
 
@@ -63,7 +63,7 @@ async def test_health_rejects_unknown_source() -> None:
     service = SourceService(AsyncMock(spec=AsyncSession))
 
     with pytest.raises(UnknownConnectorError):
-        await service.health("wallapop")
+        await service.health("mock")
 
 
 class _FlakyConnector:

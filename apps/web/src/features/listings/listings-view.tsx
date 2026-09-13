@@ -39,7 +39,7 @@ export function ListingsView() {
   });
 
   const sync = useMutation({
-    mutationFn: () => syncSource("mock"),
+    mutationFn: () => syncSource("wallapop"),
     onSuccess: (run) => {
       setSyncMessage(
         `Sincronización ${run.status === "SUCCESS" ? "completada" : run.status.toLowerCase()}: ${run.listings_created} nuevos, ${run.listings_updated} actualizados.`,
@@ -49,7 +49,7 @@ export function ListingsView() {
     onError: (error) => {
       setSyncMessage(
         error instanceof ApiError
-          ? "No se pudo sincronizar el catálogo Mock."
+          ? "No se pudo sincronizar desde Wallapop."
           : "Error inesperado al sincronizar.",
       );
     },
@@ -111,7 +111,7 @@ export function ListingsView() {
               size={16}
               className={sync.isPending ? "animate-spin" : undefined}
             />
-            {sync.isPending ? "Sincronizando…" : "Sincronizar catálogo Mock"}
+            {sync.isPending ? "Sincronizando…" : "Sincronizar Wallapop"}
           </Button>
           <Button type="button" onClick={() => setMode({ name: "manual" })}>
             <Plus aria-hidden size={17} />

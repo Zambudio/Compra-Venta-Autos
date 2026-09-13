@@ -60,11 +60,11 @@ def _client(app_ctx: AuthContext) -> AsyncClient:
 async def test_list_sources_returns_catalog() -> None:
     sources = [
         SourceRead(
-            key="mock",
-            name="Mock",
-            provider_kind=ProviderKind.MOCK,
-            is_active=True,
-            is_automatable=True,
+            key="wallapop",
+            name="Wallapop",
+            provider_kind=ProviderKind.CONNECTOR,
+            is_active=False,
+            is_automatable=False,
             latest_review=None,
         )
     ]
@@ -72,7 +72,41 @@ async def test_list_sources_returns_catalog() -> None:
         async with _client(_ctx()) as client:
             response = await client.get("/api/v1/sources")
     assert response.status_code == 200
-    assert response.json()[0]["key"] == "mock"
+    assert response.json()[0]["key"] == "wallapop"
+
+
+async def test_owner_can_deactivate_a_source() -> None:
+    updated = SourceRead(
+        key="manual",
+        name="Entrada manual",
+        provider_kind=ProviderKind.MANUAL,
+        is_active=False,
+        is_automatable=True,
+        latest_review=None,
+    )
+    update = AsyncMock(return_value=updated)
+    with patch.object(SourceService, "update_source", update):
+        async with _client(_ctx()) as client:
+            response = await client.patch(
+                "/api/v1/sources/manual",
+                json={"is_active": False},
+                headers={"X-CSRF-Token": "x"},
+            )
+
+    assert response.status_code == 200
+    assert response.json()["is_active"] is False
+    update.assert_awaited_once_with("manual", is_active=False)
+
+
+async def test_viewer_cannot_change_a_source() -> None:
+    async with _client(_ctx(UserRole.VIEWER)) as client:
+        response = await client.patch(
+            "/api/v1/sources/manual",
+            json={"is_active": False},
+            headers={"X-CSRF-Token": "x"},
+        )
+
+    assert response.status_code == 403
 
 
 async def test_source_health_maps_unknown_to_404() -> None:
@@ -87,11 +121,11 @@ async def test_source_health_maps_unknown_to_404() -> None:
 
 async def test_source_health_ok() -> None:
     health = SourceHealthRead(
-        source_key="mock", healthy=True, detail="ok", checked_at=datetime.now(UTC)
+        source_key="manual", healthy=True, detail="ok", checked_at=datetime.now(UTC)
     )
     with patch.object(SourceService, "health", AsyncMock(return_value=health)):
         async with _client(_ctx()) as client:
-            response = await client.get("/api/v1/sources/mock/health")
+            response = await client.get("/api/v1/sources/manual/health")
     assert response.status_code == 200
     assert response.json()["healthy"] is True
 
@@ -102,7 +136,7 @@ async def test_sync_sync_mode_runs_and_returns_result() -> None:
     created.id = run_id
     executed = SyncRunRead(
         id=run_id,
-        source_key="mock",
+        source_key="wallapop",
         status=SyncRunStatus.SUCCESS,
         mode="sync",
         listings_seen=36,
@@ -120,7 +154,7 @@ async def test_sync_sync_mode_runs_and_returns_result() -> None:
         patch("app.sources.router.run_read", return_value=executed),
     ):
         async with _client(_ctx()) as client:
-            response = await client.post("/api/v1/sources/mock/sync", headers={"X-CSRF-Token": "x"})
+            response = await client.post("/api/v1/sources/wallapop/sync", headers={"X-CSRF-Token": "x"})
     assert response.status_code == 202
     body = response.json()
     assert body["status"] == "SUCCESS"
@@ -129,7 +163,7 @@ async def test_sync_sync_mode_runs_and_returns_result() -> None:
 
 async def test_sync_requires_owner_or_admin_role() -> None:
     async with _client(_ctx(UserRole.VIEWER)) as client:
-        response = await client.post("/api/v1/sources/mock/sync", headers={"X-CSRF-Token": "x"})
+        response = await client.post("/api/v1/sources/wallapop/sync", headers={"X-CSRF-Token": "x"})
     assert response.status_code == 403
 
 

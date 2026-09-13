@@ -125,7 +125,7 @@ export const mockOpportunity: OpportunityRead = {
   city: "Valencia",
   province: "Valencia",
   external_url: "https://ejemplo.com/seat-ibiza",
-  source_name: "Mock Portal",
+  source_name: "Wallapop",
 };
 
 export const mockOpportunityPage: OpportunityPage = {

@@ -25,6 +25,9 @@ class ComplianceReviewRead(BaseModel):
     notes: str
 
 
+class SourceUpdate(BaseModel):
+    is_active: bool | None = None
+
 class SourceRead(BaseModel):
     key: str
     name: str

@@ -12,6 +12,7 @@ from app.core.errors import APIError, ErrorBody
 from app.sources.schemas import (
     SourceHealthRead,
     SourceRead,
+    SourceUpdate,
     SyncMode,
     SyncRequest,
     SyncRunRead,
@@ -33,6 +34,23 @@ _MutatingAuth = Annotated[object, Depends(require_roles(UserRole.OWNER, UserRole
 async def list_sources(auth: AuthDependency, db: DbDependency) -> list[SourceRead]:
     del auth
     return await SourceService(db).list_sources()
+
+
+@router.patch("/{source_key}", response_model=SourceRead)
+async def update_source(
+    source_key: str,
+    payload: SourceUpdate,
+    auth: CsrfDependency,
+    db: DbDependency,
+    _roles: _MutatingAuth,
+) -> SourceRead:
+    del auth
+    try:
+        source = await SourceService(db).update_source(source_key, is_active=payload.is_active)
+        await db.commit()
+        return source
+    except SourceNotFoundError as exc:
+        raise _not_found(exc.source_key) from exc
 
 
 @router.get(

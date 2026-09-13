@@ -11,9 +11,9 @@ import { renderWithClient } from "@/test/render";
 function listing(overrides: Partial<Listing> = {}): Listing {
   return {
     id: "listing-1",
-    source_key: "mock",
-    external_id: "mock-0001",
-    url: "https://mock.local/1",
+    source_key: "wallapop",
+    external_id: "wallapop-0001",
+    url: "https://wallapop.com/item/1",
     brand: "SEAT",
     model: "Ibiza",
     generation: null,
@@ -81,12 +81,12 @@ test("shows the error state", async () => {
   ).toBeInTheDocument();
 });
 
-test("syncs the mock catalogue and reports the result", async () => {
+test("syncs Wallapop and reports the result", async () => {
   const user = userEvent.setup();
   vi.spyOn(api, "getListings").mockResolvedValue(page([listing()]));
   vi.spyOn(api, "syncSource").mockResolvedValue({
     id: "run-1",
-    source_key: "mock",
+    source_key: "wallapop",
     status: "SUCCESS",
     mode: "sync",
     listings_seen: 36,
@@ -102,7 +102,7 @@ test("syncs the mock catalogue and reports the result", async () => {
   await screen.findByText("SEAT Ibiza");
 
   await user.click(
-    screen.getByRole("button", { name: "Sincronizar catálogo Mock" }),
+    screen.getByRole("button", { name: "Sincronizar Wallapop" }),
   );
 
   expect(
@@ -174,7 +174,7 @@ test("reports a sync failure", async () => {
   await screen.findByText("SEAT Ibiza");
 
   await user.click(
-    screen.getByRole("button", { name: "Sincronizar catálogo Mock" }),
+    screen.getByRole("button", { name: "Sincronizar Wallapop" }),
   );
 
   expect(

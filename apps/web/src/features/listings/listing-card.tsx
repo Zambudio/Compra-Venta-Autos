@@ -35,7 +35,13 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
           >
             {SELLER_LABELS[listing.seller_type]}
           </Badge>
-          <Badge>{listing.source_key === "manual" ? "Manual" : "Mock"}</Badge>
+          <Badge>
+            {listing.source_key === "manual"
+              ? "Manual"
+              : listing.source_key === "wallapop"
+                ? "Wallapop"
+                : listing.source_key}
+          </Badge>
         </div>
       </div>
 

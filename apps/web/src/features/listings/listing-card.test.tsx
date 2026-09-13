@@ -8,9 +8,9 @@ import type { Listing } from "@/features/listings/types";
 function listing(overrides: Partial<Listing> = {}): Listing {
   return {
     id: "l1",
-    source_key: "mock",
-    external_id: "mock-0001",
-    url: "https://mock.local/1",
+    source_key: "wallapop",
+    external_id: "wallapop-0001",
+    url: "https://wallapop.com/item/1",
     brand: "SEAT",
     model: "Ibiza",
     generation: null,
@@ -46,6 +46,7 @@ test("renders key data and calls onOpen", async () => {
   ).toBeInTheDocument();
   expect(screen.getByText(/168.000 km/)).toBeInTheDocument();
   expect(screen.getByText("Particular")).toBeInTheDocument();
+  expect(screen.getByText("Wallapop")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "Ver detalle" }));
   expect(onOpen).toHaveBeenCalledWith("l1");

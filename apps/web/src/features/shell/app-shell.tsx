@@ -18,6 +18,7 @@ import { ListingsView } from "@/features/listings/listings-view";
 import { OpportunitiesView } from "@/features/opportunities/opportunities-view";
 import { WatchlistView } from "@/features/watchlist/watchlist-view";
 import { StatusView } from "@/features/system/status-view";
+import { SettingsView } from "@/features/system/settings-view";
 import { GarageView } from "@/features/garage/garage-view";
 import { VehiclesView } from "@/features/vehicles/vehicles-view";
 
@@ -27,7 +28,7 @@ type AppShellProps = {
   isLoggingOut: boolean;
 };
 
-type Tab = "opportunities" | "watchlist" | "garage" | "listings" | "vehicles" | "knowledge" | "status";
+type Tab = "opportunities" | "watchlist" | "garage" | "listings" | "vehicles" | "knowledge" | "settings";
 
 const TABS = [
   {
@@ -51,7 +52,7 @@ const TABS = [
     hint: "Fiabilidad",
     icon: BookOpenText,
   },
-  { id: "status", label: "Estado", hint: "Sistema", icon: Activity },
+  { id: "settings", label: "Configuración", hint: "Sistema", icon: Activity },
 ] satisfies { id: Tab; label: string; hint: string; icon: typeof Radar }[];
 
 export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
@@ -153,7 +154,7 @@ export function AppShell({ user, onLogout, isLoggingOut }: AppShellProps) {
         {active === "listings" && <ListingsView />}
         {active === "vehicles" && <VehiclesView />}
         {active === "knowledge" && <KnowledgeView />}
-        {active === "status" && <StatusView />}
+        {active === "settings" && <SettingsView />}
       </main>
     </div>
   );

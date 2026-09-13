@@ -73,6 +73,22 @@ class SourceService:
             for source in sources
         ]
 
+    async def update_source(self, source_key: str, *, is_active: bool | None = None) -> SourceRead:
+        source = (await self.db.execute(select(Source).where(Source.key == source_key))).scalars().first()
+        if source is None:
+            raise SourceNotFoundError(source_key)
+        if is_active is not None:
+            source.is_active = is_active
+            await self.db.flush()
+        return SourceRead(
+            key=source.key,
+            name=source.name,
+            provider_kind=source.provider_kind,
+            is_active=source.is_active,
+            is_automatable=source.is_automatable,
+            latest_review=await self._latest_review(source.id),
+        )
+
     async def health(self, source_key: str) -> SourceHealthRead:
         connector = get_connector(source_key)
         health = await connector.health_check()

@@ -8,11 +8,11 @@ from app.connectors.registry import available_source_keys, get_connector
 pytestmark = pytest.mark.unit
 
 
-def test_registry_exposes_only_mock_and_manual() -> None:
-    assert set(available_source_keys()) == {"mock", "manual"}
+def test_registry_exposes_only_production_connectors() -> None:
+    assert set(available_source_keys()) == {"manual", "wallapop"}
 
 
-@pytest.mark.parametrize("key", ["mock", "manual"])
+@pytest.mark.parametrize("key", ["manual", "wallapop"])
 def test_get_connector_returns_a_base_connector(key: str) -> None:
     connector = get_connector(key)
 
@@ -22,4 +22,4 @@ def test_get_connector_returns_a_base_connector(key: str) -> None:
 
 def test_get_connector_rejects_unknown_source() -> None:
     with pytest.raises(UnknownConnectorError):
-        get_connector("wallapop")
+        get_connector("mock")

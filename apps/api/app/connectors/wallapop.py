@@ -27,7 +27,7 @@ class WallapopConnector(BaseConnector):
     async def search(self, filters: ConnectorSearchFilter) -> ConnectorSearchPage:
         params = self._build_params(filters)
         
-        async with httpx.AsyncClient(proxies=self.proxy_url) as client:
+        async with httpx.AsyncClient(proxy=self.proxy_url) as client:
             try:
                 response = await client.get(
                     self._BASE_URL,
@@ -35,9 +35,16 @@ class WallapopConnector(BaseConnector):
                     headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "X-DeviceOS": "0"},
                     timeout=15.0
                 )
+                if response.status_code == 403:
+                    raise TransientConnectorError("Acceso bloqueado por Wallapop (403): puede ser rate limit o bloqueo anti-bot")
+                if response.status_code == 429:
+                    raise TransientConnectorError("Demasiadas solicitudes a Wallapop (429): intenta más tarde")
+                if response.status_code >= 500:
+                    raise TransientConnectorError(f"Error en servidor Wallapop ({response.status_code})")
                 response.raise_for_status()
+            except httpx.TimeoutException as e:
+                raise TransientConnectorError(f"Timeout contactando Wallapop: {e}") from e
             except httpx.HTTPError as e:
-                # Wallapop utiliza Cloudfront y bloqueos anti-bot que requieren proxies residenciales
                 raise TransientConnectorError(f"Error HTTP contactando Wallapop: {e}") from e
 
         data = response.json()
@@ -53,7 +60,7 @@ class WallapopConnector(BaseConnector):
         )
 
     async def fetch(self, external_id: str) -> RawListing | None:
-        async with httpx.AsyncClient(proxies=self.proxy_url) as client:
+        async with httpx.AsyncClient(proxy=self.proxy_url) as client:
             try:
                 # Endpoint de item específico de Wallapop v3
                 response = await client.get(
@@ -63,7 +70,15 @@ class WallapopConnector(BaseConnector):
                 )
                 if response.status_code == 404:
                     return None
+                if response.status_code == 403:
+                    raise TransientConnectorError("Acceso bloqueado por Wallapop (403)")
+                if response.status_code == 429:
+                    raise TransientConnectorError("Demasiadas solicitudes a Wallapop (429)")
+                if response.status_code >= 500:
+                    raise TransientConnectorError(f"Error en servidor Wallapop ({response.status_code})")
                 response.raise_for_status()
+            except httpx.TimeoutException as e:
+                raise TransientConnectorError(f"Timeout fetching from Wallapop: {e}") from e
             except httpx.HTTPError as e:
                 raise TransientConnectorError(f"Error fetching from Wallapop: {e}") from e
                 
@@ -72,13 +87,34 @@ class WallapopConnector(BaseConnector):
     async def health_check(self) -> ConnectorHealth:
         try:
             # Una petición mínima para ver si estamos bloqueados
-            async with httpx.AsyncClient(proxies=self.proxy_url) as client:
-                res = await client.get(self._BASE_URL, params={"keywords": "test"}, headers={"User-Agent": "Mozilla/5.0", "X-DeviceOS": "0"}, timeout=5.0)
-                healthy = res.status_code == 200
-                detail = "API Accesible" if healthy else f"Bloqueo o error: HTTP {res.status_code}"
+            async with httpx.AsyncClient(proxy=self.proxy_url) as client:
+                res = await client.get(
+                    self._BASE_URL,
+                    params={"keywords": "test"},
+                    headers={"User-Agent": "Mozilla/5.0", "X-DeviceOS": "0"},
+                    timeout=5.0
+                )
+                if res.status_code == 200:
+                    healthy = True
+                    detail = "API accesible"
+                elif res.status_code == 403:
+                    healthy = False
+                    detail = "Bloqueado (403): rate limit o anti-bot"
+                elif res.status_code == 429:
+                    healthy = False
+                    detail = "Demasiadas solicitudes (429)"
+                elif res.status_code >= 500:
+                    healthy = False
+                    detail = f"Error servidor ({res.status_code})"
+                else:
+                    healthy = False
+                    detail = f"Error HTTP {res.status_code}"
+        except httpx.TimeoutException:
+            healthy = False
+            detail = "Timeout conectando con API"
         except Exception as e:
             healthy = False
-            detail = str(e)
+            detail = f"Error: {str(e)}"
             
         return ConnectorHealth(
             source_key=self.source_key,

@@ -1,9 +1,11 @@
 """Contrato común de conector (ADR-0006).
 
 Un conocedor de la semántica de una fuente. El *provider* (medio de adquisición:
-API, feed, importación manual, navegador autorizado) queda encapsulado en la
-implementación concreta. En el MVP solo existen `MockConnector` y
-`ManualEntryConnector`; ningún conector de portal real está activo.
+API, feed, importación manual) queda encapsulado en la implementación concreta.
+
+Conectores disponibles (Fase 10):
+  - ManualEntryConnector: ingesta manual de datos de usuario.
+  - WallapopConnector: API no oficial de Wallapop para búsqueda de mercado.
 """
 
 from __future__ import annotations

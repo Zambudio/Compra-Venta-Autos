@@ -10,9 +10,9 @@ import { renderWithClient } from "@/test/render";
 
 const detail: ListingDetail = {
   id: "listing-1",
-  source_key: "mock",
-  external_id: "mock-0001",
-  url: "https://mock.local/1",
+  source_key: "wallapop",
+  external_id: "wallapop-0001",
+  url: "https://wallapop.com/item/1",
   brand: "SEAT",
   model: "Ibiza",
   generation: null,

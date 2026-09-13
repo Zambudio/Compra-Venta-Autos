@@ -42,7 +42,7 @@ def test_phase2_migration_round_trips() -> None:
 
 
 @pytest.mark.integration
-def test_seed_creates_mock_and_manual_sources_idempotently() -> None:
+def test_seed_creates_sources_and_wallapop_replaces_mock_idempotently() -> None:
     config = Config("alembic.ini")
     command.upgrade(config, "head")
 
@@ -53,9 +53,23 @@ def test_seed_creates_mock_and_manual_sources_idempotently() -> None:
             reviews = connection.execute(
                 text("SELECT count(*) FROM source_compliance_reviews")
             ).scalar_one()
-        assert keys == ["manual", "mock"]
-        assert reviews == 2
+        # After Phase 10 migration: manual, mock (deactivated), wallapop
+        assert keys == ["manual", "mock", "wallapop"]
+        assert reviews == 3  # manual + wallapop (mock review deleted)
 
+        # Verify mock is deactivated
+        mock_active = connection.execute(
+            text("SELECT is_active FROM sources WHERE key = 'mock'")
+        ).scalar_one()
+        assert mock_active is False
+
+        # Verify wallapop is active
+        wallapop_active = connection.execute(
+            text("SELECT is_active FROM sources WHERE key = 'wallapop'")
+        ).scalar_one()
+        assert wallapop_active is True
+
+        # Test idempotency: downgrade and upgrade again
         command.downgrade(config, "20260906_0002")
         command.upgrade(config, "head")
         with engine.connect() as connection:
@@ -65,7 +79,7 @@ def test_seed_creates_mock_and_manual_sources_idempotently() -> None:
             reviews_again = connection.execute(
                 text("SELECT count(*) FROM source_compliance_reviews")
             ).scalar_one()
-        assert keys_again == ["manual", "mock"]
-        assert reviews_again == 2
+        assert keys_again == ["manual", "mock", "wallapop"]
+        assert reviews_again == 3
     finally:
         engine.dispose()

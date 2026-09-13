@@ -6,6 +6,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import * as authApi from "@/features/auth/api";
 import * as knowledgeApi from "@/features/knowledge/api";
 import * as listingsApi from "@/features/listings/api";
+import * as systemApi from "@/features/system/api";
 import * as vehiclesApi from "@/features/vehicles/api";
 import { AppShell } from "@/features/shell/app-shell";
 import { renderWithClient } from "@/test/render";
@@ -47,9 +48,10 @@ beforeEach(() => {
     total: 0,
     has_more: false,
   });
+  vi.spyOn(systemApi, "getSources").mockResolvedValue([]);
 });
 
-test("opens on the Anuncios tab and switches to Vehículos, Conocimiento and Estado", async () => {
+test("opens on Anuncios and exposes platform status under Configuración", async () => {
   const kbUser = userEvent.setup();
   renderWithClient(
     <AppShell user={user} onLogout={vi.fn()} isLoggingOut={false} />,
@@ -71,11 +73,11 @@ test("opens on the Anuncios tab and switches to Vehículos, Conocimiento and Est
     await screen.findByRole("heading", { name: /Base de Conocimiento/i }),
   ).toBeInTheDocument();
 
-  // Switch to Estado
-  await kbUser.click(screen.getByRole("button", { name: "Estado" }));
+  await kbUser.click(screen.getByRole("button", { name: "Configuración" }));
   expect(
-    await screen.findByRole("heading", { name: "Foundation operativa" }),
+    await screen.findByRole("heading", { name: "Configuración" }),
   ).toBeInTheDocument();
+  expect(screen.getByText("Estado de la plataforma")).toBeInTheDocument();
 });
 
 test("the active tab is marked as current", async () => {

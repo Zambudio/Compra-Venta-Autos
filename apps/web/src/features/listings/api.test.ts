@@ -32,7 +32,7 @@ test("getListings serialises filters into query params", async () => {
   await getListings({
     brand: "SEAT",
     year_min: 2010,
-    source: ["mock", "manual"],
+    source: ["wallapop", "manual"],
     sort: "price_asc",
     page: 2,
   });
@@ -41,7 +41,7 @@ test("getListings serialises filters into query params", async () => {
   expect(url).toContain("/listings?");
   expect(url).toContain("brand=SEAT");
   expect(url).toContain("year_min=2010");
-  expect(url).toContain("source=mock");
+  expect(url).toContain("source=wallapop");
   expect(url).toContain("source=manual");
   expect(url).toContain("sort=price_asc");
 });
@@ -78,10 +78,10 @@ test("syncSource posts with the CSRF header", async () => {
   document.cookie = "motorscope_csrf=csrf-token";
   const fetchMock = mockFetch({ id: "run-1", status: "SUCCESS" });
 
-  await syncSource("mock");
+  await syncSource("wallapop");
 
   expect(fetchMock).toHaveBeenCalledWith(
-    "/api/v1/sources/mock/sync",
+    "/api/v1/sources/wallapop/sync",
     expect.objectContaining({
       method: "POST",
       headers: expect.objectContaining({ "X-CSRF-Token": "csrf-token" }),
