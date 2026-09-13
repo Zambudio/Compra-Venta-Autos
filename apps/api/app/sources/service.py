@@ -77,23 +77,28 @@ class SourceService:
     async def list_sources(self) -> list[SourceRead]:
         registered_keys = available_source_keys()
         sources = (
-            await self.db.execute(
-                select(Source)
-                .where(Source.key.in_(registered_keys))
-                .order_by(Source.key)
+            (
+                await self.db.execute(
+                    select(Source).where(Source.key.in_(registered_keys)).order_by(Source.key)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         configurations = (
-            await self.db.execute(
-                select(SourceConfig).where(SourceConfig.source_key.in_(registered_keys))
+            (
+                await self.db.execute(
+                    select(SourceConfig).where(SourceConfig.source_key.in_(registered_keys))
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         config_by_key = {
             configuration.source_key: configuration for configuration in configurations
         }
         return [
-            await self._source_read(source, config_by_key.get(source.key))
-            for source in sources
+            await self._source_read(source, config_by_key.get(source.key)) for source in sources
         ]
 
     async def update_source(
@@ -122,20 +127,26 @@ class SourceService:
             raise SourceNotFoundError(source_key)
 
         sources = (
-            await self.db.execute(
-                select(Source)
-                .where(Source.key.in_(available_source_keys()))
-                .order_by(Source.key)
-                .with_for_update()
+            (
+                await self.db.execute(
+                    select(Source)
+                    .where(Source.key.in_(available_source_keys()))
+                    .order_by(Source.key)
+                    .with_for_update()
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         source_by_key = {source.key: source for source in sources}
         source = source_by_key.get(source_key)
         if source is None:
             raise SourceNotFoundError(source_key)
 
-        if enabled is False and source.is_active and not any(
-            item.is_active for key, item in source_by_key.items() if key != source_key
+        if (
+            enabled is False
+            and source.is_active
+            and not any(item.is_active for key, item in source_by_key.items() if key != source_key)
         ):
             raise LastActiveSourceError(source_key)
 
@@ -296,14 +307,10 @@ class SourceService:
 
     async def _get_configuration(self, source_key: str) -> SourceConfig | None:
         return (
-            await self.db.execute(
-                select(SourceConfig).where(SourceConfig.source_key == source_key)
-            )
+            await self.db.execute(select(SourceConfig).where(SourceConfig.source_key == source_key))
         ).scalar_one_or_none()
 
-    async def _source_read(
-        self, source: Source, configuration: SourceConfig | None
-    ) -> SourceRead:
+    async def _source_read(self, source: Source, configuration: SourceConfig | None) -> SourceRead:
         enabled = configuration.enabled if configuration is not None else source.is_active
         sync_error = configuration.sync_error if configuration is not None else None
         return SourceRead(

@@ -76,16 +76,26 @@ async def test_health_rejects_unknown_source() -> None:
 async def test_update_source_config_persists_change_and_audit_actor() -> None:
     db = AsyncMock(spec=AsyncSession)
     manual = Source(
-        id=uuid4(), key="manual", name="Entrada manual", provider_kind=ProviderKind.MANUAL,
+        id=uuid4(),
+        key="manual",
+        name="Entrada manual",
+        provider_kind=ProviderKind.MANUAL,
         is_active=True,
     )
     wallapop = Source(
-        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR,
+        id=uuid4(),
+        key="wallapop",
+        name="Wallapop",
+        provider_kind=ProviderKind.CONNECTOR,
         is_active=True,
     )
     configuration = SourceConfig(
-        id=uuid4(), source_key="wallapop", enabled=True, config={"timeout": 10},
-        created_at=datetime.now(UTC), updated_at=datetime.now(UTC),
+        id=uuid4(),
+        source_key="wallapop",
+        enabled=True,
+        config={"timeout": 10},
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     sources_result = MagicMock()
     sources_result.scalars.return_value.all.return_value = [manual, wallapop]
@@ -115,7 +125,10 @@ async def test_update_source_config_persists_change_and_audit_actor() -> None:
 async def test_update_source_config_refuses_to_disable_last_active_connector() -> None:
     db = AsyncMock(spec=AsyncSession)
     wallapop = Source(
-        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR,
+        id=uuid4(),
+        key="wallapop",
+        name="Wallapop",
+        provider_kind=ProviderKind.CONNECTOR,
         is_active=True,
     )
     result = MagicMock()
@@ -132,9 +145,7 @@ async def test_update_source_config_refuses_to_disable_last_active_connector() -
 
 def test_sync_status_updates_configuration_observability() -> None:
     finished_at = datetime.now(UTC)
-    configuration = SourceConfig(
-        source_key="wallapop", enabled=True, config={}
-    )
+    configuration = SourceConfig(source_key="wallapop", enabled=True, config={})
     run = SourceSyncRun(
         source_id=uuid4(),
         status=SyncRunStatus.PARTIAL,

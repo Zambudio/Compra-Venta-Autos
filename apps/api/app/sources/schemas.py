@@ -51,6 +51,7 @@ class SourceConfigRead(BaseModel):
     sync_error: str | None
     updated_at: datetime
 
+
 class SourceRead(BaseModel):
     key: str
     name: str

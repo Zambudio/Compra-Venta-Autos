@@ -6,8 +6,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
-from app.connectors.filters import ConnectorSearchFilter
-from app.connectors.schemas import ConnectorSearchPage, RawListing
+from app.connectors.schemas import RawListing
 from app.listings.models import ListingSnapshot, RawListingPayload, VehicleListing
 from app.listings.service import ListingService
 from app.sources.models import Source

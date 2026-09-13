@@ -1,6 +1,10 @@
 # Arquitectura
 
-Estado: implementado hasta Fase 5; Fase 6 planificada. Fecha: 2026-09-12.
+Estado: documentado hasta Fase 5 (2026-09-12); **desactualizado**. Fases 6
+(Watchlist/Inspección), 7 (Garage/Finance) y 10/10.1 (conector Wallapop real,
+gestión dinámica de fuentes y búsqueda en vivo) ya están implementadas pero no
+descritas aquí. Proyecto aparcado desde 2026-09-13, ver
+[`INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](../project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md).
 
 ## Contexto y restricciones
 

@@ -109,7 +109,9 @@ async def test_ingest_raw_creates_listing_payload_and_snapshot() -> None:
     result.scalar_one_or_none.return_value = None
     db.execute.return_value = result
 
-    source = Source(id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR)
+    source = Source(
+        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR
+    )
     raw = RawListing(
         source_key="wallapop",
         external_id="wallapop-0001",
@@ -181,7 +183,9 @@ async def test_ingest_raw_marks_seen_when_payload_hash_already_stored() -> None:
     payload_result.first.return_value = ("payload-id",)
     db.execute.side_effect = [get_result, payload_result]
 
-    source = Source(id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR)
+    source = Source(
+        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR
+    )
     raw = RawListing(
         source_key="wallapop",
         external_id="wallapop-0001",
@@ -219,7 +223,9 @@ async def test_ingest_raw_updates_and_snapshots_on_price_change() -> None:
     payload_result.first.return_value = None
     db.execute.side_effect = [get_result, payload_result]
 
-    source = Source(id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR)
+    source = Source(
+        id=uuid4(), key="wallapop", name="Wallapop", provider_kind=ProviderKind.CONNECTOR
+    )
     raw = RawListing(
         source_key="wallapop",
         external_id="wallapop-0001",

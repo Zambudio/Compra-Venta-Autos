@@ -1,8 +1,10 @@
 # Modelo de dominio y datos
 
-Estado: modelo implementado hasta Fase 5 (migraciones `0001`–`0006`); Watchlist,
-Inspección, Garage, finanzas, archivos y notificaciones siguen como diseño lógico.
-Fecha: 2026-09-12.
+Estado: documentado hasta Fase 5 (migraciones `0001`–`0006`, 2026-09-12);
+**desactualizado**. Watchlist, Inspección, Garage, finanzas y archivos ya están
+implementados (migraciones hasta `20260913_0010`), no solo como diseño lógico.
+Proyecto aparcado desde 2026-09-13, ver
+[`INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](../project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md).
 
 ## Principios
 

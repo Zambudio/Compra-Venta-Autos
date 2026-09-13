@@ -1,5 +1,12 @@
 # Plan de implementación
 
+> ⚠️ **Desactualizado desde 2026-09-12.** Todo lo descrito abajo como "siguiente
+> paso" (F6.0 en adelante) ya ocurrió; Fases 6, 7 y 10/10.1 están implementadas y
+> Fase 8/9 se autodeclaró completa sin verificación real. Proyecto aparcado desde
+> 2026-09-13: ver
+> [`INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](../informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md)
+> para el estado y los próximos pasos reales antes de seguir este plan.
+
 Última actualización: 2026-09-12. `task.md` es la fuente operativa de verdad; este
 documento conserva la secuencia, las dependencias y los gates del MVP.
 

@@ -204,7 +204,5 @@ def _active_source_required(source_key: str) -> APIError:
         status_code=status.HTTP_400_BAD_REQUEST,
         code="active_source_required",
         title="Invalid configuration",
-        detail=(
-            f"No se puede desactivar '{source_key}': debe quedar al menos un conector activo."
-        ),
+        detail=(f"No se puede desactivar '{source_key}': debe quedar al menos un conector activo."),
     )

@@ -248,9 +248,8 @@ def test_payload_hash_handles_nested_and_lists() -> None:
 
 @pytest.mark.unit
 def test_normalize_unknown_brand_is_title_cased() -> None:
-    assert (
-        normalize(_payload(marca="fabricante raro"), source_key="wallapop").brand == "Fabricante Raro"
-    )
+    normalized = normalize(_payload(marca="fabricante raro"), source_key="wallapop")
+    assert normalized.brand == "Fabricante Raro"
 
 
 @pytest.mark.unit

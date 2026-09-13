@@ -1,22 +1,27 @@
 # Roadmap
 
-Última actualización: 2026-09-12.
+Última actualización: 2026-09-13. **Proyecto aparcado**; ver
+[`INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](../informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md)
+para el estado verificado, riesgos abiertos (incluye uno de cumplimiento legal sobre
+Wallapop) y los próximos pasos priorizados.
 
 ## MVP
 
 Objetivo: completar con calidad el flujo privado de una operación real, con adquisición legal y decisiones explicables.
 
 1. ✅ Foundation segura y operable: auth, observabilidad, PostgreSQL, Redis, jobs, CI y entorno reproducible.
-2. ✅ Búsqueda mediante proveedores `Mock` y `Manual`; conectores como contratos sustituibles, sin scraping no autorizado.
+2. ✅ Búsqueda mediante conectores `Manual` y `Wallapop` (real, con gestión dinámica de estado); `Mock` retirado en Fase 10. **Ver riesgo de cumplimiento legal en el informe de relevo antes de asumir que Wallapop está autorizado.**
 3. ✅ Normalización, separación `Vehicle`/`Listing`, snapshots y deduplicación asistida.
 4. ✅ Wiki técnica con fuentes y evidencias; clasificación basada en datos.
 5. ✅ Score determinista/versionado, comparables, intervalos, confianza y mesa de oportunidades.
-6. ⏳ Watchlist e inspección; siguiente fase tras sanear el baseline de calidad.
-7. ⏳ Compra, ledger de gastos, venta, beneficio y ROI real.
-8. ⏳ Hardening ASVS 5.0 L2, accesibilidad, rendimiento, backup/restore y release reproducible.
+6. ✅ Watchlist e inspección con checklist trazable y adjuntos seguros. Sin tests frontend (deuda conocida).
+7. ✅ Compra, ledger de gastos append-only, venta, beneficio y ROI real. Sin tests frontend (deuda conocida).
+8. ⚠️ Hardening ASVS 5.0 L2, accesibilidad, rendimiento, backup/restore y release reproducible — autodeclarado completo pero sin evidencia verificable; tratar como pendiente real.
 
-Estado global: Fases 0–5 completadas; Fases 6–9 pendientes. El plan ejecutable y los
-gates actuales están en `task.md` e `implementation_plan.md`.
+Estado global: Fases 0–7 y 10–10.1 implementadas y verificadas hoy; Fase 8/9 sin
+verificación real. El plan ejecutable en `task.md` e `implementation_plan.md` no
+está sincronizado más allá de Fase 5; no son fuente de verdad hasta que se
+actualicen (ver informe de relevo).
 
 Restricciones: una sola aplicación backend, una base PostgreSQL, sin automatización de portales no autorizada, sin IA decisora y sin funcionalidades V2/V3.
 

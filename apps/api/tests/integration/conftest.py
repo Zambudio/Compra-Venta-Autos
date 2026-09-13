@@ -63,9 +63,7 @@ async def _reset_database(app: FastAPI) -> None:
         await db.execute(delete(VehicleListing))
         await db.execute(delete(User))
         await db.execute(
-            update(Source)
-            .where(Source.key.in_(("manual", "wallapop")))
-            .values(is_active=True)
+            update(Source).where(Source.key.in_(("manual", "wallapop"))).values(is_active=True)
         )
         await db.execute(update(SourceConfig).values(enabled=True, sync_error=None))
         db.add_all(

@@ -18,9 +18,7 @@ def test_source_configuration_tables_are_registered_with_required_constraints() 
     assert configurations.c.config.nullable is False
     assert changes.c.source_key.foreign_keys
     assert changes.c.changed_by.foreign_keys
-    assert {index.name for index in changes.indexes} >= {
-        "ix_source_config_changes_source_changed"
-    }
+    assert {index.name for index in changes.indexes} >= {"ix_source_config_changes_source_changed"}
 
 
 def test_source_configuration_uses_safe_application_defaults() -> None:

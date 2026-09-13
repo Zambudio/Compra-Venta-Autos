@@ -1,5 +1,15 @@
 # Compliance de fuentes externas
 
+> ⚠️ **Contradicción sin resolver (2026-09-13):** la Fase 10 activó un conector
+> real para Wallapop (`app/connectors/wallapop.py`, API privada no oficial,
+> `api.wallapop.com/api/v3/...`) y la migración `20260912_0009` insertó una fila de
+> `source_compliance_reviews` marcándolo como autorizado — sin que se siguiera el
+> proceso de esta página ni exista una revisión legal real. La tabla de abajo (fila
+> Wallapop, `AutomatedAllowed = No`) sigue siendo la única revisión con evidencia
+> real y contradice directamente lo que hay desplegado en producción. Ver
+> [`INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md)
+> §2 antes de decidir nada sobre este conector.
+
 Revisión inicial: 2026-09-06. Esta tabla es un control técnico conservador, no asesoramiento legal. Cada integración automatizada exige una nueva revisión y autorización explícita antes de implementarse.
 
 | Source      | AcquisitionMethod MVP                   |              AutomatedAllowed |                             AuthenticationRequired | RateLimit      | TermsURL                                          | CheckedAt  | Notes                                                                                                                                                                                                |

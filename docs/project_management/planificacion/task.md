@@ -1,6 +1,14 @@
 # Estado operativo del proyecto
 
-Fuente operativa de verdad. Última actualización: 2026-09-12 (auditoría posterior al cierre de Fase 5).
+> ⚠️ **Desactualizado desde 2026-09-12.** Fases 6, 7, 8/9, 10 y 10.1 ya se
+> implementaron (algunas sin verificación real, ver más abajo) y no tienen su
+> desglose de sub-tareas aquí. El proyecto está aparcado desde 2026-09-13; la
+> fuente de verdad actual es
+> [`INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](../informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md).
+> Este documento vuelve a ser la fuente operativa solo tras sincronizarlo con ese
+> informe.
+
+Fuente operativa de verdad (histórica, hasta Fase 5). Última actualización: 2026-09-12 (auditoría posterior al cierre de Fase 5).
 
 Estados: `[ ]` pendiente · `[~]` en progreso · `[x]` completado · `[!]` bloqueado.
 

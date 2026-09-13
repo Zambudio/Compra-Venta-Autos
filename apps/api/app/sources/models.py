@@ -125,9 +125,7 @@ class SourceConfigChange(Base):
     """Historial append-only de cambios de configuración de conectores."""
 
     __tablename__ = "source_config_changes"
-    __table_args__ = (
-        Index("ix_source_config_changes_source_changed", "source_key", "changed_at"),
-    )
+    __table_args__ = (Index("ix_source_config_changes_source_changed", "source_key", "changed_at"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     source_key: Mapped[str] = mapped_column(
