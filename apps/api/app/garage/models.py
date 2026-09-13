@@ -1,9 +1,10 @@
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
+from enum import Enum
 
 from app.core.models import Base, TimestampMixin
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, Text
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
