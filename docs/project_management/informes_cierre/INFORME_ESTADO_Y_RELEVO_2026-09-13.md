@@ -177,9 +177,11 @@ siguiente que retome sepa que no son fuente de verdad hasta revisarlos:
 - No existen `INFORME_CIERRE_FASE_6.md`, `_FASE_7.md`, `_FASE_8.md`, `_FASE_9.md`
   con el nivel de detalle de los de Fases 2–5 (Fase 9 sí existe pero es superficial,
   ver §3).
-- `FASE_10_STATUS.md` y `PROMPT_FASE_10_1.md` (raíz del repo) quedan como registro
-  histórico de cómo llegó la Fase 10 a medio terminar; su contenido ya está
-  incorporado y superado por este informe.
+- **Actualización 2026-09-13 (limpieza final):** `FASE_10_STATUS.md` se borró (su
+  contenido ya estaba incorporado y superado por este informe); `PROMPT_FASE_10_1.md`
+  se movió a `docs/prompts/PROMPT_FASE_10_1.md` como registro histórico del prompt
+  usado. `ESTADO_ACTUAL.md` (raíz del repo) es ahora el punto de entrada único y
+  vivo; este informe queda como evidencia detallada de la auditoría de esa fecha.
 
 ## 6. Próximos pasos para cuando se retome el proyecto
 

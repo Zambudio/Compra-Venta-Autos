@@ -7,29 +7,10 @@ explicables y auditables.
 
 ## Estado del proyecto
 
-**⏸️ Proyecto aparcado desde 2026-09-13** por decisión del propietario. Antes de
-tocar nada, leer
-[`docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md):
-resume el estado real de cada fase, un riesgo de cumplimiento legal abierto sobre el
-conector Wallapop, la deuda de calidad conocida y los próximos pasos priorizados.
-
-| Fase | Estado | Capacidad principal |
-| --- | --- | --- |
-| 0 — Planning | ✅ Completa | Arquitectura, roadmap, riesgos y ADRs. |
-| 1 — Foundation | ✅ Completa | Auth, observabilidad, Docker, PostgreSQL, Redis y CI. |
-| 2 — Search | ✅ Completa (conector Mock retirado en Fase 10) | Adquisición, normalización, ingesta y snapshots. |
-| 3 — Vehicles | ✅ Completa | Vehicle/Listing, matching, histórico y comparables. |
-| 4 — Knowledge | ✅ Completa | Evidencias, problemas conocidos y fiabilidad. |
-| 5 — Scoring | ✅ Completa | Score versionado, valoración y oportunidades. |
-| 6 — Watchlist/Inspección | ✅ Implementada | Seguimiento, inspección y fotos seguras. Sin tests frontend. |
-| 7 — Garage/Finance | ✅ Implementada | Compra, ledger de gastos, venta y ROI. Sin tests frontend. |
-| 8 — Hardening / 9 — Release | ⚠️ Autodeclarada, no verificada | Ver informe de relevo §3: falta evidencia de ASVS/DAST/restore real. |
-| 10 — Wallapop real / 10.1 — Config dinámica y búsqueda en vivo | ✅ Implementada y desplegada (2026-09-13) | Conector real, toggle de fuentes, búsqueda en vivo con caché y rate limit. **Riesgo legal abierto**, ver informe. |
-
-Desplegado y verificado en el Synology NAS el 2026-09-13 (6 contenedores
-`healthy`, migración `20260913_0010`). Detalle completo, deuda de cobertura
-frontend (`garage`/`watchlist` sin tests) y comandos de verificación en el informe
-de relevo enlazado arriba.
+**⏸️ Proyecto aparcado desde 2026-09-13.** Antes de tocar nada, leer
+[`ESTADO_ACTUAL.md`](ESTADO_ACTUAL.md): qué hay construido, un riesgo de
+cumplimiento legal abierto sobre el conector Wallapop, deuda conocida e
+instrucciones explícitas para la IA que retome el proyecto.
 
 ## Capacidades actuales
 
@@ -123,13 +104,12 @@ usar `N:\IA\02_Proyectos\Compra-Venta Autos\apps\web` evita esa duplicación.
 
 ## Documentación
 
-- Fuente principal: [`PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md`](PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md)
-- **Informe de relevo actual (leer primero):** [`docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md)
-- Estado operativo (desactualizado desde Fase 5, ver informe de relevo): [`docs/project_management/planificacion/task.md`](docs/project_management/planificacion/task.md)
-- Secuencia y gates (desactualizado desde Fase 5): [`docs/project_management/planificacion/implementation_plan.md`](docs/project_management/planificacion/implementation_plan.md)
+- **Estado actual e instrucciones de relevo (leer primero):** [`ESTADO_ACTUAL.md`](ESTADO_ACTUAL.md)
+- Fuente principal del dominio: [`docs/project_management/planificacion/PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md`](docs/project_management/planificacion/PLAN_MAESTRO_VEHICULOS_SEGUNDA_MANO.md)
+- Auditoría detallada del último cierre: [`docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md`](docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-13.md)
+- Estado operativo y plan (desactualizados desde Fase 5, ver `ESTADO_ACTUAL.md`): [`task.md`](docs/project_management/planificacion/task.md), [`implementation_plan.md`](docs/project_management/planificacion/implementation_plan.md)
 - Roadmap MVP/V2/V3: [`docs/project_management/planificacion/roadmap.md`](docs/project_management/planificacion/roadmap.md)
-- Informe anterior (Fase 5, histórico): [`docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-12.md`](docs/project_management/informes_cierre/INFORME_ESTADO_Y_RELEVO_2026-09-12.md)
-- Compliance de fuentes externas (ver riesgo Wallapop en el informe de relevo): [`docs/source-compliance.md`](docs/source-compliance.md)
+- Compliance de fuentes externas (ver riesgo Wallapop): [`docs/source-compliance.md`](docs/source-compliance.md)
 - Arquitectura y dominio (cabeceras desactualizadas desde Fase 5): [`docs/architecture/`](docs/architecture/) y [`docs/domain/`](docs/domain/)
 - ADRs: [`docs/adr/`](docs/adr/)
 - Conexión y despliegue en el NAS: [`docs/operations/Guia_Conexion_ssh_NAS.md`](docs/operations/Guia_Conexion_ssh_NAS.md)
