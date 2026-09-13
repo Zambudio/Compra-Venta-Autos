@@ -1,4 +1,4 @@
-FROM node:26.8.1-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS base
+FROM node:26.8.2-alpine@sha256:ef24c5053d50fdc3e4e56eb4e7ddb7861874ab0fdc797046ba897581deb8e868 AS base
 # corepack ya no se distribuye con Node en esta imagen; instalamos pnpm
 # directamente con la versión fijada.
 RUN npm install --global pnpm@11.1.3
@@ -17,7 +17,7 @@ COPY apps/web ./apps/web
 COPY packages/shared ./packages/shared
 RUN pnpm --filter @motorscope/web build
 
-FROM node:26.8.1-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS runtime
+FROM node:26.8.2-alpine@sha256:ef24c5053d50fdc3e4e56eb4e7ddb7861874ab0fdc797046ba897581deb8e868 AS runtime
 ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
     PORT=3000
