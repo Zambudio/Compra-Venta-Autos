@@ -7,10 +7,17 @@ explicables y auditables.
 
 ## Estado del proyecto
 
-**⏸️ Proyecto aparcado desde 2026-09-13.** Antes de tocar nada, leer
-[`ESTADO_ACTUAL.md`](ESTADO_ACTUAL.md): qué hay construido, un riesgo de
-cumplimiento legal abierto sobre el conector Wallapop, deuda conocida e
-instrucciones explícitas para la IA que retome el proyecto.
+**🛑 Proyecto Descontinuado (2026-09-28)**
+
+El desarrollo activo de MotorScope ha sido detenido y el proyecto pasa a estar **archivado**. No se trata de un fracaso, sino de una gran experiencia de aprendizaje sobre desarrollo asistido con Inteligencia Artificial.
+
+**¿Por qué se archiva?**
+- **Aprendizaje sobre IA**: Se ha comprobado que delegar funciones complejas a agentes autónomos sin supervisión estricta (como el scraping en plataformas sin API oficial como Wallapop) conlleva riesgos legales y de validación ("alucinación de completitud" en hitos de desarrollo). 
+- **Mejora continua**: El código queda congelado como base de estudio. Quizás en un futuro, con un perfil de programación con IA más maduro y metodologías más rigurosas para la supervisión de agentes, este proyecto pueda retomarse y evolucionar hacia algo más grande. 
+
+Todo el conocimiento técnico extraído y las lecciones aprendidas se han consolidado en nuestra base de conocimiento principal (`OBSIDIAN VAULT`).
+
+> *Nota: Antes de tocar nada en un futuro, leer [`ESTADO_ACTUAL.md`](ESTADO_ACTUAL.md) para conocer la deuda técnica y el estado exacto en el que se congeló el proyecto.*
 
 ## Capacidades actuales
 
